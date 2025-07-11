@@ -1,14 +1,14 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class BookSpawner : MonoBehaviour
 {
     [Header("Book Settings")]
-    public GameObject bookPrefab;          // ÊéµÄÔ¤ÖÆ¼ş
-    public float bookInitialScale = 0.01f; // ÊéµÄ³õÊ¼Ëõ·Å±ÈÀı
-    public float bookTargetScale = 1.0f;   // ÊéµÄÄ¿±êËõ·Å±ÈÀı
-    public float bookDropDistance = 1.0f;  // Êé¼®ÏÂÂäµÄ¾àÀë
-    public float bookDropDuration = 2.0f;  // Êé¼®ÏÂÂäµÄ³ÖĞøÊ±¼ä
+    public GameObject bookPrefab;          // ä¹¦çš„é¢„åˆ¶ä»¶
+    public float bookInitialScale = 0.01f; // ä¹¦çš„åˆå§‹ç¼©æ”¾æ¯”ä¾‹
+    public float bookTargetScale = 1.0f;   // ä¹¦çš„ç›®æ ‡ç¼©æ”¾æ¯”ä¾‹
+    public float bookDropDistance = 1.0f;  // ä¹¦ç±ä¸‹è½çš„è·ç¦»
+    public float bookDropDuration = 2.0f;  // ä¹¦ç±ä¸‹è½çš„æŒç»­æ—¶é—´
 
     private PortalController portalController;
 
@@ -19,31 +19,31 @@ public class BookSpawner : MonoBehaviour
 
     IEnumerator BookSequence()
     {
-        // µÈ´ı´«ËÍÃÅ³öÏÖ
+        // ç­‰å¾…ä¼ é€é—¨å‡ºç°
         yield return StartCoroutine(WaitForPortal());
 
         if (portalController == null)
         {
-            Debug.LogError("Î´ÄÜÕÒµ½ PortalController£¡");
+            Debug.LogError("æœªèƒ½æ‰¾åˆ° PortalControllerï¼");
             yield break;
         }
 
-        // µÈ´ı 5 Ãë
+        // ç­‰å¾… 5 ç§’
         yield return new WaitForSeconds(5.0f);
 
-        // Éú³ÉÊé¼®
+        // ç”Ÿæˆä¹¦ç±
         StartCoroutine(SpawnBook());
 
-        // ÔÙµÈ´ı 5 Ãë
+        // å†ç­‰å¾… 5 ç§’
         yield return new WaitForSeconds(5.0f);
 
-        // µ÷ÓÃ´«ËÍÃÅµÄÒş²Ø·½·¨
+        // è°ƒç”¨ä¼ é€é—¨çš„éšè—æ–¹æ³•
         portalController.HidePortal();
     }
 
     IEnumerator WaitForPortal()
     {
-        // ²»¶Ï²éÕÒ PortalController ÊµÀı
+        // ä¸æ–­æŸ¥æ‰¾ PortalController å®ä¾‹
         while (portalController == null)
         {
             portalController = FindObjectOfType<PortalController>();
@@ -56,17 +56,17 @@ public class BookSpawner : MonoBehaviour
 
     IEnumerator SpawnBook()
     {
-        // »ñÈ¡´«ËÍÃÅµÄÖĞĞÄÎ»ÖÃ×÷ÎªÊéµÄÆğÊ¼Î»ÖÃ
+        // è·å–ä¼ é€é—¨çš„ä¸­å¿ƒä½ç½®ä½œä¸ºä¹¦çš„èµ·å§‹ä½ç½®
         Vector3 startPosition = portalController.transform.position;
 
-        // ¼ÆËãÊéµÄÄ¿±êÎ»ÖÃ£¨´Ó´«ËÍÃÅÎ»ÖÃÏòÏÂÆ«ÒÆ bookDropDistance£©
+        // è®¡ç®—ä¹¦çš„ç›®æ ‡ä½ç½®ï¼ˆä»ä¼ é€é—¨ä½ç½®å‘ä¸‹åç§» bookDropDistanceï¼‰
         Vector3 targetPosition = startPosition - new Vector3(0, bookDropDistance, 0);
 
-        // ÊµÀı»¯Êé¼®
+        // å®ä¾‹åŒ–ä¹¦ç±
         GameObject bookInstance = Instantiate(bookPrefab, startPosition, Quaternion.identity);
-        // È·±£Êé¼®²»Á¥ÊôÓÚÈÎºÎ¸¸¶ÔÏó
+        // ç¡®ä¿ä¹¦ç±ä¸éš¶å±äºä»»ä½•çˆ¶å¯¹è±¡
         bookInstance.transform.SetParent(null);
-        // ÉèÖÃ³õÊ¼Ëõ·ÅÎª³õÊ¼Öµ£¨¼¸ºõ²»¿É¼û£©
+        // è®¾ç½®åˆå§‹ç¼©æ”¾ä¸ºåˆå§‹å€¼ï¼ˆå‡ ä¹ä¸å¯è§ï¼‰
         bookInstance.transform.localScale = Vector3.one * bookInitialScale;
 
         float elapsed = 0f;
@@ -74,25 +74,25 @@ public class BookSpawner : MonoBehaviour
         {
             float t = elapsed / bookDropDuration;
 
-            // Î»ÖÃ´Ó´«ËÍÃÅÖĞĞÄÏÂÂäµ½Ä¿±êÎ»ÖÃ
+            // ä½ç½®ä»ä¼ é€é—¨ä¸­å¿ƒä¸‹è½åˆ°ç›®æ ‡ä½ç½®
             bookInstance.transform.position = Vector3.Lerp(startPosition, targetPosition, t);
 
-            // Ëõ·Å´Ó³õÊ¼Ëõ·Å±ÈÀıµ½Ä¿±êËõ·Å±ÈÀı
+            // ç¼©æ”¾ä»åˆå§‹ç¼©æ”¾æ¯”ä¾‹åˆ°ç›®æ ‡ç¼©æ”¾æ¯”ä¾‹
             float scale = Mathf.Lerp(bookInitialScale, bookTargetScale, t);
             bookInstance.transform.localScale = Vector3.one * scale;
 
-            // Ê¹Êé¼®Ê¼ÖÕÃæÏòÇ°·½£¨Äú¿ÉÒÔ¸ù¾İĞèÒªµ÷Õû£©
+            // ä½¿ä¹¦ç±å§‹ç»ˆé¢å‘å‰æ–¹ï¼ˆæ‚¨å¯ä»¥æ ¹æ®éœ€è¦è°ƒæ•´ï¼‰
             bookInstance.transform.forward = Vector3.forward;
 
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        // È·±£×îÖÕÎ»ÖÃºÍËõ·Å×¼È·
+        // ç¡®ä¿æœ€ç»ˆä½ç½®å’Œç¼©æ”¾å‡†ç¡®
         bookInstance.transform.position = targetPosition;
         bookInstance.transform.localScale = Vector3.one * bookTargetScale;
 
-        // ×îºóÔÙ´ÎÈ·±£Êé¼®³¯ÏòÕıÈ·
+        // æœ€åå†æ¬¡ç¡®ä¿ä¹¦ç±æœå‘æ­£ç¡®
         bookInstance.transform.forward = Vector3.forward;
     }
 }

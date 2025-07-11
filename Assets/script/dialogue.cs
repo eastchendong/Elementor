@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -18,8 +18,8 @@ public class dialogue : MonoBehaviour
     public Transform buttonGroup;
     private bool btnfull = true;
     private bool optionsGenerated = false;
-    public AudioSource audioSource; // ÔÚInspectorÖĞÖ¸¶¨
-    public AudioClip[] dialogAudioClips; // ÔÚInspectorÖĞÖ¸¶¨£¬È·±£Óë¶Ô»°ĞĞË÷Òı¶ÔÓ¦
+    public AudioSource audioSource; // åœ¨Inspectorä¸­æŒ‡å®š
+    public AudioClip[] dialogAudioClips; // åœ¨Inspectorä¸­æŒ‡å®šï¼Œç¡®ä¿ä¸å¯¹è¯è¡Œç´¢å¼•å¯¹åº”
     public Animator FaceAnimation;
 
 
@@ -64,14 +64,14 @@ public class dialogue : MonoBehaviour
                 int animatorIntValue = int.TryParse(cell[5], out var animValue) ? animValue : -1;
                 UpdateText(cell[2], cell[3], audioIndex, animatorIntValue);
                 DialogIndex = int.Parse(cell[4]);
-                optionsGenerated = false; // ÖØÖÃÑ¡ÏîÉú³É±êÖ¾
+                optionsGenerated = false; // é‡ç½®é€‰é¡¹ç”Ÿæˆæ ‡å¿—
                 break;
             }
             else if (cell[0] == "!" && int.Parse(cell[1]) == DialogIndex && !optionsGenerated)
             {
 
                 GenerateOption(i);
-                optionsGenerated = true; // ÉèÖÃ±êÖ¾ÒÔ·ÀÖ¹ÔÙ´ÎÉú³É
+                optionsGenerated = true; // è®¾ç½®æ ‡å¿—ä»¥é˜²æ­¢å†æ¬¡ç”Ÿæˆ
             }
             else if (cell[0] == "NEXT" && int.Parse(cell[1]) == DialogIndex)
             {
@@ -89,17 +89,17 @@ public class dialogue : MonoBehaviour
 
     public void GenerateOption(int _index)
     {
-        // Ê¹ÓÃÕıÈ·µÄ±äÁ¿iÀ´±éÀú¶Ô»°ĞĞ
+        // ä½¿ç”¨æ­£ç¡®çš„å˜é‡iæ¥éå†å¯¹è¯è¡Œ
         for (int i = _index; i < DialogRows.Length; i++)
         {
-            string[] cells = DialogRows[i].Split(','); // ×¢ÒâÕâÀïÊ¹ÓÃi£¬²»ÊÇ_index
+            string[] cells = DialogRows[i].Split(','); // æ³¨æ„è¿™é‡Œä½¿ç”¨iï¼Œä¸æ˜¯_index
             if (cells[0] == "!")
             {
 
-                // ÊµÀı»¯Ñ¡Ïî°´Å¥
+                // å®ä¾‹åŒ–é€‰é¡¹æŒ‰é’®
                 GameObject button = Instantiate(optionButton, buttonGroup);
 
-                // ¼ÙÉè°´Å¥ÉÏÓĞÒ»¸öTextMeshProUGUI×é¼şÀ´ÏÔÊ¾ÎÄ±¾
+                // å‡è®¾æŒ‰é’®ä¸Šæœ‰ä¸€ä¸ªTextMeshProUGUIç»„ä»¶æ¥æ˜¾ç¤ºæ–‡æœ¬
                 TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>();
                 buttonText.text = cells[3];
                 button.GetComponent<Button>().onClick.AddListener
@@ -113,7 +113,7 @@ public class dialogue : MonoBehaviour
             }
             else if (cells[0] != "!" && i > _index)
             {
-                // Èç¹ûÓöµ½µÄĞĞ²»ÊÇÒÔ"!"¿ªÍ·£¬²¢ÇÒÒÑ¾­´¦Àí¹ıÖÁÉÙÒ»¸öÑ¡Ïî£¬ÖĞ¶ÏÑ­»·
+                // å¦‚æœé‡åˆ°çš„è¡Œä¸æ˜¯ä»¥"!"å¼€å¤´ï¼Œå¹¶ä¸”å·²ç»å¤„ç†è¿‡è‡³å°‘ä¸€ä¸ªé€‰é¡¹ï¼Œä¸­æ–­å¾ªç¯
                 break;
             }
         }
@@ -122,7 +122,7 @@ public class dialogue : MonoBehaviour
     {
         DialogIndex = _id;
         ShowDiaLogRow();
-        // Êä³öÈÕÖ¾£¬È·ÈÏ´Ë·½·¨±»µ÷ÓÃ
+        // è¾“å‡ºæ—¥å¿—ï¼Œç¡®è®¤æ­¤æ–¹æ³•è¢«è°ƒç”¨
         Debug.Log("OnOptionClick called with _id: " + _id);
         foreach (Transform child in buttonGroup)
         {

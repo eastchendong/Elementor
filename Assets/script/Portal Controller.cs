@@ -1,19 +1,19 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class PortalController : MonoBehaviour
 {
     [Header("Portal Settings")]
-    public float appearDuration = 1.0f;        // ´«ËÍÃÅÏÔÏÖµÄ³ÖĞøÊ±¼ä
-    public float rotationSpeed = 90f;          // Ğı×ªËÙ¶È£¨¶È/Ãë£©
-    public Vector3 targetScale = new Vector3(1.2f, 1.2f, 1.2f); // Ä¿±ê·Å´ó±ÈÀı
+    public float appearDuration = 1.0f;        // ä¼ é€é—¨æ˜¾ç°çš„æŒç»­æ—¶é—´
+    public float rotationSpeed = 90f;          // æ—‹è½¬é€Ÿåº¦ï¼ˆåº¦/ç§’ï¼‰
+    public Vector3 targetScale = new Vector3(1.2f, 1.2f, 1.2f); // ç›®æ ‡æ”¾å¤§æ¯”ä¾‹
 
     private Vector3 initialScale;
     private bool isRotating = false;
 
     [Header("Portal Surface")]
-    public string portalSurfaceName = "PortalSurface_low"; // ×Ó¶ÔÏóÃû³Æ
-    private Transform portalSurface; // ×Ó¶ÔÏóµÄTransform
+    public string portalSurfaceName = "PortalSurface_low"; // å­å¯¹è±¡åç§°
+    private Transform portalSurface; // å­å¯¹è±¡çš„Transform
 
     void Start()
     {
@@ -22,29 +22,29 @@ public class PortalController : MonoBehaviour
 
     IEnumerator PortalSequence()
     {
-        // 1. ³õÊ¼»¯´«ËÍÃÅÎª²»¿É¼û£¨Ëõ·ÅÎª0£©
+        // 1. åˆå§‹åŒ–ä¼ é€é—¨ä¸ºä¸å¯è§ï¼ˆç¼©æ”¾ä¸º0ï¼‰
         initialScale = Vector3.zero;
         transform.localScale = initialScale;
 
-        // 2. ²éÕÒ×Ó¶ÔÏóPortalSurface_low
+        // 2. æŸ¥æ‰¾å­å¯¹è±¡PortalSurface_low
         portalSurface = transform.Find(portalSurfaceName);
         if (portalSurface == null)
         {
-            Debug.LogError($"×Ó¶ÔÏó '{portalSurfaceName}' Î´ÕÒµ½£¬ÇëÈ·±£Ëü´æÔÚÓÚ´«ËÍÃÅPrefabÖĞ¡£");
+            Debug.LogError($"å­å¯¹è±¡ '{portalSurfaceName}' æœªæ‰¾åˆ°ï¼Œè¯·ç¡®ä¿å®ƒå­˜åœ¨äºä¼ é€é—¨Prefabä¸­ã€‚");
             yield break;
         }
 
-        // 3. ´«ËÍÃÅÏÔÏÖ
+        // 3. ä¼ é€é—¨æ˜¾ç°
         yield return StartCoroutine(ScaleOverTime(initialScale, Vector3.one, appearDuration));
 
-        // 4. ¿ªÊ¼Ğı×ªºÍ·Å´ó
+        // 4. å¼€å§‹æ—‹è½¬å’Œæ”¾å¤§
         isRotating = true;
         StartCoroutine(RotatePortal());
 
-        // 5. ·Å´óµ½Ä¿±ê¹æÄ£
+        // 5. æ”¾å¤§åˆ°ç›®æ ‡è§„æ¨¡
         yield return StartCoroutine(ScaleOverTime(Vector3.one, targetScale, 1.0f));
 
-        // ´«ËÍÃÅ±£³ÖÔÚÄ¿±ê¹æÄ££¬µÈ´ıÍâ²¿Ö¸Áî£¨ÀıÈçÀ´×Ô BookSpawner£©
+        // ä¼ é€é—¨ä¿æŒåœ¨ç›®æ ‡è§„æ¨¡ï¼Œç­‰å¾…å¤–éƒ¨æŒ‡ä»¤ï¼ˆä¾‹å¦‚æ¥è‡ª BookSpawnerï¼‰
     }
 
     IEnumerator ScaleOverTime(Vector3 fromScale, Vector3 toScale, float duration)
@@ -63,13 +63,13 @@ public class PortalController : MonoBehaviour
     {
         while (isRotating && portalSurface != null)
         {
-            // È·±£Ê¹ÓÃ Space.Self ÒÔÈÆ×ÔÉíÖáĞı×ª
+            // ç¡®ä¿ä½¿ç”¨ Space.Self ä»¥ç»•è‡ªèº«è½´æ—‹è½¬
             portalSurface.Rotate(0, 0, rotationSpeed * Time.deltaTime, Space.Self);
             yield return null;
         }
     }
 
-    // ¹«¹²·½·¨£¬ÓÃÓÚÒş²Ø´«ËÍÃÅ
+    // å…¬å…±æ–¹æ³•ï¼Œç”¨äºéšè—ä¼ é€é—¨
     public void HidePortal()
     {
         StartCoroutine(HidePortalSequence());
@@ -77,13 +77,13 @@ public class PortalController : MonoBehaviour
 
     IEnumerator HidePortalSequence()
     {
-        // Í£Ö¹Ğı×ª
+        // åœæ­¢æ—‹è½¬
         isRotating = false;
 
-        // ËõĞ¡´«ËÍÃÅ
+        // ç¼©å°ä¼ é€é—¨
         yield return StartCoroutine(ScaleOverTime(transform.localScale, Vector3.zero, 1.0f));
 
-        // Ïú»Ù´«ËÍÃÅ¶ÔÏó
+        // é”€æ¯ä¼ é€é—¨å¯¹è±¡
         Destroy(gameObject);
     }
 }

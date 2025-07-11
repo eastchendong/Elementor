@@ -1,4 +1,4 @@
-using Oculus.Interaction;
+ï»¿using Oculus.Interaction;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -11,16 +11,16 @@ public class InteractiveBook : MonoBehaviour
 
     private void Awake()
     {
-        // È·±£InteractableUnityEventWrapperÒÑ¾­ÕıÈ·×¢ÈëÁËInteractableView
+        // ç¡®ä¿InteractableUnityEventWrapperå·²ç»æ­£ç¡®æ³¨å…¥äº†InteractableView
         eventWrapper.InjectInteractableView(GetComponent<IInteractableView>());
 
-        // ¶©ÔÄÑ¡ÔñÊÂ¼ş
+        // è®¢é˜…é€‰æ‹©äº‹ä»¶
         eventWrapper.WhenSelect.AddListener(HandleGrabbed);
     }
 
     private void HandleGrabbed()
     {
-        // µ±ÎïÌå±»×¥È¡Ê±µ÷ÓÃ
+        // å½“ç‰©ä½“è¢«æŠ“å–æ—¶è°ƒç”¨
         Debug.Log("Interactable was grabbed.");
         onGrabbed?.Invoke();
         Dialogue.SetActive(true);
