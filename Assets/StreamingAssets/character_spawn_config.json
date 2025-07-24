@@ -1,0 +1,19 @@
+﻿{
+    "characters": [
+        {
+            "type": "Metal",
+            "name": "Fe",
+            "prefabPath": "Characters/Fe"
+        },
+        {
+            "type": "Metal", 
+            "name": "Cu",
+            "prefabPath": "Characters/Cu"
+        },
+        {
+            "type": "Halogen",
+            "name": "Cl",
+            "prefabPath": "Characters/Cl"
+        }
+    ]
+}
