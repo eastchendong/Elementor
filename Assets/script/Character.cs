@@ -3,6 +3,15 @@ using UnityEngine;
 
 namespace Elementor
 {
+    public enum CharacterAnimationState
+    {
+        Idle,
+        Grabbed,
+        Running,
+        CastingSkill,
+        // 可以继续添加更多状态
+    }
+
     [Serializable]
     public class Character
     {
