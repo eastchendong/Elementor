@@ -78,7 +78,8 @@ namespace Elementor
                         characterView.SetCharacterModel(characterModel);
                         
                         // 进行初始化
-                        characterView.Initialize(spawnData.characters[i]);
+                        characterView.Initialize();
+                        characterModel.Initialize(spawnData.characters[i]);
                         spawnedCharacters.Add(characterView);
                         
                         // 订阅角色交互事件

@@ -1,37 +1,36 @@
 ﻿using UnityEngine;
 using System;
+using Oculus.Interaction;
 
 namespace Elementor
 {
     public class CharacterModel : MonoBehaviour
     {
         [SerializeField] private Character characterData;
-        
+
         private CharacterAnimationState currentState = CharacterAnimationState.Idle;
-        
+
         public Character CharacterData => characterData;
         public CharacterAnimationState CurrentAnimationState => currentState;
-        
-        // 状态改变事件
         public event Action<CharacterAnimationState, CharacterAnimationState> OnAnimationStateChanged;
-        
+
         public void Initialize(Character character)
         {
             characterData = character;
             SetAnimationState(CharacterAnimationState.Idle);
         }
-        
+
         public void SetAnimationState(CharacterAnimationState newState)
         {
             if (currentState == newState) return;
-            
+
             CharacterAnimationState previousState = currentState;
             currentState = newState;
-            
-            // 只触发状态改变事件，让View处理动画
+
+            // 触发状态改变事件，让View处理动画
             OnAnimationStateChanged?.Invoke(previousState, newState);
         }
-        
+
         public bool CanTransitionTo(CharacterAnimationState targetState)
         {
             // 定义状态转换规则
@@ -49,12 +48,33 @@ namespace Elementor
                     return false;
             }
         }
-        
+
+        public void StartGrab()
+        {
+            if (CanTransitionTo(CharacterAnimationState.Grabbed))
+            {
+                SetAnimationState(CharacterAnimationState.Grabbed);
+            }
+        }
+
+        public void EndGrab()
+        {
+            if (CanTransitionTo(CharacterAnimationState.Idle))
+            {
+                SetAnimationState(CharacterAnimationState.Idle);
+            }
+        }
+
+        public bool IsGrabbed()
+        {
+            return currentState == CharacterAnimationState.Grabbed;
+        }
+
         public string GetCharacterType()
         {
             return characterData?.type ?? "";
         }
-        
+
         public string GetCharacterName()
         {
             return characterData?.name ?? "";

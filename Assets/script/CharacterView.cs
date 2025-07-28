@@ -13,31 +13,13 @@ namespace Elementor
         public event Action<CharacterView, Vector3> OnCharacterMoved;
         public event Action<CharacterView, CharacterAnimationState, CharacterAnimationState> OnAnimationStateChanged;
         
-        private void Awake()
-        {
-            if (characterModel == null)
-                characterModel = GetComponent<CharacterModel>();
-            
-            if (animator == null)
-            {
-                // 首先尝试在直接子物体中查找
-                animator = GetComponentInChildren<Animator>();
-                
-                // 如果仍然没有找到，递归搜索所有子物体
-                if (animator == null)
-                {
-                    animator = FindAnimatorInChildren(transform);
-                }
-            }
-        }
-        
         private Animator FindAnimatorInChildren(Transform parent)
         {
             // 检查当前物体
             Animator foundAnimator = parent.GetComponent<Animator>();
             if (foundAnimator != null)
                 return foundAnimator;
-            
+
             // 递归检查所有子物体
             for (int i = 0; i < parent.childCount; i++)
             {
@@ -45,7 +27,7 @@ namespace Elementor
                 if (foundAnimator != null)
                     return foundAnimator;
             }
-            
+
             return null;
         }
         
@@ -74,7 +56,7 @@ namespace Elementor
                 characterModel.OnAnimationStateChanged += HandleAnimationStateChanged;
         }
 
-        public void Initialize(Character character)
+        public void Initialize()
         {
             // 确保characterModel不为null
             if (characterModel == null)
@@ -86,8 +68,17 @@ namespace Elementor
                     return;
                 }
             }
-            
-            characterModel.Initialize(character);
+
+            // 确保animator被找到并引用
+            if (animator == null)
+            {
+                animator = GetComponentInChildren<Animator>();
+                if (animator == null)
+                {
+                    animator = FindAnimatorInChildren(transform);
+                }
+            }
+
             UpdateVisual();
         }
         
@@ -95,39 +86,6 @@ namespace Elementor
         {
             // 根据角色类型和名称更新可视化表现
             gameObject.name = $"{characterModel.GetCharacterType()}_{characterModel.GetCharacterName()}";
-        }
-        
-        // Meta Quest交互接口 - 抓取开始
-        public void OnHandGrab()
-        {
-            if (characterModel != null && characterModel.CanTransitionTo(CharacterAnimationState.Grabbed))
-            {
-                characterModel.SetAnimationState(CharacterAnimationState.Grabbed);
-                OnCharacterSelected?.Invoke(this);
-            }
-        }
-        
-        // Meta Quest交互接口 - 拖拽中
-        public void OnHandDrag(Vector3 newPosition)
-        {
-            transform.position = newPosition;
-            OnCharacterMoved?.Invoke(this, newPosition);
-            
-            // 确保在拖拽时保持Grabbed状态
-            if (characterModel != null && characterModel.CurrentAnimationState != CharacterAnimationState.Grabbed)
-            {
-                if (characterModel.CanTransitionTo(CharacterAnimationState.Grabbed))
-                    characterModel.SetAnimationState(CharacterAnimationState.Grabbed);
-            }
-        }
-        
-        // Meta Quest交互接口 - 释放
-        public void OnHandRelease()
-        {
-            if (characterModel != null && characterModel.CanTransitionTo(CharacterAnimationState.Idle))
-            {
-                characterModel.SetAnimationState(CharacterAnimationState.Idle);
-            }
         }
         
         // 扩展接口 - 开始跑步
@@ -169,20 +127,38 @@ namespace Elementor
                 characterModel.SetAnimationState(CharacterAnimationState.Idle);
             }
         }
-        
+
         private void HandleAnimationStateChanged(CharacterAnimationState previousState, CharacterAnimationState newState)
         {
             Debug.Log($"{characterModel.GetCharacterName()} 动画状态从 {previousState} 转换到 {newState}");
             
-            // View负责更新Animator
             UpdateAnimatorState(newState);
+            
+            // 根据状态变化触发相应事件
+            switch (newState)
+            {
+                case CharacterAnimationState.Grabbed:
+                    OnCharacterSelected?.Invoke(this);
+                    break;
+                case CharacterAnimationState.Idle:
+                    if (previousState == CharacterAnimationState.Grabbed)
+                    {
+                        // 从抓取状态释放
+                        Debug.Log($"{characterModel.GetCharacterName()} 已被释放");
+                    }
+                    break;
+            }
             
             OnAnimationStateChanged?.Invoke(this, previousState, newState);
         }
         
         private void UpdateAnimatorState(CharacterAnimationState newState)
         {
-            if (animator == null) return;
+            if (animator == null)
+            {
+            Debug.LogError("Animator is not assigned in CharacterView.");
+            return;
+            }
             
             // 重置所有状态
             animator.SetBool("IsIdle", false);
@@ -193,18 +169,18 @@ namespace Elementor
             // 设置当前状态
             switch (newState)
             {
-                case CharacterAnimationState.Idle:
-                    animator.SetBool("IsIdle", true);
-                    break;
-                case CharacterAnimationState.Grabbed:
-                    animator.SetBool("IsGrabbed", true);
-                    break;
-                case CharacterAnimationState.Running:
-                    animator.SetBool("IsRunning", true);
-                    break;
-                case CharacterAnimationState.CastingSkill:
-                    animator.SetBool("IsCastingSkill", true);
-                    break;
+            case CharacterAnimationState.Idle:
+                animator.SetBool("IsIdle", true);
+                break;
+            case CharacterAnimationState.Grabbed:
+                animator.SetBool("IsGrabbed", true);
+                break;
+            case CharacterAnimationState.Running:
+                animator.SetBool("IsRunning", true);
+                break;
+            case CharacterAnimationState.CastingSkill:
+                animator.SetBool("IsCastingSkill", true);
+                break;
             }
         }
         
