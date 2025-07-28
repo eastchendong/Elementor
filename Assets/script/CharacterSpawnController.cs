@@ -9,9 +9,10 @@ namespace Elementor
     {
         [SerializeField] private Transform spawnArea;
         [SerializeField] private string jsonFileName = "character_spawn_config.json";
-        [SerializeField] private Vector2 spawnAreaSize = new Vector2(10f, 10f);
+        [SerializeField] private Vector2 spawnAreaSize = new Vector2(2f, 2f);
         [SerializeField] private GameObject fallbackPrefab; // 备用prefab，当找不到指定模型时使用
         [SerializeField] private GameObject characterControllerPrefab; // 包含所有组件和脚本的控制器prefab
+        [SerializeField] private GameObject characterGroupPrefab; // 用于组合角色的Prefab
         
         private CharacterSpawnData spawnData;
         private List<CharacterView> spawnedCharacters = new List<CharacterView>();
@@ -33,63 +34,56 @@ namespace Elementor
             }
             else
             {
-                Debug.LogWarning($"JSON文件未找到: {filePath}，使用默认配置");
-                CreateDefaultSpawnData();
+                Debug.LogWarning($"JSON文件未找到: {filePath}");
             }
         }
         
-        private void CreateDefaultSpawnData()
-        {
-            spawnData = new CharacterSpawnData
-            {
-                characters = new Character[]
-                {
-                    new Character("Fire", "Flame Warrior", "Characters/FireWarrior"),
-                    new Character("Water", "Ice Mage", "Characters/IceMage"),
-                    new Character("Earth", "Stone Guardian", "Characters/StoneGuardian")
-                }
-            };
-        }
         
         private void SpawnCharacters()
         {
             if (spawnData?.characters == null) return;
-            
+
             for (int i = 0; i < spawnData.characters.Length; i++)
             {
                 Vector3 spawnPosition = GetRandomSpawnPosition();
-                
-                // 先生成控制器prefab作为主物体
-                Transform parentTransform = spawnArea.parent;
-                GameObject controllerObj = Instantiate(characterControllerPrefab, spawnPosition, Quaternion.identity, parentTransform);
-                
-                if (controllerObj != null)
+                SpawnCharacter(spawnData.characters[i], spawnPosition, spawnArea.parent);
+            }
+        }
+
+        public void SpawnCharacter(Character character, Vector3? location = null, Transform parent = null)
+        {
+            Vector3 spawnPosition = location ?? Vector3.zero;
+            Transform parentTransform = parent ?? transform;
+
+            // 先生成控制器prefab作为主物体
+            GameObject controllerObj = Instantiate(characterControllerPrefab, spawnPosition, Quaternion.identity, parentTransform);
+
+            if (controllerObj != null)
+            {
+                // 然后在控制器下面生成3D人偶模型
+                GameObject modelObj = CreateCharacterModel(character, controllerObj.transform);
+
+                // 获取CharacterView和CharacterModel组件
+                CharacterView characterView = controllerObj.GetComponent<CharacterView>();
+                CharacterModel characterModel = controllerObj.GetComponent<CharacterModel>();
+
+                if (characterView != null && characterModel != null)
                 {
-                    // 然后在控制器下面生成3D人偶模型
-                    GameObject modelObj = CreateCharacterModel(spawnData.characters[i], controllerObj.transform);
-                    
-                    // 获取CharacterView和CharacterModel组件
-                    CharacterView characterView = controllerObj.GetComponent<CharacterView>();
-                    CharacterModel characterModel = controllerObj.GetComponent<CharacterModel>();
-                    
-                    if (characterView != null && characterModel != null)
-                    {
-                        // 设置CharacterView的model引用
-                        characterView.SetCharacterModel(characterModel);
-                        
-                        // 进行初始化
-                        characterView.Initialize();
-                        characterModel.Initialize(spawnData.characters[i]);
-                        spawnedCharacters.Add(characterView);
-                        
-                        // 订阅角色交互事件
-                        characterView.OnCharacterSelected += OnCharacterSelected;
-                        characterView.OnCharacterMoved += OnCharacterMoved;
-                    }
-                    else
-                    {
-                        Debug.LogError("控制器prefab缺少必要的组件 (CharacterView 或 CharacterModel)");
-                    }
+                    // 设置CharacterView的model引用
+                    characterView.SetCharacterModel(characterModel);
+
+                    // 进行初始化
+                    characterView.Initialize();
+                    characterModel.Initialize(character);
+                    spawnedCharacters.Add(characterView);
+
+                    // 订阅角色交互事件
+                    characterView.OnCharacterSelected += OnCharacterSelected;
+                    characterView.OnCharacterMoved += OnCharacterMoved;
+                }
+                else
+                {
+                    Debug.LogError("控制器prefab缺少必要的组件 (CharacterView 或 CharacterModel)");
                 }
             }
         }
@@ -160,3 +154,4 @@ namespace Elementor
         }
     }
 }
+

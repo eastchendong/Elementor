@@ -9,7 +9,7 @@ namespace Elementor
         Grabbed,
         Running,
         CastingSkill,
-        // 可以继续添加更多状态
+        Slotted,
     }
 
     [Serializable]
@@ -17,13 +17,15 @@ namespace Elementor
     {
         public string type;
         public string name;
-        public string prefabPath; // 添加prefab路径字段
+        public string prefabPath;
+        public string groupId;
         
-        public Character(string type, string name, string prefabPath = "")
+        public Character(string type, string name, string prefabPath = "", string groupId = "")
         {
             this.type = type;
             this.name = name;
             this.prefabPath = prefabPath;
+            this.groupId = groupId;
         }
     }
     

@@ -7,8 +7,8 @@ namespace Elementor
     {
         [SerializeField] private CharacterModel characterModel;
         [SerializeField] private Animator animator;
+        private CharacterGroup characterGroup;
         
-        // Meta Quest手部交互预留接口
         public event Action<CharacterView> OnCharacterSelected;
         public event Action<CharacterView, Vector3> OnCharacterMoved;
         public event Action<CharacterView, CharacterAnimationState, CharacterAnimationState> OnAnimationStateChanged;
@@ -165,6 +165,7 @@ namespace Elementor
             animator.SetBool("IsGrabbed", false);
             animator.SetBool("IsRunning", false);
             animator.SetBool("IsCastingSkill", false);
+            animator.SetBool("IsSlotted", false);
             
             // 设置当前状态
             switch (newState)
@@ -181,6 +182,9 @@ namespace Elementor
             case CharacterAnimationState.CastingSkill:
                 animator.SetBool("IsCastingSkill", true);
                 break;
+            case CharacterAnimationState.Slotted:
+                animator.SetBool("IsSlotted", true);
+                break;
             }
         }
         
@@ -192,6 +196,12 @@ namespace Elementor
         public CharacterAnimationState GetCurrentAnimationState()
         {
             return characterModel?.CurrentAnimationState ?? CharacterAnimationState.Idle;
+        }
+
+        public void SetGroup(CharacterGroup group)
+        {
+            characterGroup = group;
+            characterModel.SetGroup(group);
         }
     }
 }
