@@ -8,15 +8,25 @@ namespace Elementor
     [RequireComponent(typeof(Grabbable))]
     public class CharacterGroup : MonoBehaviour
     {
-        [SerializeField] private float slotCheckRadius = 1f;
         private List<CharacterView> characters = new List<CharacterView>();
         public List<CharacterView> Characters => characters;
         private CharacterSlot currentSlot;
         private Grabbable _grabbable;
+        private CharacterSlot potentialSlot; // The slot trigger we are currently inside
 
         private void Awake()
         {
             _grabbable = GetComponent<Grabbable>();
+            // Ensure the group has a collider for trigger detection
+            Collider collider = GetComponent<Collider>();
+            if (collider == null)
+            {
+                Debug.LogError("CharacterGroup requires a Collider component for trigger detection.");
+            }
+            else if (!collider.isTrigger)
+            {
+                collider.isTrigger = true; // Ensure the collider is set as a trigger
+            }
         }
 
         private void OnEnable()
@@ -85,24 +95,37 @@ namespace Elementor
 
         private void EndGrab()
         {
-            // Check for a nearby slot
-            Collider[] colliders = Physics.OverlapSphere(transform.position, slotCheckRadius, LayerMask.GetMask("CharacterSlot"));
-            foreach (var col in colliders)
+            // Check if the group is inside a valid slot
+            if (potentialSlot != null && !potentialSlot.IsOccupied)
             {
-                CharacterSlot slot = col.GetComponent<CharacterSlot>();
-                if (slot != null && !slot.IsOccupied)
+                if (potentialSlot.Occupy(this))
                 {
-                    if (slot.Occupy(this))
-                    {
-                        currentSlot = slot;
-                        // The Occupy method handles setting the state to Slotted
-                        return;
-                    }
+                    currentSlot = potentialSlot;
+                    SetState(CharacterAnimationState.Slotted);
+                    return;
                 }
             }
 
-            // If no slot found, return to idle
+            // If no valid slot, return to idle
             SetState(CharacterAnimationState.Idle);
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            // Check if the trigger is a CharacterSlot
+            if (other.TryGetComponent<CharacterSlot>(out var slot))
+            {
+                potentialSlot = slot;
+            }
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            // Check if the exiting trigger is the current potential slot
+            if (other.TryGetComponent<CharacterSlot>(out var slot) && potentialSlot == slot)
+            {
+                potentialSlot = null;
+            }
         }
     }
 }
