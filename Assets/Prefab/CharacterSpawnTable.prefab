@@ -155,3 +155,4 @@ MonoBehaviour:
   spawnAreaSize: {x: 2, y: 2}
   fallbackPrefab: {fileID: 1957035027616942724, guid: d4d5191e4cf248e4b8bf53c74ce514ab, type: 3}
   characterControllerPrefab: {fileID: 8744643762706610891, guid: 3886674e77e474d4496518b42ee16c06, type: 3}
+  characterGroupPrefab: {fileID: 0}

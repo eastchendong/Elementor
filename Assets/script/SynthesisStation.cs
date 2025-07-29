@@ -4,15 +4,31 @@ using UnityEngine;
 
 namespace Elementor
 {
+    [System.Serializable]
+    public class SynthesisRecipe
+    {
+        public string resultingGroupName;
+        public List<string> requiredCharacterNames;
+    }
+
     [RequireComponent(typeof(Collider))]
     public class SynthesisStation : MonoBehaviour
     {
-        [SerializeField] private GameObject characterGroupPrefab;
+        [SerializeField] private CharacterSpawnController characterSpawnController;
+        [SerializeField] private List<SynthesisRecipe> recipes;
         private List<CharacterView> charactersOnStation = new List<CharacterView>();
 
         private void Awake()
         {
             GetComponent<Collider>().isTrigger = true;
+            if (characterSpawnController == null)
+            {
+                characterSpawnController = FindObjectOfType<CharacterSpawnController>();
+                if (characterSpawnController == null)
+                {
+                    Debug.LogError("SynthesisStation requires a CharacterSpawnController.");
+                }
+            }
         }
 
         private void OnTriggerEnter(Collider other)
@@ -35,42 +51,76 @@ namespace Elementor
             }
         }
 
+
+        [ContextMenu("Try Synthesize Group")]
         public void TrySynthesizeGroup()
         {
-            if (charactersOnStation.Count < 2)
+            foreach (var recipe in recipes)
             {
-                Debug.Log("Not enough characters to form a group.");
-                return;
-            }
-
-            // Find a common group ID among the characters on the station
-            var potentialGroup = charactersOnStation
-                .Where(c => !string.IsNullOrEmpty(c.GetModel().CharacterData.groupId))
-                .GroupBy(c => c.GetModel().CharacterData.groupId)
-                .FirstOrDefault(g => g.Count() > 1);
-
-            if (potentialGroup != null)
-            {
-                string groupId = potentialGroup.Key;
-                List<CharacterView> members = potentialGroup.ToList();
-
-                Debug.Log($"Found group {groupId} with {members.Count} members. Synthesizing...");
-
-                // Create the group
-                GameObject groupObj = Instantiate(characterGroupPrefab, transform.position, transform.rotation);
-                CharacterGroup group = groupObj.GetComponent<CharacterGroup>();
-                groupObj.name = $"Group_{groupId}";
-
-                // Add members to the group and remove them from the station
-                foreach (var member in members)
+                if (CanSynthesize(recipe))
                 {
-                    group.AddCharacter(member);
-                    charactersOnStation.Remove(member);
+                    Synthesize(recipe);
+                    return; // Synthesize one group at a time
                 }
             }
-            else
+            Debug.Log("No valid group combination found on the station.");
+        }
+
+        private bool CanSynthesize(SynthesisRecipe recipe)
+        {
+            var stationCharacterNames = charactersOnStation.Select(c => c.GetModel().GetCharacterName()).ToList();
+            var requiredNames = new List<string>(recipe.requiredCharacterNames);
+
+            if (stationCharacterNames.Count < requiredNames.Count) return false;
+
+            foreach (var name in requiredNames)
             {
-                Debug.Log("No valid group combination found on the station.");
+                if (stationCharacterNames.Contains(name))
+                {
+                    stationCharacterNames.Remove(name);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void Synthesize(SynthesisRecipe recipe)
+        {
+            if (characterSpawnController == null)
+            {
+                Debug.LogError("Cannot synthesize, CharacterSpawnController is missing.");
+                return;
+            }
+            Debug.Log($"Recipe for {recipe.resultingGroupName} matched. Synthesizing...");
+
+            List<CharacterView> members = new List<CharacterView>();
+            List<string> namesToFind = new List<string>(recipe.requiredCharacterNames);
+
+            // Create a copy to iterate over while removing from the original list
+            List<CharacterView> stationCharactersCopy = new List<CharacterView>(charactersOnStation);
+
+            foreach (var character in stationCharactersCopy)
+            {
+                string characterName = character.GetModel().GetCharacterName();
+                if (namesToFind.Contains(characterName))
+                {
+                    members.Add(character);
+                    namesToFind.Remove(characterName);
+                    charactersOnStation.Remove(character);
+                }
+            }
+
+            // Create the group using the controller
+            CharacterGroup group = characterSpawnController.CreateCharacterGroup(recipe.resultingGroupName, transform.position, transform.parent);
+            if (group == null) return;
+
+            // Add members to the group using the controller
+            foreach (var member in members)
+            {
+                characterSpawnController.AddCharacterToGroup(group, member);
             }
         }
     }

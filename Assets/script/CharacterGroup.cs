@@ -63,6 +63,17 @@ namespace Elementor
             }
         }
 
+        public void ClearAndDestroy()
+        {
+            foreach (var character in characters)
+            {
+                character.transform.SetParent(null, true);
+                character.SetGroup(null);
+            }
+            characters.Clear();
+            Destroy(gameObject);
+        }
+
         private void ArrangeCharacters()
         {
             // Arrange characters in a line formation
@@ -101,7 +112,6 @@ namespace Elementor
                 if (potentialSlot.Occupy(this))
                 {
                     currentSlot = potentialSlot;
-                    SetState(CharacterAnimationState.Slotted);
                     return;
                 }
             }

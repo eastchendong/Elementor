@@ -6,6 +6,9 @@ namespace Elementor
     public class CharacterSlot : MonoBehaviour
     {
         [SerializeField] private Transform slotAnchor; // The point where the character/group will snap to.
+        [SerializeField] private Material shiningMaterial; // Material to use for guidance
+        private Material originalMaterial;
+        private Renderer _renderer;
 
         private object occupant; // Can be CharacterView or CharacterGroup
 
@@ -17,6 +20,11 @@ namespace Elementor
             if (slotAnchor == null)
             {
                 slotAnchor = transform;
+            }
+            _renderer = GetComponent<Renderer>();
+            if (_renderer != null)
+            {
+                originalMaterial = _renderer.material;
             }
         }
 
@@ -43,6 +51,7 @@ namespace Elementor
                 occupantTransform.SetParent(slotAnchor, true);
                 occupantTransform.position = slotAnchor.position;
                 occupantTransform.rotation = slotAnchor.rotation;
+                StopShining(); // Stop shining when occupied
             }
             
             Debug.Log($"{name} is now occupied.");
@@ -69,6 +78,22 @@ namespace Elementor
         public object GetOccupant()
         {
             return occupant;
+        }
+
+        public void StartShining()
+        {
+            if (_renderer != null && shiningMaterial != null)
+            {
+                _renderer.material = shiningMaterial;
+            }
+        }
+
+        public void StopShining()
+        {
+            if (_renderer != null && originalMaterial != null)
+            {
+                _renderer.material = originalMaterial;
+            }
         }
     }
 }

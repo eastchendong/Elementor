@@ -14,6 +14,17 @@
             "type": "Halogen",
             "name": "Cl",
             "prefabPath": "Characters/Cl"
+        },
+        {
+            "type": "Halogen",
+            "name": "Cl",
+            "prefabPath": "Characters/Cl"
+        },
+        {
+            "type": "Halogen",
+            "name": "Cl",
+            "prefabPath": "Characters/Cl"
         }
+
     ]
 }

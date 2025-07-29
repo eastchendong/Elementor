@@ -88,6 +88,33 @@ namespace Elementor
             }
         }
         
+        public CharacterGroup CreateCharacterGroup(string groupName, Vector3? location = null, Transform parent = null)
+        {
+            if (characterGroupPrefab == null)
+            {
+                Debug.LogError("CharacterGroupPrefab is not set in CharacterSpawnController.");
+                return null;
+            }
+
+            Vector3 spawnPosition = location ?? Vector3.zero;
+            Transform parentTransform = parent ?? transform;
+
+            GameObject groupObj = Instantiate(characterGroupPrefab, spawnPosition, Quaternion.identity, parentTransform);
+            groupObj.name = groupName;
+            CharacterGroup group = groupObj.GetComponent<CharacterGroup>();
+            return group;
+        }
+
+        public void AddCharacterToGroup(CharacterGroup group, CharacterView character)
+        {
+            if (group == null || character == null)
+            {
+                Debug.LogError("Cannot add character to a null group or add a null character.");
+                return;
+            }
+            group.AddCharacter(character);
+        }
+
         private GameObject CreateCharacterModel(Character character, Transform parent)
         {
             GameObject modelPrefab = null;
