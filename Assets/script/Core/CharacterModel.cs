@@ -70,6 +70,8 @@ namespace Elementor
                 }
                 else
                 {
+                    var rb = GetComponent<Rigidbody>();
+                    if (rb != null) rb.isKinematic = true;
                     SetAnimationState(CharacterAnimationState.Grabbed);
                 }
             }
@@ -79,7 +81,6 @@ namespace Elementor
         {
             if (characterGroup != null)
             {
-                // 团队的 EndGrab 逻辑应该在团队的 Grabbable 组件上处理
                 return;
             }
 
@@ -93,9 +94,14 @@ namespace Elementor
                 }
             }
             
+            // Reset rotation to be upright when released.
+            transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
+
             if (CanTransitionTo(CharacterAnimationState.Idle))
             {
                 SetAnimationState(CharacterAnimationState.Idle);
+                var rb = GetComponent<Rigidbody>();
+                if (rb != null) rb.isKinematic = false;
             }
         }
 
@@ -121,7 +127,6 @@ namespace Elementor
 
         private void OnTriggerEnter(Collider other)
         {
-            // 检查进入的是否是插槽
             if (other.TryGetComponent<CharacterSlot>(out var slot))
             {
                 potentialSlot = slot;

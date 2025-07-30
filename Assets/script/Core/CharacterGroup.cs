@@ -101,6 +101,7 @@ namespace Elementor
                 currentSlot.Release();
                 currentSlot = null;
             }
+            GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
             SetState(CharacterAnimationState.Grabbed);
         }
 
@@ -112,11 +113,13 @@ namespace Elementor
                 if (potentialSlot.Occupy(this))
                 {
                     currentSlot = potentialSlot;
+                    // The Occupy method in CharacterSlot now handles freezing the rigidbody.
                     return;
                 }
             }
 
             // If no valid slot, return to idle
+            GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotation;
             SetState(CharacterAnimationState.Idle);
         }
 

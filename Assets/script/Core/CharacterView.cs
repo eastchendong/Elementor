@@ -3,6 +3,8 @@ using System;
 
 namespace Elementor
 {
+    [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(CharacterMovement))]
     public class CharacterView : MonoBehaviour
     {
         [SerializeField] private CharacterModel characterModel;
@@ -78,6 +80,10 @@ namespace Elementor
                     animator = FindAnimatorInChildren(transform);
                 }
             }
+            
+            // 确保其他组件存在
+            GetComponent<Rigidbody>();
+            GetComponent<CharacterMovement>();
 
             UpdateVisual();
         }
