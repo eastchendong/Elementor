@@ -1,0 +1,39 @@
+﻿{
+    "story": {
+        "title": "石灰骑士的觉醒",
+        "plot": [
+            "Ca从山上被召集",
+            "与水灵在山脚相遇",
+            "激烈反应释放热",
+            "生成白色晶体"
+        ]
+    },
+    "reactions": [
+        {
+            "reactionName": "石灰的诞生",
+            "reactants": [
+                {
+                    "characterName": "Ca",
+                    "groupName": ""
+                },
+                {
+                    "characterName": "",
+                    "groupName": "H2O"
+                }
+            ],
+            "products": [
+                {
+                    "newGroupName": "Ca(OH)2",
+                    "characterNamesInGroup": [
+                        "Ca",
+                        "H",
+                        "H",
+                        "O"
+                    ]
+                }
+            ],
+            "condition": "常温",
+            "phenomenon": "释放大量热量，生成白色沉淀"
+        }
+    ]
+}

@@ -1,0 +1,85 @@
+﻿{
+"scene_id": "scene_001",
+"story": {
+"title": "Zn与H族的分手契约",
+"plot": [
+"锌族下山抛弃电子球",
+"氢气军团追寻合作旧梦",
+"离子河边谈判破裂冲突",
+"氢族愤然腾空离去"
+]
+},
+"reaction": {
+"equation": "Zn + 2HCl → ZnCl₂ + H₂↑",
+"type": "置换反应",
+"conditions": ["常温常压", "酸性环境"],
+"reactants": [
+{
+"name": "Zn",
+"type": "单质",
+"count": 1,
+"elements": [
+{ "element": "Zn", "count": 1 }
+]
+},
+{
+"name": "HCl",
+"type": "离子团",
+"count": 2,
+"elements": [
+{ "element": "H", "count": 2 },
+{ "element": "Cl", "count": 2 }
+]
+}
+],
+"products": [
+{
+"name": "ZnCl₂",
+"type": "离子团",
+"count": 1,
+"elements": [
+{ "element": "Zn", "count": 1 },
+{ "element": "Cl", "count": 2 }
+]
+},
+{
+"name": "H₂",
+"type": "单质",
+"count": 1,
+"elements": [
+{ "element": "H", "count": 2 }
+]
+}
+]
+},
+"electron_transfer": {
+"from": "Zn",
+"to": "2H⁺（来自HCl）",
+"electron_count": 2,
+"description": "锌族主动丢出两颗电子球，交予氢族"
+},
+"gameplay_trigger": {
+"required_ions": [
+{
+"name": "Zn²⁺",
+"from": "Zn",
+"elements": [
+{ "element": "Zn", "count": 1 }
+]
+},
+{
+"name": "Cl⁻",
+"from": "HCl",
+"elements": [
+{ "element": "Cl", "count": 1 }
+]
+}
+],
+"reaction_area": "金属置换台",
+"success_effects": {
+"animation": "spark_burst_metal2gas",
+"new_items": ["ZnCl₂晶体", "气泡特效"],
+"story_continuation": true
+}
+}
+}

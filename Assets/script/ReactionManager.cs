@@ -28,7 +28,7 @@ namespace Elementor
         public List<SlotRequirement> requirements; // 反应物 (Reactants)
         public List<ReactionOutcome> outcomes;     // 生成物 (Products)
         public string reactionCondition;           // 反应条件 (Condition)
-        public UnityEvent onReactionPhenomenon;    // 反应现象 (Phenomenon)
+        public UnityEvent onReactionPhenomenon = new UnityEvent();    // 反应现象 (Phenomenon)
     }
 
     public class ReactionManager : MonoBehaviour
@@ -36,6 +36,13 @@ namespace Elementor
         [SerializeField] private List<ReactionStage> reactionStages;
         [SerializeField] private int currentReactionIndex = 0;
         [SerializeField] private CharacterSpawnController characterSpawnController;
+
+        public void SetupStages(List<ReactionStage> stages)
+        {
+            reactionStages = stages;
+            currentReactionIndex = 0;
+            Debug.Log($"ReactionManager setup with {stages.Count} stages.");
+        }
 
         private void Start()
         {
