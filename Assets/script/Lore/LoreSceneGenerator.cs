@@ -64,9 +64,9 @@ namespace Elementor
                 return;
             }
 
-            // Instantiate the environment
-            currentEnvironmentInstance = Instantiate(environmentPrefab, environmentSpawnPoint.position, environmentSpawnPoint.rotation);
-            
+            // Instantiate the environment with identity rotation
+            currentEnvironmentInstance = Instantiate(environmentPrefab, environmentSpawnPoint.position, Quaternion.identity);
+
             // Get the ReactionManager from the new instance
             ReactionManager reactionManager = currentEnvironmentInstance.GetComponentInChildren<ReactionManager>();
             if (reactionManager == null)
