@@ -13,13 +13,10 @@ namespace Elementor
         [Tooltip("The prefab representing the reaction environment. It should contain a ReactionManager and CharacterSlots.")]
         private GameObject environmentPrefab;
 
-        [SerializeField]
-        [Tooltip("The location where the environment prefab will be instantiated.")]
-        private Transform environmentSpawnPoint;
-
         private LoreController loreController;
         private CharacterSpawnController characterSpawnController;
         private LoreJsonReader loreJsonReader;
+        private SceneAnchorManager sceneAnchorManager;
         private GameObject currentEnvironmentInstance;
 
         void Start()
@@ -27,10 +24,11 @@ namespace Elementor
             loreController = LoreController.Instance;
             characterSpawnController = CharacterSpawnController.Instance;
             loreJsonReader = FindObjectOfType<LoreJsonReader>();
+            sceneAnchorManager = SceneAnchorManager.Instance;
 
-            if (loreController == null || characterSpawnController == null || loreJsonReader == null)
+            if (loreController == null || characterSpawnController == null || loreJsonReader == null || sceneAnchorManager == null)
             {
-                Debug.LogError("A required controller (Lore, CharacterSpawn, or LoreJsonReader) is missing.");
+                Debug.LogError("A required controller (Lore, CharacterSpawn, LoreJsonReader, or SceneAnchorManager) is missing.");
                 return;
             }
 
@@ -59,9 +57,10 @@ namespace Elementor
 
         private void GenerateSceneFromLore()
         {
+            Transform environmentSpawnPoint = sceneAnchorManager.GetRandomAnchorTransform();
             if (environmentPrefab == null || environmentSpawnPoint == null)
             {
-                Debug.LogError("Environment Prefab or Spawn Point is not set in LoreSceneGenerator.");
+                Debug.LogError("Environment Prefab is not set or no spawn point available from SceneAnchorManager.");
                 return;
             }
 

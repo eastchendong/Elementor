@@ -551,6 +551,7 @@ GameObject:
   - component: {fileID: 255017178}
   - component: {fileID: 255017177}
   - component: {fileID: 255017176}
+  - component: {fileID: 255017179}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -571,7 +572,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   environmentPrefab: {fileID: 6032414950297170674, guid: 029089aab9464854fbe7c77db9a35a34, type: 3}
-  environmentSpawnPoint: {fileID: 255017178}
 --- !u!114 &255017177
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -600,6 +600,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &255017179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 255017174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85b01728e766c5842b4c1f9d603d19e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &265726193
 GameObject:
   m_ObjectHideFlags: 0
@@ -633,13 +645,13 @@ MonoBehaviour:
   <SceneLoadedEvent>k__BackingField:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 0
+      - m_Target: {fileID: 255017179}
+        m_TargetAssemblyTypeName: Elementor.SceneAnchorManager, Assembly-CSharp
+        m_MethodName: CollectVolumeAnchors
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
