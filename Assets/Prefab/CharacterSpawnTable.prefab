@@ -114,7 +114,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 826008276566045613}
-  - component: {fileID: 1118744692317852260}
+  - component: {fileID: -8486868285676080755}
   m_Layer: 0
   m_Name: CharacterSpawnTable
   m_TagString: Untagged
@@ -138,7 +138,7 @@ Transform:
   - {fileID: 6990153858770835086}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1118744692317852260
+--- !u!114 &-8486868285676080755
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -147,12 +147,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3345501849170612017}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8c9f990596e1d04c8808a218d1eb465, type: 3}
+  m_Script: {fileID: 11500000, guid: fb7027e402ed49c4bb00dccc035e5d30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   spawnArea: {fileID: 826008276566045613}
   jsonFileName: character_spawn_config.json
   spawnAreaSize: {x: 2, y: 2}
-  fallbackPrefab: {fileID: 1957035027616942724, guid: d4d5191e4cf248e4b8bf53c74ce514ab, type: 3}
-  characterControllerPrefab: {fileID: 8744643762706610891, guid: 3886674e77e474d4496518b42ee16c06, type: 3}
-  characterGroupPrefab: {fileID: 0}

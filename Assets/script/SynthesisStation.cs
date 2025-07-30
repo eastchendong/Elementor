@@ -14,21 +14,12 @@ namespace Elementor
     [RequireComponent(typeof(Collider))]
     public class SynthesisStation : MonoBehaviour
     {
-        [SerializeField] private CharacterSpawnController characterSpawnController;
         [SerializeField] private List<SynthesisRecipe> recipes;
         private List<CharacterView> charactersOnStation = new List<CharacterView>();
 
         private void Awake()
         {
             GetComponent<Collider>().isTrigger = true;
-            if (characterSpawnController == null)
-            {
-                characterSpawnController = FindObjectOfType<CharacterSpawnController>();
-                if (characterSpawnController == null)
-                {
-                    Debug.LogError("SynthesisStation requires a CharacterSpawnController.");
-                }
-            }
         }
 
         private void OnTriggerEnter(Collider other)
@@ -89,9 +80,9 @@ namespace Elementor
 
         private void Synthesize(SynthesisRecipe recipe)
         {
-            if (characterSpawnController == null)
+            if (CharacterSpawnController.Instance == null)
             {
-                Debug.LogError("Cannot synthesize, CharacterSpawnController is missing.");
+                Debug.LogError("Cannot synthesize, CharacterSpawnController instance is missing.");
                 return;
             }
             Debug.Log($"Recipe for {recipe.resultingGroupName} matched. Synthesizing...");
@@ -114,13 +105,13 @@ namespace Elementor
             }
 
             // Create the group using the controller
-            CharacterGroup group = characterSpawnController.CreateCharacterGroup(recipe.resultingGroupName, transform.position, transform.parent);
+            CharacterGroup group = CharacterSpawnController.Instance.CreateCharacterGroup(recipe.resultingGroupName, transform.position, transform.parent);
             if (group == null) return;
 
             // Add members to the group using the controller
             foreach (var member in members)
             {
-                characterSpawnController.AddCharacterToGroup(group, member);
+                CharacterSpawnController.Instance.AddCharacterToGroup(group, member);
             }
         }
     }
