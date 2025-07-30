@@ -10,6 +10,10 @@ public class BookSpawner : MonoBehaviour
     public float bookDropDistance = 1.0f;  // 书籍下落的距离
     public float bookDropDuration = 2.0f;  // 书籍下落的持续时间
 
+    [Header("Spawn Point")]
+    public Transform bookSpawnPoint;       // 书籍生成的参考点
+    public Vector3 spawnOffset;            // 偏移量（基于本地前、上、侧向量）
+
     private PortalController portalController;
 
     void Start()
@@ -56,10 +60,19 @@ public class BookSpawner : MonoBehaviour
 
     IEnumerator SpawnBook()
     {
-        // 获取传送门的中心位置作为书的起始位置
-        Vector3 startPosition = portalController.transform.position;
+        if (bookSpawnPoint == null)
+        {
+            Debug.LogError("未设置书籍生成点！");
+            yield break;
+        }
 
-        // 计算书的目标位置（从传送门位置向下偏移 bookDropDistance）
+        // 获取书籍生成点的位置并应用偏移量
+        Vector3 startPosition = bookSpawnPoint.position +
+                                bookSpawnPoint.forward * spawnOffset.z +
+                                bookSpawnPoint.up * spawnOffset.y +
+                                bookSpawnPoint.right * spawnOffset.x;
+
+        // 计算书的目标位置（从生成点位置向下偏移 bookDropDistance）
         Vector3 targetPosition = startPosition - new Vector3(0, bookDropDistance, 0);
 
         // 实例化书籍
@@ -74,7 +87,7 @@ public class BookSpawner : MonoBehaviour
         {
             float t = elapsed / bookDropDuration;
 
-            // 位置从传送门中心下落到目标位置
+            // 位置从生成点下落到目标位置
             bookInstance.transform.position = Vector3.Lerp(startPosition, targetPosition, t);
 
             // 缩放从初始缩放比例到目标缩放比例

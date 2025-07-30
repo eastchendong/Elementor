@@ -6,9 +6,20 @@ namespace Elementor
 {
     public class LoreJsonReader : MonoBehaviour
     {
+        public static LoreJsonReader Instance { get; private set; }
+
         [Tooltip("The lore file to load from StreamingAssets folder.")]
         public string loreFilePath = "original_lore.json"; // Relative to StreamingAssets
 
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
 
         [ContextMenu("Load Lore from JSON")]
         public void LoadLoreFromJson()

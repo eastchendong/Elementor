@@ -313,5 +313,5 @@ MonoBehaviour:
   patrolRadius: 3
   groundLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 4294967295
   groundCheckDistance: 1
