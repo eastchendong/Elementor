@@ -37,21 +37,21 @@ namespace Elementor
 
             if (controllerObj != null)
             {
-                // 然后在控制器下面生成3D人偶模型
+
                 GameObject modelObj = CreateCharacterModel(character, controllerObj.transform);
 
-                // 获取CharacterView和CharacterModel组件
                 CharacterView characterView = controllerObj.GetComponent<CharacterView>();
                 CharacterModel characterModel = controllerObj.GetComponent<CharacterModel>();
 
                 if (characterView != null && characterModel != null)
                 {
-                    // 设置CharacterView的model引用
                     characterView.SetCharacterModel(characterModel);
 
-                    // 进行初始化
                     characterView.Initialize();
                     characterModel.Initialize(character);
+                    
+                    controllerObj.name = character.name + "_Controller";
+                    
                     spawnedCharacters.Add(characterView);
 
                     // 订阅角色交互事件
@@ -119,11 +119,13 @@ namespace Elementor
                 return null;
             }
             
-            // 在控制器下生成3D模型，使用本地坐标(0,0,0)
             GameObject modelObj = Instantiate(modelPrefab, parent);
             modelObj.transform.localPosition = Vector3.zero;
             modelObj.transform.localRotation = Quaternion.identity;
             
+            modelObj.name = $"{character.name}_Model";
+            Debug.Log($"Model object name set to: '{modelObj.name}'");
+
             return modelObj;
         }
         
