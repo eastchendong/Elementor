@@ -119,7 +119,7 @@ namespace Elementor
             }
 
             // If no valid slot, return to idle
-            GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotation;
+            GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
             SetState(CharacterAnimationState.Idle);
         }
 

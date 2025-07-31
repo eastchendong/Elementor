@@ -4,7 +4,6 @@ using System;
 namespace Elementor
 {
     [RequireComponent(typeof(Rigidbody))]
-    [RequireComponent(typeof(CharacterMovement))]
     public class CharacterView : MonoBehaviour
     {
         [SerializeField] private CharacterModel characterModel;
@@ -83,7 +82,6 @@ namespace Elementor
             
             // 确保其他组件存在
             GetComponent<Rigidbody>();
-            GetComponent<CharacterMovement>();
 
             UpdateVisual();
         }
@@ -130,6 +128,7 @@ namespace Elementor
             
             if (characterModel != null && characterModel.CurrentAnimationState == CharacterAnimationState.CastingSkill)
             {
+                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
                 characterModel.SetAnimationState(CharacterAnimationState.Idle);
             }
         }
@@ -177,6 +176,7 @@ namespace Elementor
             switch (newState)
             {
             case CharacterAnimationState.Idle:
+            case CharacterAnimationState.Falling: // Falling can use Idle animation
                 animator.SetBool("IsIdle", true);
                 break;
             case CharacterAnimationState.Grabbed:
@@ -211,3 +211,4 @@ namespace Elementor
         }
     }
 }
+

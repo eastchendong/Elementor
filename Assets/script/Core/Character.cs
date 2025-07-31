@@ -10,6 +10,7 @@ namespace Elementor
         Running,
         CastingSkill,
         Slotted,
+        Falling,
     }
 
     [Serializable]

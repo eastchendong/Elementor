@@ -112,7 +112,6 @@ GameObject:
   - component: {fileID: 2344515134017176236}
   - component: {fileID: 2423755591418637661}
   - component: {fileID: 8361306681625712971}
-  - component: {fileID: 3780333735537217421}
   m_Layer: 0
   m_Name: CharacterModel
   m_TagString: Untagged
@@ -295,23 +294,3 @@ MonoBehaviour:
   _whenCancel:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &3780333735537217421
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8744643762706610891}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 867aea94364c4d84f93489f7e97b50eb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  moveSpeed: 1
-  minIdleTime: 2
-  maxIdleTime: 5
-  patrolRadius: 3
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  groundCheckDistance: 1

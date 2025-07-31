@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using Oculus.Interaction;
+using System.Collections;
 
 namespace Elementor
 {
@@ -29,6 +30,38 @@ namespace Elementor
 
             CharacterAnimationState previousState = currentState;
             currentState = newState;
+            
+            var rb = GetComponent<Rigidbody>();
+            if (rb == null) return;
+
+            // 根据新状态设置物理属性
+            switch (newState)
+            {
+                case CharacterAnimationState.Idle:
+                    rb.isKinematic = true;
+                    rb.useGravity = false;
+                    rb.transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
+                    rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+                    break;
+                case CharacterAnimationState.Running:
+                case CharacterAnimationState.CastingSkill:
+                case CharacterAnimationState.Slotted:
+                    rb.isKinematic = true;
+                    rb.useGravity = false;
+                    rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+                    break;
+                case CharacterAnimationState.Grabbed:
+                    rb.isKinematic = true;
+                    rb.useGravity = false;
+                    rb.constraints = RigidbodyConstraints.None;
+                    break;
+                case CharacterAnimationState.Falling:
+                    rb.isKinematic = false;
+                    rb.useGravity = true;
+                    rb.constraints = RigidbodyConstraints.None;
+                    StartCoroutine(CheckIfSettled());
+                    break;
+            }
 
             // 触发状态改变事件，让View处理动画
             OnAnimationStateChanged?.Invoke(previousState, newState);
@@ -49,6 +82,8 @@ namespace Elementor
                     return targetState == CharacterAnimationState.Idle; // 释放技能后只能回到Idle
                 case CharacterAnimationState.Slotted:
                     return targetState == CharacterAnimationState.Grabbed; // 在槽里只能被抓取
+                case CharacterAnimationState.Falling:
+                    return targetState == CharacterAnimationState.Idle || targetState == CharacterAnimationState.Grabbed; // 下落时可以被再次抓住或恢复静止
                 default:
                     return false;
             }
@@ -97,11 +132,29 @@ namespace Elementor
             // Reset rotation to be upright when released.
             transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
 
-            if (CanTransitionTo(CharacterAnimationState.Idle))
+            if (CanTransitionTo(CharacterAnimationState.Falling))
+            {
+                SetAnimationState(CharacterAnimationState.Falling);
+            }
+        }
+
+        private IEnumerator CheckIfSettled()
+        {
+            var rb = GetComponent<Rigidbody>();
+            if (rb == null) yield break;
+
+            // 等待一小段时间，避免释放瞬间就判断为稳定
+            yield return new WaitForSeconds(0.5f);
+
+            while (rb.velocity.sqrMagnitude > 0.01f)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            // 速度足够小，认为已经稳定
+            if (currentState == CharacterAnimationState.Falling)
             {
                 SetAnimationState(CharacterAnimationState.Idle);
-                var rb = GetComponent<Rigidbody>();
-                if (rb != null) rb.isKinematic = false;
             }
         }
 
