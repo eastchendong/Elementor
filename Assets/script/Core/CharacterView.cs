@@ -122,15 +122,20 @@ namespace Elementor
             }
         }
         
-        private System.Collections.IEnumerator ReturnToIdleAfterSkill()
+        // 扩展接口 - 技能释放完成
+        public void ReleaseFromSkill()
         {
-            yield return new WaitForSeconds(2f); // 假设技能持续2秒
-            
             if (characterModel != null && characterModel.CurrentAnimationState == CharacterAnimationState.CastingSkill)
             {
                 transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
                 characterModel.SetAnimationState(CharacterAnimationState.Idle);
             }
+        }
+        
+        private System.Collections.IEnumerator ReturnToIdleAfterSkill()
+        {
+            yield return new WaitForSeconds(2f); // 假设技能持续2秒
+            ReleaseFromSkill();
         }
 
         private void HandleAnimationStateChanged(CharacterAnimationState previousState, CharacterAnimationState newState)

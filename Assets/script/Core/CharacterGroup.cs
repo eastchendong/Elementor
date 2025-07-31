@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Oculus.Interaction;
+using System.Collections;
 
 namespace Elementor
 {
@@ -92,6 +93,25 @@ namespace Elementor
             {
                 character.GetModel().SetAnimationState(state);
             }
+            
+            var rb = GetComponent<Rigidbody>();
+            if (rb == null) return;
+
+            switch (state)
+            {
+                case CharacterAnimationState.Idle:
+                    rb.isKinematic = true;
+                    rb.constraints = RigidbodyConstraints.FreezeAll;
+                    break;
+                case CharacterAnimationState.Grabbed:
+                    rb.constraints = RigidbodyConstraints.None;
+                    break;
+                case CharacterAnimationState.Falling:
+                    rb.isKinematic = false;
+                    rb.constraints = RigidbodyConstraints.None;
+                    StartCoroutine(CheckIfSettled());
+                    break;
+            }
         }
 
         private void StartGrab()
@@ -101,7 +121,9 @@ namespace Elementor
                 currentSlot.Release();
                 currentSlot = null;
             }
-            GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+            // Ensure the Rigidbody is not kinematic when grabbing starts,
+            // so the Grabbable component can manage it correctly.
+            GetComponent<Rigidbody>().isKinematic = false;
             SetState(CharacterAnimationState.Grabbed);
         }
 
@@ -118,9 +140,43 @@ namespace Elementor
                 }
             }
 
-            // If no valid slot, return to idle
-            GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            // If no valid slot, enter falling state to settle physically
+            StartCoroutine(DelayedSetFallingState());
+        }
+
+        private IEnumerator DelayedSetFallingState()
+        {
+            // 等待一帧，让Oculus系统完成其内部设置
+            yield return null;
+            
+            SetState(CharacterAnimationState.Falling);
+            
+            // 强制确保物理设置正确
+            var rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = false;
+                rb.useGravity = true;
+                rb.constraints = RigidbodyConstraints.None;
+                Debug.Log($"[{gameObject.name}] CharacterGroup forced physics settings: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}");
+            }
+        }
+
+        private IEnumerator CheckIfSettled()
+        {
+            var rb = GetComponent<Rigidbody>();
+            if (rb == null) yield break;
+
+            yield return new WaitForSeconds(0.5f);
+
+            while (rb.velocity.sqrMagnitude > 0.01f || rb.angularVelocity.sqrMagnitude > 0.01f)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            // Once settled, go to Idle state and freeze
             SetState(CharacterAnimationState.Idle);
+            transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
         }
 
         private void OnTriggerEnter(Collider other)

@@ -113,6 +113,9 @@ namespace Elementor
             {
                 CharacterSpawnController.Instance.AddCharacterToGroup(group, member);
             }
+            
+            // Set group to falling so it settles on the station
+            group.SetState(CharacterAnimationState.Falling);
         }
     }
 }

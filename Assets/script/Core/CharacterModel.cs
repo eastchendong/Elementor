@@ -32,16 +32,22 @@ namespace Elementor
             currentState = newState;
             
             var rb = GetComponent<Rigidbody>();
-            if (rb == null) return;
+            if (rb == null) 
+            {
+                Debug.LogError($"Rigidbody not found on {gameObject.name}");
+                return;
+            }
 
-            // 根据新状态设置物理属性
+            Debug.Log($"[{gameObject.name}] Setting animation state to {newState}, rb.isKinematic before: {rb.isKinematic}");
+
             switch (newState)
             {
                 case CharacterAnimationState.Idle:
                     rb.isKinematic = true;
                     rb.useGravity = false;
-                    rb.transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
+                    transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
                     rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+                    Debug.Log($"[{gameObject.name}] Idle state set: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}");
                     break;
                 case CharacterAnimationState.Running:
                 case CharacterAnimationState.CastingSkill:
@@ -51,19 +57,21 @@ namespace Elementor
                     rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
                     break;
                 case CharacterAnimationState.Grabbed:
-                    rb.isKinematic = true;
+                    rb.isKinematic = false;
                     rb.useGravity = false;
                     rb.constraints = RigidbodyConstraints.None;
+                    Debug.Log($"[{gameObject.name}] Grabbed state set: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}");
                     break;
                 case CharacterAnimationState.Falling:
                     rb.isKinematic = false;
                     rb.useGravity = true;
                     rb.constraints = RigidbodyConstraints.None;
+                    Debug.Log($"[{gameObject.name}] Falling state set: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}");
                     StartCoroutine(CheckIfSettled());
                     break;
             }
 
-            // 触发状态改变事件，让View处理动画
+            Debug.Log($"[{gameObject.name}] Final state: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}");
             OnAnimationStateChanged?.Invoke(previousState, newState);
         }
 
@@ -105,8 +113,6 @@ namespace Elementor
                 }
                 else
                 {
-                    var rb = GetComponent<Rigidbody>();
-                    if (rb != null) rb.isKinematic = true;
                     SetAnimationState(CharacterAnimationState.Grabbed);
                 }
             }
@@ -129,12 +135,28 @@ namespace Elementor
                 }
             }
             
-            // Reset rotation to be upright when released.
             transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
 
             if (CanTransitionTo(CharacterAnimationState.Falling))
             {
-                SetAnimationState(CharacterAnimationState.Falling);
+                StartCoroutine(DelayedSetFallingState());
+            }
+        }
+
+        private IEnumerator DelayedSetFallingState()
+        {
+            yield return null;
+            
+            SetAnimationState(CharacterAnimationState.Falling);
+            
+            // 强制确保物理设置正确
+            var rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = false;
+                rb.useGravity = true;
+                rb.constraints = RigidbodyConstraints.None;
+                Debug.Log($"[{gameObject.name}] Forced physics settings: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}");
             }
         }
 
@@ -144,7 +166,7 @@ namespace Elementor
             if (rb == null) yield break;
 
             // 等待一小段时间，避免释放瞬间就判断为稳定
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(1f);
 
             while (rb.velocity.sqrMagnitude > 0.01f)
             {
