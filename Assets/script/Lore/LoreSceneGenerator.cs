@@ -15,7 +15,6 @@ namespace Elementor
 
         private LoreController loreController;
         private CharacterSpawnController characterSpawnController;
-        private LoreJsonReader loreJsonReader;
         private SceneAnchorManager sceneAnchorManager;
         private GameObject currentEnvironmentInstance;
 
@@ -23,17 +22,26 @@ namespace Elementor
         {
             loreController = LoreController.Instance;
             characterSpawnController = CharacterSpawnController.Instance;
-            loreJsonReader = FindObjectOfType<LoreJsonReader>();
             sceneAnchorManager = SceneAnchorManager.Instance;
 
-            if (loreController == null || characterSpawnController == null || loreJsonReader == null || sceneAnchorManager == null)
+            Debug.Log($"🎬 LoreSceneGenerator Start - Controllers found: LoreController={loreController != null}, CharacterSpawn={characterSpawnController != null}, SceneAnchorManager={sceneAnchorManager != null}");
+
+            if (loreController == null || characterSpawnController == null)
             {
-                Debug.LogError("A required controller (Lore, CharacterSpawn, LoreJsonReader, or SceneAnchorManager) is missing.");
+                Debug.LogError("A required controller (Lore, CharacterSpawn");
                 return;
             }
 
             // Subscribe to the lore loading event
             loreController.OnLoreLoaded += HandleLoreLoaded;
+            Debug.Log("🔗 LoreSceneGenerator subscribed to OnLoreLoaded event");
+            
+            // Check if lore is already loaded
+            if (loreController.CurrentLore != null)
+            {
+                Debug.Log("🎯 Lore already loaded on startup, generating scene immediately");
+                HandleLoreLoaded();
+            }
         }
 
         private void OnDestroy()
@@ -49,20 +57,30 @@ namespace Elementor
         /// </summary>
         private void HandleLoreLoaded()
         {
-            if (loreController.CurrentLore == null) return;
+            Debug.Log("🎭 HandleLoreLoaded called in LoreSceneGenerator!");
+            
+            if (loreController.CurrentLore == null)
+            {
+                Debug.LogWarning("🚫 HandleLoreLoaded called but CurrentLore is null");
+                return;
+            }
 
-            Debug.Log("New lore detected. Generating reaction environment...");
+            Debug.Log($"✅ New lore detected: '{loreController.CurrentLore.story?.title}'. Generating reaction environment...");
             GenerateSceneFromLore();
         }
 
         private void GenerateSceneFromLore()
         {
+            Debug.Log("🏗️ Starting scene generation from lore...");
+            
             Transform environmentSpawnPoint = sceneAnchorManager.GetRandomAnchorTransform();
             if (environmentPrefab == null || environmentSpawnPoint == null)
             {
-                Debug.LogError("Environment Prefab is not set or no spawn point available from SceneAnchorManager.");
+                Debug.LogError($"❌ Environment Prefab is not set ({environmentPrefab == null}) or no spawn point available from SceneAnchorManager ({environmentSpawnPoint == null}).");
                 return;
             }
+
+            Debug.Log($"🎯 Spawning environment at position: {environmentSpawnPoint.position}");
 
             // Instantiate the environment with identity rotation
             currentEnvironmentInstance = Instantiate(environmentPrefab, environmentSpawnPoint.position, Quaternion.identity);

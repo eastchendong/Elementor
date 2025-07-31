@@ -113,6 +113,12 @@ namespace Elementor
         // 化学式
         public string chemicalFormula = "H2O";
 
+        // Add event for completion notification
+        public System.Action<string> OnAnalysisComplete;
+
+        // Add property to track analysis state
+        public bool IsAnalyzing { get; private set; } = false;
+
         void Start()
         {
             // 设置按钮点击事件
@@ -154,9 +160,22 @@ namespace Elementor
             }
         }
 
+        // Add new public method for starting analysis from image
+        public void StartAnalysisFromImage()
+        {
+            if (IsAnalyzing)
+            {
+                Debug.LogWarning("Analysis is already in progress.");
+                return;
+            }
+
+            StartCoroutine(AnalyzeChemicalFormula(chemicalFormula));
+        }
+
         // 分析化学方程式（现在支持图片输入）
         IEnumerator AnalyzeChemicalFormula(string chemicalFormula)
         {
+            IsAnalyzing = true;
             resultText.text = "Loading...";
 
             // 构造system prompt
@@ -233,15 +252,115 @@ namespace Elementor
                 Debug.LogError("Response Code: " + request.responseCode);
                 Debug.LogError("Response Headers: " + request.GetResponseHeader("Content-Type"));
                 resultText.text = "Error: " + request.error;
+
+                // Notify completion even on error
+                IsAnalyzing = false;
+                OnAnalysisComplete?.Invoke("{}");
             }
         }
 
         // 解析化学响应
         void ParseChemicalResponse(string jsonResponse)
         {
-            // 直接显示完整的AI返回内容
             Debug.Log("📦 完整的AI返回内容: " + jsonResponse);
             resultText.text = "完整的AI返回内容:\n" + jsonResponse;
+
+            // Extract the actual JSON from the response
+            string cleanedJson = ExtractJsonFromResponse(jsonResponse);
+
+            // Mark analysis as complete and notify
+            IsAnalyzing = false;
+            OnAnalysisComplete?.Invoke(cleanedJson);
+        }
+
+        // Helper method to extract JSON from API response
+        private string ExtractJsonFromResponse(string responseText)
+        {
+            try
+            {
+                // Parse the API response to get the actual content
+                var apiResponse = JsonUtility.FromJson<ApiResponse>(responseText);
+                if (apiResponse?.choices != null && apiResponse.choices.Length > 0)
+                {
+                    string content = apiResponse.choices[0].message.content;
+                    return CleanJsonContent(content);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to parse API response: {ex.Message}");
+            }
+            
+            // Fallback: try to clean the original response
+            return CleanJsonContent(responseText);
+        }
+        
+        // Helper method to clean JSON content from markdown formatting
+        private string CleanJsonContent(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return "{}";
+                
+            // Remove markdown code block formatting
+            content = content.Trim();
+            
+            // Remove ```json at the beginning
+            if (content.StartsWith("```json"))
+            {
+                content = content.Substring(7);
+            }
+            else if (content.StartsWith("```"))
+            {
+                content = content.Substring(3);
+            }
+            
+            // Remove ``` at the end
+            if (content.EndsWith("```"))
+            {
+                content = content.Substring(0, content.Length - 3);
+            }
+            
+            // Trim whitespace again
+            content = content.Trim();
+            
+            // Validate that it starts and ends with braces
+            if (!content.StartsWith("{") || !content.EndsWith("}"))
+            {
+                Debug.LogWarning("Content doesn't appear to be valid JSON format");
+                // Try to find JSON within the content
+                int startIndex = content.IndexOf('{');
+                int endIndex = content.LastIndexOf('}');
+                
+                if (startIndex >= 0 && endIndex > startIndex)
+                {
+                    content = content.Substring(startIndex, endIndex - startIndex + 1);
+                }
+                else
+                {
+                    Debug.LogError("Could not extract valid JSON from response");
+                    return "{}";
+                }
+            }
+            
+            return content;
+        }
+
+        [System.Serializable]
+        private class ApiResponse
+        {
+            public Choice[] choices;
+        }
+
+        [System.Serializable]
+        private class Choice
+        {
+            public Message message;
+        }
+
+        [System.Serializable]
+        private class Message
+        {
+            public string content;
         }
 
         // 公共方法，可以从外部调用
