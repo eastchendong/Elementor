@@ -7,7 +7,7 @@ namespace Elementor
     public class ChemicalAnalysisHelper : MonoBehaviour
     {
         [Header("Components")]
-        public ChemicalAssistant2 chemicalAssistant;
+        public API chemicalAssistant;
         public LoreJsonReader loreJsonReader;
         
         [Header("Settings")]
@@ -29,7 +29,7 @@ namespace Elementor
             
             if (chemicalAssistant == null)
             {
-                Debug.LogError("ChemicalAssistant2 reference is missing!");
+                Debug.LogError("API reference is missing!");
                 return;
             }
             
@@ -39,7 +39,6 @@ namespace Elementor
                 return;
             }
             
-            // Generate timestamped filename
             string timestamp = System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
             currentGeneratedFileName = $"{outputFilePrefix}{timestamp}.json";
             
@@ -49,16 +48,13 @@ namespace Elementor
         private IEnumerator ExecuteWorkflow()
         {
             isProcessing = true;
-            Debug.Log($"🚀 Starting Chemical Analysis Workflow... Output file: {currentGeneratedFileName}");
+            Debug.Log($"Starting Chemical Analysis Workflow... Output file: {currentGeneratedFileName}");
             
-            // Subscribe to the response event
             chemicalAssistant.OnAnalysisComplete += OnAnalysisComplete;
             
-            // Start the chemical analysis
             chemicalAssistant.StartAnalysisFromImage();
             
-            // Wait for completion with timeout
-            float timeout = 120f; // 2 minutes timeout
+            float timeout = 120f;
             float elapsed = 0f;
             
             while (chemicalAssistant.IsAnalyzing && elapsed < timeout)
@@ -69,7 +65,7 @@ namespace Elementor
             
             if (elapsed >= timeout)
             {
-                Debug.LogError("⏰ Analysis workflow timed out!");
+                Debug.LogError("Analysis workflow timed out!");
                 chemicalAssistant.OnAnalysisComplete -= OnAnalysisComplete;
             }
             
@@ -78,23 +74,18 @@ namespace Elementor
         
         private void OnAnalysisComplete(string jsonResponse)
         {
-            Debug.Log("📋 Analysis complete, processing response...");
+            Debug.Log("Analysis complete, processing response...");
             
-            // Validate JSON before saving
             if (IsValidJson(jsonResponse))
             {
-                // Save the JSON response
                 SaveJsonResponse(jsonResponse);
-                
-                // Load the saved JSON through LoreJsonReader
                 LoadGeneratedLore();
             }
             else
             {
-                Debug.LogError("❌ Received invalid JSON response, cannot proceed");
+                Debug.LogError("Received invalid JSON response, cannot proceed");
             }
             
-            // Unsubscribe from the event
             chemicalAssistant.OnAnalysisComplete -= OnAnalysisComplete;
         }
         
@@ -122,22 +113,24 @@ namespace Elementor
             try
             {
                 string streamingAssetsPath = Application.streamingAssetsPath;
+                string generatedJsonsPath = Path.Combine(streamingAssetsPath, "Generated_JSONs");
                 
-                // Create StreamingAssets directory if it doesn't exist
-                if (!Directory.Exists(streamingAssetsPath))
+                // Create Generated_JSONs directory if it doesn't exist
+                if (!Directory.Exists(generatedJsonsPath))
                 {
-                    Directory.CreateDirectory(streamingAssetsPath);
+                    Directory.CreateDirectory(generatedJsonsPath);
+                    Debug.Log($"Created directory: {generatedJsonsPath}");
                 }
                 
-                string filePath = Path.Combine(streamingAssetsPath, currentGeneratedFileName);
+                string filePath = Path.Combine(generatedJsonsPath, currentGeneratedFileName);
                 File.WriteAllText(filePath, jsonResponse);
                 
-                Debug.Log($"💾 JSON response saved to: {filePath}");
-                Debug.Log($"📄 Saved content preview: {jsonResponse.Substring(0, Mathf.Min(200, jsonResponse.Length))}...");
+                Debug.Log($"JSON response saved to: {filePath}");
+                Debug.Log($"Saved content preview: {jsonResponse.Substring(0, Mathf.Min(200, jsonResponse.Length))}...");
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"❌ Failed to save JSON response: {ex.Message}");
+                Debug.LogError($"Failed to save JSON response: {ex.Message}");
             }
         }
         
@@ -145,9 +138,10 @@ namespace Elementor
         {
             string originalPath = loreJsonReader.loreFilePath;
             
-            loreJsonReader.loreFilePath = currentGeneratedFileName;
+            // Set path to include Generated_JSONs folder
+            loreJsonReader.loreFilePath = Path.Combine("Generated_JSONs", currentGeneratedFileName);
             
-            Debug.Log($"Loading generated lore from: {currentGeneratedFileName}");
+            Debug.Log($"Loading generated lore from: {loreJsonReader.loreFilePath}");
             
             loreJsonReader.LoadLoreFromJson();
             
@@ -169,10 +163,13 @@ namespace Elementor
         {
             if (loreJsonReader != null)
             {
-                loreJsonReader.loreFilePath = fileName;
+                // Ensure the path includes Generated_JSONs folder
+                string fullPath = fileName.Contains("Generated_JSONs") ? fileName : Path.Combine("Generated_JSONs", fileName);
+                loreJsonReader.loreFilePath = fullPath;
                 loreJsonReader.LoadLoreFromJson();
-                Debug.Log($"🎯 Manually loaded lore from: {fileName}");
+                Debug.Log($"Manually loaded lore from: {fullPath}");
             }
         }
     }
 }
+
