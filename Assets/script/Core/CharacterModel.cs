@@ -13,10 +13,10 @@ namespace Elementor
         private CharacterSlot currentSlot;
         private CharacterSlot potentialSlot; // The slot trigger we are currently inside
         private CharacterGroup characterGroup;
-
-        public Character CharacterData => characterData;
         public CharacterAnimationState CurrentAnimationState => currentState;
         public event Action<CharacterAnimationState, CharacterAnimationState> OnAnimationStateChanged;
+
+        [SerializeField] public GameObject HandGrabbableController;
 
         public void Initialize(Character character)
         {
@@ -31,14 +31,21 @@ namespace Elementor
             CharacterAnimationState previousState = currentState;
             currentState = newState;
             
+            OnAnimationStateChanged?.Invoke(previousState, newState);
+            
+            if (characterGroup != null)
+            {
+                Debug.Log($"[{gameObject.name}] Part of a group, skipping individual physics management.");
+                return;
+            }
+            
+            // Only manage individual physics if not part of a group
             var rb = GetComponent<Rigidbody>();
             if (rb == null) 
             {
                 Debug.LogError($"Rigidbody not found on {gameObject.name}");
                 return;
             }
-
-            Debug.Log($"[{gameObject.name}] Setting animation state to {newState}, rb.isKinematic before: {rb.isKinematic}");
 
             switch (newState)
             {
@@ -60,19 +67,14 @@ namespace Elementor
                     rb.isKinematic = false;
                     rb.useGravity = false;
                     rb.constraints = RigidbodyConstraints.None;
-                    Debug.Log($"[{gameObject.name}] Grabbed state set: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}");
                     break;
                 case CharacterAnimationState.Falling:
                     rb.isKinematic = false;
                     rb.useGravity = true;
                     rb.constraints = RigidbodyConstraints.None;
-                    Debug.Log($"[{gameObject.name}] Falling state set: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}");
                     StartCoroutine(CheckIfSettled());
                     break;
             }
-
-            Debug.Log($"[{gameObject.name}] Final state: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}");
-            OnAnimationStateChanged?.Invoke(previousState, newState);
         }
 
         public bool CanTransitionTo(CharacterAnimationState targetState)
@@ -99,6 +101,12 @@ namespace Elementor
 
         public void StartGrab()
         {
+            if (characterGroup != null)
+            {
+                characterGroup.StartGrab();
+                return;
+            }
+            
             if (currentSlot != null)
             {
                 currentSlot.Release();
@@ -107,14 +115,7 @@ namespace Elementor
             
             if (CanTransitionTo(CharacterAnimationState.Grabbed))
             {
-                if (characterGroup != null)
-                {
-                    characterGroup.SetState(CharacterAnimationState.Grabbed);
-                }
-                else
-                {
-                    SetAnimationState(CharacterAnimationState.Grabbed);
-                }
+                SetAnimationState(CharacterAnimationState.Grabbed);
             }
         }
 
@@ -122,6 +123,7 @@ namespace Elementor
         {
             if (characterGroup != null)
             {
+                characterGroup.EndGrab();
                 return;
             }
 
@@ -199,9 +201,17 @@ namespace Elementor
         {
             characterGroup = group;
         }
+        
+        public void ClearGroup()
+        {
+            characterGroup = null;
+        }   
 
         private void OnTriggerEnter(Collider other)
         {
+            // If part of a group, ignore individual trigger detection
+            if (characterGroup != null) return;
+
             if (other.TryGetComponent<CharacterSlot>(out var slot))
             {
                 potentialSlot = slot;
@@ -210,10 +220,55 @@ namespace Elementor
 
         private void OnTriggerExit(Collider other)
         {
-            // 检查离开的是否是之前记录的插槽
+            // If part of a group, ignore individual trigger detection
+            if (characterGroup != null) return;
+            
             if (other.TryGetComponent<CharacterSlot>(out var slot) && potentialSlot == slot)
             {
                 potentialSlot = null;
+            }
+        }
+
+        public void DisableIndividualPhysics()
+        {
+            HandGrabbableController.SetActive(false);
+
+            BoxCollider boxCollider = GetComponent<BoxCollider>();
+            if (boxCollider != null)
+            {
+                boxCollider.isTrigger = true;
+            }
+
+            var rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = true;
+                rb.useGravity = false;
+                rb.constraints = RigidbodyConstraints.FreezeAll;
+                Debug.Log($"[{gameObject.name}] Individual physics disabled for group");
+            }
+        }
+
+        public void EnableIndividualPhysics()
+        {
+            HandGrabbableController.SetActive(true);
+
+            BoxCollider boxCollider = GetComponent<BoxCollider>();
+            if (boxCollider != null)
+            {
+                boxCollider.isTrigger = false;
+            }
+
+            var rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                Debug.Log($"[{gameObject.name}] Individual physics re-enabled");
+                // Restore appropriate physics based on current state
+                // Temporarily clear group reference to allow physics control
+                var tempGroup = characterGroup;
+                characterGroup = null;
+                SetAnimationState(currentState);
+                characterGroup = tempGroup;
             }
         }
     }

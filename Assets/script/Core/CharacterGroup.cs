@@ -12,13 +12,10 @@ namespace Elementor
         private List<CharacterView> characters = new List<CharacterView>();
         public List<CharacterView> Characters => characters;
         private CharacterSlot currentSlot;
-        private Grabbable _grabbable;
-        private CharacterSlot potentialSlot; // The slot trigger we are currently inside
+        private CharacterSlot potentialSlot;
 
         private void Awake()
         {
-            _grabbable = GetComponent<Grabbable>();
-            // Ensure the group has a collider for trigger detection
             Collider collider = GetComponent<Collider>();
             if (collider == null)
             {
@@ -26,41 +23,35 @@ namespace Elementor
             }
             else if (!collider.isTrigger)
             {
-                collider.isTrigger = true; // Ensure the collider is set as a trigger
+                collider.isTrigger = false;
             }
         }
 
-        private void OnEnable()
-        {
-            _grabbable.WhenPointerEventRaised += HandlePointerEvent;
-        }
 
-        private void OnDisable()
-        {
-            _grabbable.WhenPointerEventRaised -= HandlePointerEvent;
-        }
-
-        private void HandlePointerEvent(PointerEvent evt)
-        {
-            if (evt.Type == PointerEventType.Select)
-            {
-                StartGrab();
-            }
-            else if (evt.Type == PointerEventType.Unselect)
-            {
-                EndGrab();
-            }
-        }
 
         public void AddCharacter(CharacterView character)
         {
             if (!characters.Contains(character))
             {
                 characters.Add(character);
-                // Position characters relative to the group center
                 character.transform.SetParent(transform, true);
-                character.SetGroup(this);
+
+                character.GetModel().SetGroup(this);
+                character.GetModel().DisableIndividualPhysics();
+                
                 ArrangeCharacters();
+            }
+        }
+
+        public void RemoveCharacter(CharacterView character)
+        {
+            if (characters.Contains(character))
+            {
+                characters.Remove(character);
+                character.transform.SetParent(null, true);
+
+                character.GetModel().ClearGroup();
+                character.GetModel().EnableIndividualPhysics();
             }
         }
 
@@ -69,7 +60,8 @@ namespace Elementor
             foreach (var character in characters)
             {
                 character.transform.SetParent(null, true);
-                character.SetGroup(null);
+                // Re-enable individual character physics before destroying group
+                character.GetModel().EnableIndividualPhysics();
             }
             characters.Clear();
             Destroy(gameObject);
@@ -89,32 +81,45 @@ namespace Elementor
 
         public void SetState(CharacterAnimationState state)
         {
+            // Set animation state for all characters without physics control
             foreach (var character in characters)
             {
                 character.GetModel().SetAnimationState(state);
             }
             
+            // Group manages all physics
             var rb = GetComponent<Rigidbody>();
             if (rb == null) return;
 
             switch (state)
             {
                 case CharacterAnimationState.Idle:
+                case CharacterAnimationState.Slotted:
                     rb.isKinematic = true;
+                    rb.useGravity = false;
                     rb.constraints = RigidbodyConstraints.FreezeAll;
                     break;
                 case CharacterAnimationState.Grabbed:
+                    rb.isKinematic = false;
+                    rb.useGravity = false;
                     rb.constraints = RigidbodyConstraints.None;
                     break;
                 case CharacterAnimationState.Falling:
                     rb.isKinematic = false;
+                    rb.useGravity = true;
                     rb.constraints = RigidbodyConstraints.None;
                     StartCoroutine(CheckIfSettled());
+                    break;
+                case CharacterAnimationState.Running:
+                case CharacterAnimationState.CastingSkill:
+                    rb.isKinematic = true;
+                    rb.useGravity = false;
+                    rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
                     break;
             }
         }
 
-        private void StartGrab()
+        public void StartGrab()
         {
             if (currentSlot != null)
             {
@@ -127,7 +132,7 @@ namespace Elementor
             SetState(CharacterAnimationState.Grabbed);
         }
 
-        private void EndGrab()
+        public void EndGrab()
         {
             // Check if the group is inside a valid slot
             if (potentialSlot != null && !potentialSlot.IsOccupied)
@@ -146,19 +151,16 @@ namespace Elementor
 
         private IEnumerator DelayedSetFallingState()
         {
-            // 等待一帧，让Oculus系统完成其内部设置
             yield return null;
             
             SetState(CharacterAnimationState.Falling);
             
-            // 强制确保物理设置正确
             var rb = GetComponent<Rigidbody>();
             if (rb != null)
             {
                 rb.isKinematic = false;
                 rb.useGravity = true;
                 rb.constraints = RigidbodyConstraints.None;
-                Debug.Log($"[{gameObject.name}] CharacterGroup forced physics settings: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}");
             }
         }
 
@@ -174,14 +176,12 @@ namespace Elementor
                 yield return new WaitForFixedUpdate();
             }
 
-            // Once settled, go to Idle state and freeze
             SetState(CharacterAnimationState.Idle);
             transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
         }
 
         private void OnTriggerEnter(Collider other)
         {
-            // Check if the trigger is a CharacterSlot
             if (other.TryGetComponent<CharacterSlot>(out var slot))
             {
                 potentialSlot = slot;
@@ -190,7 +190,6 @@ namespace Elementor
 
         private void OnTriggerExit(Collider other)
         {
-            // Check if the exiting trigger is the current potential slot
             if (other.TryGetComponent<CharacterSlot>(out var slot) && potentialSlot == slot)
             {
                 potentialSlot = null;

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using Oculus.Interaction;
 
 namespace Elementor
 {
@@ -7,21 +8,17 @@ namespace Elementor
     public class CharacterView : MonoBehaviour
     {
         [SerializeField] private CharacterModel characterModel;
-        [SerializeField] private Animator animator;
-        private CharacterGroup characterGroup;
-        
+        [SerializeField] private Animator animator;        
         public event Action<CharacterView> OnCharacterSelected;
         public event Action<CharacterView, Vector3> OnCharacterMoved;
         public event Action<CharacterView, CharacterAnimationState, CharacterAnimationState> OnAnimationStateChanged;
         
         private Animator FindAnimatorInChildren(Transform parent)
         {
-            // 检查当前物体
             Animator foundAnimator = parent.GetComponent<Animator>();
             if (foundAnimator != null)
                 return foundAnimator;
 
-            // 递归检查所有子物体
             for (int i = 0; i < parent.childCount; i++)
             {
                 foundAnimator = FindAnimatorInChildren(parent.GetChild(i));
@@ -46,20 +43,17 @@ namespace Elementor
         
         public void SetCharacterModel(CharacterModel model)
         {
-            // 如果之前有model，先取消订阅
             if (characterModel != null)
                 characterModel.OnAnimationStateChanged -= HandleAnimationStateChanged;
             
             characterModel = model;
             
-            // 订阅新model的事件
             if (characterModel != null)
                 characterModel.OnAnimationStateChanged += HandleAnimationStateChanged;
         }
 
         public void Initialize()
         {
-            // 确保characterModel不为null
             if (characterModel == null)
             {
                 characterModel = GetComponent<CharacterModel>();
@@ -70,7 +64,6 @@ namespace Elementor
                 }
             }
 
-            // 确保animator被找到并引用
             if (animator == null)
             {
                 animator = GetComponentInChildren<Animator>();
@@ -153,7 +146,6 @@ namespace Elementor
                 case CharacterAnimationState.Idle:
                     if (previousState == CharacterAnimationState.Grabbed)
                     {
-                        // 从抓取状态释放
                         Debug.Log($"{characterModel.GetCharacterName()} 已被释放");
                     }
                     break;
@@ -207,12 +199,6 @@ namespace Elementor
         public CharacterAnimationState GetCurrentAnimationState()
         {
             return characterModel?.CurrentAnimationState ?? CharacterAnimationState.Idle;
-        }
-
-        public void SetGroup(CharacterGroup group)
-        {
-            characterGroup = group;
-            characterModel.SetGroup(group);
         }
     }
 }
