@@ -256,6 +256,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6aaf615e9f0138148be2fd72e88b4487, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  colliderSizePercentage: 0.75
+  characterSpacing: 0.15
 --- !u!114 &7842024487444750526
 MonoBehaviour:
   m_ObjectHideFlags: 0

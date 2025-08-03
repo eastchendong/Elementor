@@ -74,3 +74,4 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /Assets/StreamingAssets/Generated_JSONs
 /Assets/PassthroughCameraApiSamples
+/Assets/Prefab/Test

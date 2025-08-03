@@ -84,6 +84,8 @@ namespace Elementor
 
         private bool IsReactionComplete(ReactionStage stage)
         {
+            Debug.Log($"Checking reaction completion for '{stage.reactionName}':");
+            
             foreach (var requirement in stage.requirements)
             {
                 if (requirement.slot == null)
@@ -93,23 +95,50 @@ namespace Elementor
                 }
 
                 object occupant = requirement.slot.GetOccupant();
+                
+                // Debug log current occupant
+                string occupantInfo = "empty";
+                if (occupant is CharacterView characterView)
+                {
+                    occupantInfo = $"Character: {characterView.GetModel().GetCharacterName()}";
+                }
+                else if (occupant is CharacterGroup characterGroup)
+                {
+                    occupantInfo = $"Group: {characterGroup.name}";
+                }
+                
+                // Debug log requirement
+                string requirementInfo = "";
+                if (!string.IsNullOrEmpty(requirement.requiredCharacterName))
+                {
+                    requirementInfo = $"Required Character: {requirement.requiredCharacterName}";
+                }
+                else if (!string.IsNullOrEmpty(requirement.requiredGroupName))
+                {
+                    requirementInfo = $"Required Group: {requirement.requiredGroupName}";
+                }
+                
+                Debug.Log($"Slot occupant: {occupantInfo} | {requirementInfo}");
+                
                 if (occupant == null) return false; // Slot is empty, requirement not met.
 
                 bool requirementMet = false;
-                if (occupant is CharacterView characterView && !string.IsNullOrEmpty(requirement.requiredCharacterName))
+                if (occupant is CharacterView charView && !string.IsNullOrEmpty(requirement.requiredCharacterName))
                 {
-                    if (characterView.GetModel().GetCharacterName() == requirement.requiredCharacterName)
+                    if (charView.GetModel().GetCharacterName() == requirement.requiredCharacterName)
                     {
                         requirementMet = true;
                     }
                 }
-                else if (occupant is CharacterGroup characterGroup && !string.IsNullOrEmpty(requirement.requiredGroupName))
+                else if (occupant is CharacterGroup charGroup && !string.IsNullOrEmpty(requirement.requiredGroupName))
                 {
-                    if (characterGroup.name == requirement.requiredGroupName)
+                    if (charGroup.name == requirement.requiredGroupName)
                     {
                         requirementMet = true;
                     }
                 }
+
+                Debug.Log($"Requirement met: {requirementMet}");
 
                 if (!requirementMet)
                 {

@@ -9,6 +9,10 @@ namespace Elementor
     [RequireComponent(typeof(Grabbable))]
     public class CharacterGroup : MonoBehaviour
     {
+        [Header("Group Settings")]
+        [SerializeField] [Range(0.1f, 2.0f)] private float colliderSizePercentage = 0.75f;
+        [SerializeField] [Range(0.1f, 2.0f)] private float characterSpacing = 0.1f;
+        
         private List<CharacterView> characters = new List<CharacterView>();
         public List<CharacterView> Characters => characters;
         private CharacterSlot currentSlot;
@@ -25,6 +29,8 @@ namespace Elementor
             {
                 collider.isTrigger = false;
             }
+            
+            UpdateColliderSize();
         }
 
 
@@ -40,6 +46,7 @@ namespace Elementor
                 character.GetModel().DisableIndividualPhysics();
                 
                 ArrangeCharacters();
+                UpdateColliderSize();
             }
         }
 
@@ -52,6 +59,8 @@ namespace Elementor
 
                 character.GetModel().ClearGroup();
                 character.GetModel().EnableIndividualPhysics();
+                
+                UpdateColliderSize();
             }
         }
 
@@ -72,11 +81,58 @@ namespace Elementor
             // Arrange characters in a line formation
             for (int i = 0; i < characters.Count; i++)
             {
-                // This is a simple horizontal line arrangement. You can customize the formation.
-                float xOffset = (i - (characters.Count - 1) / 2.0f) * 0.5f;
+                // Use configurable character spacing
+                float xOffset = (i - (characters.Count - 1) / 2.0f) * characterSpacing;
                 characters[i].transform.localPosition = new Vector3(xOffset, 0, 0);
                 characters[i].transform.localRotation = Quaternion.identity;
             }
+        }
+
+        private void UpdateColliderSize()
+        {
+            if (characters.Count == 0) return;
+            
+            Bounds bounds = CalculateGroupBounds();
+            Collider collider = GetComponent<Collider>();
+            
+            if (collider is BoxCollider boxCollider)
+            {
+                boxCollider.center = bounds.center;
+                boxCollider.size = bounds.size * colliderSizePercentage;
+            }
+            else if (collider is SphereCollider sphereCollider)
+            {
+                sphereCollider.center = bounds.center;
+                sphereCollider.radius = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z) * 0.5f * colliderSizePercentage;
+            }
+            else if (collider is CapsuleCollider capsuleCollider)
+            {
+                capsuleCollider.center = bounds.center;
+                capsuleCollider.height = bounds.size.y * colliderSizePercentage;
+                capsuleCollider.radius = Mathf.Max(bounds.size.x, bounds.size.z) * 0.5f * colliderSizePercentage;
+            }
+        }
+
+        private Bounds CalculateGroupBounds()
+        {
+            if (characters.Count == 0) return new Bounds(transform.position, Vector3.one);
+            
+            Bounds bounds = new Bounds(characters[0].transform.position, Vector3.zero);
+            
+            foreach (var character in characters)
+            {
+                Renderer[] renderers = character.GetComponentsInChildren<Renderer>();
+                foreach (var renderer in renderers)
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+            
+            // Convert to local space
+            bounds.center = transform.InverseTransformPoint(bounds.center);
+            bounds.size = transform.InverseTransformVector(bounds.size);
+            
+            return bounds;
         }
 
         public void SetState(CharacterAnimationState state)
@@ -193,6 +249,28 @@ namespace Elementor
             if (other.TryGetComponent<CharacterSlot>(out var slot) && potentialSlot == slot)
             {
                 potentialSlot = null;
+            }
+        }
+
+        // Property accessors for runtime adjustment
+        public float ColliderSizePercentage
+        {
+            get => colliderSizePercentage;
+            set
+            {
+                colliderSizePercentage = Mathf.Clamp(value, 0.1f, 2.0f);
+                UpdateColliderSize();
+            }
+        }
+
+        public float CharacterSpacing
+        {
+            get => characterSpacing;
+            set
+            {
+                characterSpacing = Mathf.Clamp(value, 0.1f, 2.0f);
+                ArrangeCharacters();
+                UpdateColliderSize();
             }
         }
     }

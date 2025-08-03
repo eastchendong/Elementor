@@ -317,7 +317,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4b940d262be3fb459b7480d9845fc17, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  reactionStages: []
+  reactionStages:
+  - reactionName: Test Reaction
+    requirements: []
+    outcomes: []
+    reactionCondition: 
+    onReactionPhenomenon:
+      m_PersistentCalls:
+        m_Calls: []
   currentReactionIndex: 0
   characterSpawnController: {fileID: 0}
 --- !u!1 &6241122435877795072
