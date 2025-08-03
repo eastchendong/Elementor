@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-namespace Elementor
+namespace Elementor.Core
 {
     public class CharacterSpawnController : MonoBehaviour
     {

@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Elementor.Core;
+using Elementor.Core.Speech;    
 
 namespace Elementor
 {
@@ -113,7 +115,7 @@ namespace Elementor
             {
                 CharacterSpawnController.Instance.AddCharacterToGroup(group, member);
             }
-            
+
             // Set group to falling so it settles on the station
             group.SetState(CharacterAnimationState.Falling);
         }

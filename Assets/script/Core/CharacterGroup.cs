@@ -3,7 +3,7 @@ using UnityEngine;
 using Oculus.Interaction;
 using System.Collections;
 
-namespace Elementor
+namespace Elementor.Core
 {
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(Grabbable))]

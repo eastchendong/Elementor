@@ -2,6 +2,9 @@
 using UnityEngine;
 using System.Linq;
 using UnityEngine.Events;
+using Elementor.Core.Speech;
+using Elementor.Core;
+
 
 namespace Elementor
 {
@@ -72,6 +75,10 @@ namespace Elementor
 
                 currentReaction.onReactionPhenomenon?.Invoke();
 
+                // Trigger speech for reaction success
+                var participantCharacters = GetParticipantCharacters(currentReaction);
+                SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.ReactionSuccess, participantCharacters);
+
                 ProcessReaction(currentReaction);
 
                 currentReactionIndex++;
@@ -79,7 +86,33 @@ namespace Elementor
             else
             {
                 Debug.Log($"Reaction '{currentReaction.reactionName}' requirements not met.");
+                
+                // Trigger speech for reaction failure
+                var participantCharacters = GetParticipantCharacters(currentReaction);
+                SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.ReactionFailure, participantCharacters);
             }
+        }
+
+        private List<CharacterView> GetParticipantCharacters(ReactionStage stage)
+        {
+            var participants = new List<CharacterView>();
+            
+            foreach (var requirement in stage.requirements)
+            {
+                if (requirement.slot == null) continue;
+                
+                object occupant = requirement.slot.GetOccupant();
+                if (occupant is CharacterView character)
+                {
+                    participants.Add(character);
+                }
+                else if (occupant is CharacterGroup group)
+                {
+                    participants.AddRange(group.Characters);
+                }
+            }
+            
+            return participants;
         }
 
         private bool IsReactionComplete(ReactionStage stage)
@@ -201,6 +234,9 @@ namespace Elementor
                 }
 
                 outcome.outputSlot.Occupy(newGroup);
+                
+                // Trigger synthesis success speech for the new group
+                SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.SynthesisSuccess, charactersForNewGroup);
             }
 
             // Handle any remaining single characters if needed

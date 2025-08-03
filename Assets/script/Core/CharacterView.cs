@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
 using System;
 using Oculus.Interaction;
+using Elementor.Core.Speech;
 
-namespace Elementor
+namespace Elementor.Core
 {
     [RequireComponent(typeof(Rigidbody))]
     public class CharacterView : MonoBehaviour
@@ -71,6 +72,12 @@ namespace Elementor
                 {
                     animator = FindAnimatorInChildren(transform);
                 }
+            }
+            
+            // Initialize speech component if not present
+            if (GetComponent<CharacterSpeech>() == null)
+            {
+                gameObject.AddComponent<CharacterSpeech>();
             }
             
             // 确保其他组件存在

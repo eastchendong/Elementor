@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Elementor
+namespace Elementor.Core
 {
     public enum CharacterAnimationState
     {

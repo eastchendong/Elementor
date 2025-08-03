@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Elementor
+namespace Elementor.Core
 {
     [RequireComponent(typeof(Collider))]
     public class CharacterSlot : MonoBehaviour

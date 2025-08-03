@@ -3,7 +3,7 @@ using System;
 using Oculus.Interaction;
 using System.Collections;
 
-namespace Elementor
+namespace Elementor.Core
 {
     public class CharacterModel : MonoBehaviour
     {
