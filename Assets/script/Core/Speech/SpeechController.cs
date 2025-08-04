@@ -38,12 +38,9 @@ namespace Elementor.Core.Speech
 
         [SerializeField] private List<DialogueSequence> predefinedSequences;
         [SerializeField] private bool isPlayingDialogue = false;
-        [SerializeField] private bool useElevenLabsForAllCharacters = false;
-        [SerializeField] private bool useAIForDialogue = true;
         [SerializeField] private string defaultVoiceId;
         
         private Queue<DialogueLine> currentDialogueQueue = new Queue<DialogueLine>();
-        private API apiController;
 
         private void Awake()
         {
@@ -60,18 +57,7 @@ namespace Elementor.Core.Speech
 
         private void Start()
         {
-            // Find API controller
-            apiController = FindObjectOfType<API>();
-            if (apiController == null && useAIForDialogue)
-            {
-                Debug.LogWarning("API controller not found. AI dialogue generation will not work.");
-            }
 
-            // Configure all existing characters with ElevenLabs if enabled
-            if (useElevenLabsForAllCharacters)
-            {
-                ConfigureAllCharactersWithElevenLabs();
-            }
         }
 
         [ContextMenu("Test Speech System")]
@@ -88,23 +74,7 @@ namespace Elementor.Core.Speech
             }
         }
 
-        private void ConfigureAllCharactersWithElevenLabs()
-        {
-            var allCharacters = FindObjectsOfType<CharacterView>();
-            
-            foreach (var character in allCharacters)
-            {
-                var speechComponent = character.GetComponent<CharacterSpeech>();
-                if (speechComponent != null)
-                {
-                    string voiceId = defaultVoiceId;
 
-                    speechComponent.EnableElevenLabs(true);
-                    
-                    Debug.Log($"Configured ElevenLabs for character: {character.GetModel().GetCharacterName()}");
-                }
-            }
-        }
 
 
         public void TriggerSpeech(SpeechTriggerType triggerType, List<CharacterView> participants)
@@ -125,8 +95,7 @@ namespace Elementor.Core.Speech
                 return;
             }
 
-            // Generate dialogue using AI or fallback to simple generation
-            if (useAIForDialogue && apiController != null)
+            if (API.Instance != null)
             {
                 StartCoroutine(GenerateAIDialogue(triggerType, participants));
             }
@@ -168,7 +137,7 @@ namespace Elementor.Core.Speech
                     responseReceived = true;
                 };
                 
-                apiController.OnAnalysisComplete += onComplete;
+                API.Instance.OnAnalysisComplete += onComplete;
                 
                 // Use the API to generate dialogue (reusing the existing analyze method)
                 yield return StartCoroutine(GenerateDialogueWithAPI(prompt));
@@ -182,7 +151,7 @@ namespace Elementor.Core.Speech
                     yield return null;
                 }
                 
-                apiController.OnAnalysisComplete -= onComplete;
+                API.Instance.OnAnalysisComplete -= onComplete;
                 
                 // Parse AI response and extract dialogue
                 string dialogueText = ExtractDialogueFromAIResponse(aiResponse, characterName);
@@ -211,7 +180,7 @@ namespace Elementor.Core.Speech
         private IEnumerator GenerateDialogueWithAPI(string prompt)
         {
             // Modify the API call to use our dialogue prompt
-            apiController.chemicalFormula = prompt;
+            API.Instance.chemicalFormula = prompt;
             yield return StartCoroutine(CallAPIForDialogue(prompt));
         }
 
@@ -462,3 +431,4 @@ namespace Elementor.Core.Speech
 
     }
 }
+

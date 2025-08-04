@@ -336,8 +336,6 @@ MonoBehaviour:
   - Cl
   spawnTransforms:
   - {fileID: 594002213}
-  defaultCharacterType: Metal
-  defaultGroupId: 
   positionOffset: {x: 0, y: 0, z: 0}
   rotationOffset: {x: 0, y: 0, z: 0}
   useRandomOffset: 0
@@ -434,6 +432,7 @@ GameObject:
   - component: {fileID: 255017178}
   - component: {fileID: 255017176}
   - component: {fileID: 255017179}
+  - component: {fileID: 255017180}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -481,6 +480,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85b01728e766c5842b4c1f9d603d19e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &255017180
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 255017174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7dd9533430c87e4ca0184438920abee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  chemicalFormula: 
 --- !u!1 &265726193
 GameObject:
   m_ObjectHideFlags: 0
@@ -1843,10 +1855,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   predefinedSequences: []
-  characterVoiceMappings: []
   isPlayingDialogue: 0
-  useElevenLabsForAllCharacters: 0
-  defaultApiKey: 
   defaultVoiceId: 
 --- !u!1 &965863022
 GameObject:

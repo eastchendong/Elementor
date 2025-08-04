@@ -1,14 +1,15 @@
 ﻿using System.Collections;
 using System.IO;
 using UnityEngine;
+using TMPro;
 
 namespace Elementor
 {
     public class ChemicalAnalysisHelper : MonoBehaviour
     {
         [Header("Components")]
-        public API chemicalAssistant;
         public LoreJsonReader loreJsonReader;
+        public TMP_Text resultText;
         
         [Header("Settings")]
         public string outputFilePrefix = "generated_lore_";
@@ -27,15 +28,9 @@ namespace Elementor
                 return;
             }
             
-            if (chemicalAssistant == null)
+            if (API.Instance == null)
             {
-                Debug.LogError("API reference is missing!");
-                return;
-            }
-            
-            if (loreJsonReader == null)
-            {
-                Debug.LogError("LoreJsonReader reference is missing!");
+                Debug.LogError("API Instance is not available!");
                 return;
             }
             
@@ -50,14 +45,20 @@ namespace Elementor
             isProcessing = true;
             Debug.Log($"Starting Chemical Analysis Workflow... Output file: {currentGeneratedFileName}");
             
-            chemicalAssistant.OnAnalysisComplete += OnAnalysisComplete;
+            // Update UI
+            if (resultText != null)
+            {
+                resultText.text = "Loading...";
+            }
             
-            chemicalAssistant.StartAnalysisFromImage();
+            API.Instance.OnAnalysisComplete += OnAnalysisComplete;
+            
+            API.Instance.StartAnalysisFromImage();
             
             float timeout = 120f;
             float elapsed = 0f;
             
-            while (chemicalAssistant.IsAnalyzing && elapsed < timeout)
+            while (API.Instance.IsAnalyzing && elapsed < timeout)
             {
                 yield return new WaitForSeconds(0.1f);
                 elapsed += 0.1f;
@@ -66,7 +67,11 @@ namespace Elementor
             if (elapsed >= timeout)
             {
                 Debug.LogError("Analysis workflow timed out!");
-                chemicalAssistant.OnAnalysisComplete -= OnAnalysisComplete;
+                if (resultText != null)
+                {
+                    resultText.text = "Error: Analysis timed out";
+                }
+                API.Instance.OnAnalysisComplete -= OnAnalysisComplete;
             }
             
             isProcessing = false;
@@ -76,17 +81,35 @@ namespace Elementor
         {
             Debug.Log("Analysis complete, processing response...");
             
+            // Update UI with response
+            if (resultText != null)
+            {
+                resultText.text = "Analysis complete! Processing response...";
+            }
+            
             if (IsValidJson(jsonResponse))
             {
                 SaveJsonResponse(jsonResponse);
                 LoadGeneratedLore();
+                
+                // Update UI with success
+                if (resultText != null)
+                {
+                    resultText.text = $"Successfully generated and loaded: {currentGeneratedFileName}";
+                }
             }
             else
             {
                 Debug.LogError("Received invalid JSON response, cannot proceed");
+                
+                // Update UI with error
+                if (resultText != null)
+                {
+                    resultText.text = "Error: Received invalid JSON response";
+                }
             }
             
-            chemicalAssistant.OnAnalysisComplete -= OnAnalysisComplete;
+            API.Instance.OnAnalysisComplete -= OnAnalysisComplete;
         }
         
         private bool IsValidJson(string jsonString)
@@ -172,4 +195,3 @@ namespace Elementor
         }
     }
 }
-
