@@ -39,7 +39,7 @@ namespace Elementor.Core
             Vector3 spawnPosition = location ?? Vector3.zero;
             Transform parentTransform = parent ?? transform;
 
-            // 先生成控制器prefab作为主物体
+            
             GameObject controllerObj = Instantiate(characterControllerPrefab, spawnPosition, Quaternion.identity, parentTransform);
 
             if (controllerObj != null)
@@ -61,9 +61,7 @@ namespace Elementor.Core
                     
                     spawnedCharacters.Add(characterView);
 
-                    // 订阅角色交互事件
-                    characterView.OnCharacterSelected += OnCharacterSelected;
-                    characterView.OnCharacterMoved += OnCharacterMoved;
+
                 }
                 else
                 {
@@ -134,16 +132,6 @@ namespace Elementor.Core
             Debug.Log($"Model object name set to: '{modelObj.name}'");
 
             return modelObj;
-        }
-        
-        private void OnCharacterSelected(CharacterView character)
-        {
-            Debug.Log($"角色被选中: {character.GetModel().GetCharacterName()}");
-        }
-        
-        private void OnCharacterMoved(CharacterView character, Vector3 newPosition)
-        {
-            Debug.Log($"角色移动: {character.GetModel().GetCharacterName()} 到 {newPosition}");
         }
         
         public List<CharacterView> GetSpawnedCharacters()

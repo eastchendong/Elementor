@@ -60,12 +60,6 @@ namespace Elementor.Core.Speech
                 elevenlabsAPI = gameObject.AddComponent<ElevenlabsAPI>();
             }
 
-            if (!string.IsNullOrEmpty(apiKey))
-                elevenlabsAPI.SetApiKey(apiKey);
-
-            if (!string.IsNullOrEmpty(voiceId))
-                elevenlabsAPI.SetVoiceId(voiceId);
-
             // Subscribe to audio received event
             elevenlabsAPI.AudioReceived.AddListener(OnElevenLabsAudioReceived);
         }
@@ -183,18 +177,6 @@ namespace Elementor.Core.Speech
             if (speechUIPanel != null)
             {
                 speechUIPanel.SetActive(false);
-            }
-        }
-
-        public void SetElevenLabsCredentials(string newApiKey, string newVoiceId)
-        {
-            apiKey = newApiKey;
-            voiceId = newVoiceId;
-
-            if (elevenlabsAPI != null)
-            {
-                elevenlabsAPI.SetApiKey(apiKey);
-                elevenlabsAPI.SetVoiceId(voiceId);
             }
         }
 

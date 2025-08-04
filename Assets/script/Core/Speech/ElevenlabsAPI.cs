@@ -5,14 +5,17 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
+using Elementor.Core;
 
 namespace Elementor.Core.Speech
 {
     public class ElevenlabsAPI : MonoBehaviour 
     {
-        [SerializeField] private string _voiceId;
-        [SerializeField] private string _apiKey;
-        [SerializeField] private string _apiUrl = "https://api.elevenlabs.io";
+        private string _apiKey => APIConfigManager.Config.elevenlabs_api_key;
+        private string _apiUrl => APIConfigManager.Config.elevenlabs_api_url;
+        
+        [SerializeField]
+        public string defaultVoiceId = "21m00Tcm4TlvDq8ikWAM"; // Default ElevenLabs voice
         
         private AudioClip _audioClip;
 
@@ -23,25 +26,18 @@ namespace Elementor.Core.Speech
 
         public UnityEvent<AudioClip> AudioReceived;
 
-        public ElevenlabsAPI(string apiKey, string voiceId) 
+        void Start()
         {
-            _apiKey = apiKey;
-            _voiceId = voiceId;
+            // Validate API configuration
+            if (!APIConfigManager.ValidateConfiguration())
+            {
+                Debug.LogError("ElevenLabs API Configuration is incomplete. Please check your environment variables or Resources/APIConfig.json file.");
+            }
         }
 
-        public void SetApiKey(string apiKey)
+        public void GetAudio(string text, string voiceId = null) 
         {
-            _apiKey = apiKey;
-        }
-
-        public void SetVoiceId(string voiceId)
-        {
-            _voiceId = voiceId;
-        }
-
-        public void GetAudio(string text) 
-        {
-            StartCoroutine(DoRequest(text));
+            StartCoroutine(DoRequest(text, voiceId));
         }
 
         [ContextMenu("Test API Connection")]
@@ -49,13 +45,7 @@ namespace Elementor.Core.Speech
         {
             if (string.IsNullOrEmpty(_apiKey))
             {
-                Debug.LogError("API Key is not set. Please configure your ElevenLabs API key.");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(_voiceId))
-            {
-                Debug.LogError("Voice ID is not set. Please configure a voice ID.");
+                Debug.LogError("API Key is not set. Please configure your ElevenLabs API key in environment variables or Resources/APIConfig.json.");
                 return;
             }
 
@@ -63,8 +53,10 @@ namespace Elementor.Core.Speech
             GetAudio("Hello, this is a test of the ElevenLabs text to speech API integration.");
         }
 
-        IEnumerator DoRequest(string message) 
+        IEnumerator DoRequest(string message, string voiceId = null) 
         {
+            string activeVoiceId = !string.IsNullOrEmpty(voiceId) ? voiceId : defaultVoiceId;
+
             var postData = new TextToSpeechRequest 
             {
                 text = message,
@@ -83,7 +75,7 @@ namespace Elementor.Core.Speech
             var json = JsonConvert.SerializeObject(postData);
             var uH = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
             var stream = (Streaming) ? "/stream" : "";
-            var url = $"{_apiUrl}/v1/text-to-speech/{_voiceId}{stream}?optimize_streaming_latency={LatencyOptimization}";
+            var url = $"{_apiUrl}/v1/text-to-speech/{activeVoiceId}{stream}?optimize_streaming_latency={LatencyOptimization}";
             var request = UnityWebRequest.PostWwwForm(url, json);
             var downloadHandler = new DownloadHandlerAudioClip(url, AudioType.MPEG);
             

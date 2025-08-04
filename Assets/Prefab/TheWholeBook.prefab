@@ -598,8 +598,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7dd9533430c87e4ca0184438920abee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: sk-SSOirqmgtsdKAmhsmKZbVc6NftMo5MCdEgoSQbxh7kbSIwHL
-  apiUrl: https://yibuapi.com/v1/chat/completions
   equationInput: {fileID: 8453358578166856665}
   analyzeButton: {fileID: 1865183054346378620}
   resultText: {fileID: 6998128526455112311}

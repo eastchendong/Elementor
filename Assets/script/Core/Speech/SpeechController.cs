@@ -30,24 +30,16 @@ namespace Elementor.Core.Speech
         public List<DialogueLine> lines;
     }
 
-    [System.Serializable]
-    public class CharacterVoiceMapping
-    {
-        public string characterName;
-        public string voiceId;
-        public string apiKey;
-    }
+
 
     public class SpeechController : MonoBehaviour
     {
         public static SpeechController Instance { get; private set; }
 
         [SerializeField] private List<DialogueSequence> predefinedSequences;
-        [SerializeField] private List<CharacterVoiceMapping> characterVoiceMappings;
         [SerializeField] private bool isPlayingDialogue = false;
         [SerializeField] private bool useElevenLabsForAllCharacters = false;
         [SerializeField] private bool useAIForDialogue = true;
-        [SerializeField] private string defaultApiKey;
         [SerializeField] private string defaultVoiceId;
         
         private Queue<DialogueLine> currentDialogueQueue = new Queue<DialogueLine>();
@@ -105,11 +97,8 @@ namespace Elementor.Core.Speech
                 var speechComponent = character.GetComponent<CharacterSpeech>();
                 if (speechComponent != null)
                 {
-                    var voiceMapping = GetVoiceMappingForCharacter(character.GetModel().GetCharacterName());
-                    string apiKey = voiceMapping?.apiKey ?? defaultApiKey;
-                    string voiceId = voiceMapping?.voiceId ?? defaultVoiceId;
-                    
-                    speechComponent.SetElevenLabsCredentials(apiKey, voiceId);
+                    string voiceId = defaultVoiceId;
+
                     speechComponent.EnableElevenLabs(true);
                     
                     Debug.Log($"Configured ElevenLabs for character: {character.GetModel().GetCharacterName()}");
@@ -117,11 +106,6 @@ namespace Elementor.Core.Speech
             }
         }
 
-        private CharacterVoiceMapping GetVoiceMappingForCharacter(string characterName)
-        {
-            return characterVoiceMappings.FirstOrDefault(mapping => 
-                mapping.characterName.Equals(characterName, System.StringComparison.OrdinalIgnoreCase));
-        }
 
         public void TriggerSpeech(SpeechTriggerType triggerType, List<CharacterView> participants)
         {
@@ -476,25 +460,5 @@ namespace Elementor.Core.Speech
             return isPlayingDialogue;
         }
 
-        public void AddCharacterVoiceMapping(string characterName, string voiceId, string apiKey = "")
-        {
-            var existingMapping = characterVoiceMappings.FirstOrDefault(m => 
-                m.characterName.Equals(characterName, System.StringComparison.OrdinalIgnoreCase));
-            
-            if (existingMapping != null)
-            {
-                existingMapping.voiceId = voiceId;
-                existingMapping.apiKey = string.IsNullOrEmpty(apiKey) ? defaultApiKey : apiKey;
-            }
-            else
-            {
-                characterVoiceMappings.Add(new CharacterVoiceMapping
-                {
-                    characterName = characterName,
-                    voiceId = voiceId,
-                    apiKey = string.IsNullOrEmpty(apiKey) ? defaultApiKey : apiKey
-                });
-            }
-        }
     }
 }

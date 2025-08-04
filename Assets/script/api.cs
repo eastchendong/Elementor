@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Threading.Tasks;
 using System.IO;
+using Elementor.Core;
 
 namespace Elementor
 {
@@ -96,9 +97,9 @@ namespace Elementor
             public bool story_continuation;
         }
 
-        // API配置
-        [SerializeField] private string apiKey = "sk-SSOirqmgtsdKAmhsmKZbVc6NftMo5MCdEgoSQbxh7kbSIwHL";
-        private string apiUrl = "https://yibuapi.com/v1/chat/completions";
+        // API configuration - now loaded from environment or resources
+        private string apiKey => APIConfigManager.Config.openai_api_key;
+        private string apiUrl => APIConfigManager.Config.openai_api_url;
 
         // UI组件
         [Header("UI Components")]
@@ -114,6 +115,12 @@ namespace Elementor
 
         void Start()
         {
+            // Validate API configuration
+            if (!APIConfigManager.ValidateConfiguration())
+            {
+                Debug.LogError("API Configuration is incomplete. Please check your environment variables or Resources/APIConfig.json file.");
+            }
+
             // 设置按钮点击事件
             if (analyzeButton != null)
             {
