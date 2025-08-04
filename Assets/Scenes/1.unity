@@ -268,7 +268,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Direction: 0
   m_Covers:
-  - {fileID: 0}
+  - {fileID: 21300000, guid: bcb2eff117ed96e4ba05f88fb23464c6, type: 3}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
@@ -1133,7 +1133,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 897537686178030139, guid: 6b196de96e7d16b4297c1980179ae439, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.6166664
+      value: 3.216
       objectReference: {fileID: 0}
     - target: {fileID: 897537686178030139, guid: 6b196de96e7d16b4297c1980179ae439, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2581,8 +2581,9 @@ GameObject:
   - component: {fileID: 1091166493}
   - component: {fileID: 1091166492}
   - component: {fileID: 1091166495}
+  - component: {fileID: 1091166496}
   m_Layer: 0
-  m_Name: Book
+  m_Name: chemistryBook
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2634,13 +2635,13 @@ MonoBehaviour:
   m_UsePaperGPUInstancing: 0
   m_PaperInstancingMaterial: {fileID: 0}
   m_CoverPaperSetup:
-    m_Material: {fileID: 0}
-    m_Color: {r: 0.21960786, g: 0.21960786, b: 0.21960786, a: 1}
+    m_Material: {fileID: 2100000, guid: 988c4cf03a056f14fa80221229e76613, type: 2}
+    m_Color: {r: 1, g: 1, b: 1, a: 0}
     m_Width: 2.1
     m_Height: 3.1
     m_Thickness: 0.04
-    m_Stiffness: 0.5
-    m_Quality: 3
+    m_Stiffness: 0.942
+    m_Quality: 4
     m_UVMargin:
       m_Left: 0
       m_Right: 0
@@ -2668,8 +2669,8 @@ Transform:
   m_GameObject: {fileID: 1091166491}
   serializedVersion: 2
   m_LocalRotation: {x: -0.5647618, y: -0, z: -0, w: 0.82525396}
-  m_LocalPosition: {x: 0.114, y: 0.932, z: 1.594}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_LocalPosition: {x: 0.114, y: 0.728, z: 1.515}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 110863107}
@@ -2862,6 +2863,27 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     m_CurveTimeMode: 0
+--- !u!95 &1091166496
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091166491}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 71f64d4a7740cd84aa9473e800c29155, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &1195673658
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3598,7 +3620,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1091166495}
         m_TargetAssemblyTypeName: ScriptBoy.ProceduralBook.AutoTurningDemo, ScriptBoy.ProceduralBook.Demo
-        m_MethodName: AutoTurnLast
+        m_MethodName: AutoTurnBack
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
