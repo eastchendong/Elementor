@@ -197,6 +197,16 @@ namespace Elementor.Core
             return characterData?.name ?? "";
         }
 
+        public CharacterPersonality GetPersonality()
+        {
+            return characterData?.personality ?? new CharacterPersonality();
+        }
+
+        public Character GetCharacterData()
+        {
+            return characterData;
+        }
+
         public void SetGroup(CharacterGroup group)
         {
             characterGroup = group;

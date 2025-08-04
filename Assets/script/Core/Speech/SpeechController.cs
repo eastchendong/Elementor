@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.Text;
 
 namespace Elementor.Core.Speech
 {
@@ -30,15 +31,12 @@ namespace Elementor.Core.Speech
         public List<DialogueLine> lines;
     }
 
-
-
     public class SpeechController : MonoBehaviour
     {
         public static SpeechController Instance { get; private set; }
 
-        [SerializeField] private List<DialogueSequence> predefinedSequences;
+        [SerializeField] private List<DialogueSequence> predefinedSequences; // Now used as fallback
         [SerializeField] private bool isPlayingDialogue = false;
-        [SerializeField] private string defaultVoiceId;
         
         private Queue<DialogueLine> currentDialogueQueue = new Queue<DialogueLine>();
 
@@ -74,9 +72,6 @@ namespace Elementor.Core.Speech
             }
         }
 
-
-
-
         public void TriggerSpeech(SpeechTriggerType triggerType, List<CharacterView> participants)
         {
             if (isPlayingDialogue)
@@ -87,122 +82,207 @@ namespace Elementor.Core.Speech
 
             Debug.Log($"Triggering speech for: {triggerType} with {participants.Count} participants");
 
-            // Try to find predefined sequence first
+            // Priority 1: Try AI generation first
+            if (API.Instance != null)
+            {
+                StartCoroutine(GenerateAIDialogue(triggerType, participants));
+                return;
+            }
+
+            // Priority 2: Fall back to predefined sequences
             var predefinedSequence = predefinedSequences.FirstOrDefault(s => s.triggerType == triggerType);
             if (predefinedSequence != null && predefinedSequence.lines.Count > 0)
             {
+                Debug.Log("Using predefined dialogue sequence as fallback");
                 PlayDialogueSequence(predefinedSequence.lines);
                 return;
             }
 
-            if (API.Instance != null)
+            // Priority 3: Generate simple dialogue as last resort
+            var generatedDialogue = GenerateSimpleDialogue(triggerType, participants);
+            if (generatedDialogue.Count > 0)
             {
-                StartCoroutine(GenerateAIDialogue(triggerType, participants));
-            }
-            else
-            {
-                var generatedDialogue = GenerateSimpleDialogue(triggerType, participants);
-                if (generatedDialogue.Count > 0)
-                {
-                    PlayDialogueSequence(generatedDialogue);
-                }
+                Debug.Log("Using simple generated dialogue as last resort");
+                PlayDialogueSequence(generatedDialogue);
             }
         }
 
         private IEnumerator GenerateAIDialogue(SpeechTriggerType triggerType, List<CharacterView> participants)
         {
-            if (participants.Count == 0) yield break;
+            if (participants.Count == 0) 
+            {
+                Debug.LogWarning("No participants for AI dialogue generation");
+                yield break;
+            }
 
+            Debug.Log($"Generating AI dialogue for {participants.Count} participants");
             var dialogueLines = new List<DialogueLine>();
             
-            // Get lore context
+            // Get comprehensive context for AI generation
             string loreContext = GetLoreContext(triggerType);
+            string triggerDescription = GetTriggerDescription(triggerType);
+            string participantInfo = GetParticipantInfo(participants);
             
-            foreach (var character in participants)
+            // Create comprehensive prompt for multiple characters
+            string prompt = CreateMultiCharacterDialoguePrompt(triggerType, participants, loreContext, triggerDescription, participantInfo);
+            
+            // Request AI response for all characters
+            bool responseReceived = false;
+            string aiResponse = "";
+            
+            System.Action<string> onComplete = (response) => {
+                aiResponse = response;
+                responseReceived = true;
+            };
+            
+            API.Instance.OnAnalysisComplete += onComplete;
+            
+            yield return StartCoroutine(GenerateDialogueWithAPI(prompt));
+            
+            // Wait for response with timeout
+            float timeout = 15f;
+            float elapsed = 0f;
+            while (!responseReceived && elapsed < timeout)
             {
-                string characterName = character.GetModel().GetCharacterName();
-                string characterType = character.GetModel().GetCharacterType();
-                string speakingTrait = GetCharacterSpeakingTrait(character);
-                
-                // Create prompt for AI
-                string prompt = CreateDialoguePrompt(triggerType, characterName, characterType, speakingTrait, loreContext);
-                
-                // Request AI response
-                bool responseReceived = false;
-                string aiResponse = "";
-                
-                // Subscribe to API completion
-                System.Action<string> onComplete = (response) => {
-                    aiResponse = response;
-                    responseReceived = true;
-                };
-                
-                API.Instance.OnAnalysisComplete += onComplete;
-                
-                // Use the API to generate dialogue (reusing the existing analyze method)
-                yield return StartCoroutine(GenerateDialogueWithAPI(prompt));
-                
-                // Wait for response
-                float timeout = 10f;
-                float elapsed = 0f;
-                while (!responseReceived && elapsed < timeout)
-                {
-                    elapsed += Time.deltaTime;
-                    yield return null;
-                }
-                
-                API.Instance.OnAnalysisComplete -= onComplete;
-                
-                // Parse AI response and extract dialogue
-                string dialogueText = ExtractDialogueFromAIResponse(aiResponse, characterName);
-                if (string.IsNullOrEmpty(dialogueText))
-                {
-                    dialogueText = GenerateSimpleDialogueText(triggerType, characterName, characterType);
-                }
-                
-                var dialogueLine = new DialogueLine
-                {
-                    characterName = characterName,
-                    text = dialogueText,
-                    duration = 2f + dialogueText.Length * 0.05f,
-                    audioClip = null
-                };
-                
-                dialogueLines.Add(dialogueLine);
+                elapsed += Time.deltaTime;
+                yield return null;
             }
             
-            if (dialogueLines.Count > 0)
+            API.Instance.OnAnalysisComplete -= onComplete;
+            
+            if (responseReceived && !string.IsNullOrEmpty(aiResponse))
             {
-                PlayDialogueSequence(dialogueLines);
+                // Parse AI response to extract dialogue for each character
+                dialogueLines = ParseMultiCharacterDialogue(aiResponse, participants);
             }
+            
+            // If AI generation failed, fall back to predefined or simple dialogue
+            if (dialogueLines.Count == 0)
+            {
+                Debug.LogWarning("AI dialogue generation failed, falling back to predefined sequences");
+                var predefinedSequence = predefinedSequences.FirstOrDefault(s => s.triggerType == triggerType);
+                if (predefinedSequence != null && predefinedSequence.lines.Count > 0)
+                {
+                    PlayDialogueSequence(predefinedSequence.lines);
+                }
+                else
+                {
+                    var simpleDialogue = GenerateSimpleDialogue(triggerType, participants);
+                    PlayDialogueSequence(simpleDialogue);
+                }
+                yield break;
+            }
+            
+            Debug.Log($"Successfully generated AI dialogue with {dialogueLines.Count} lines");
+            PlayDialogueSequence(dialogueLines);
+        }
+
+        private string CreateMultiCharacterDialoguePrompt(SpeechTriggerType triggerType, List<CharacterView> participants, string loreContext, string triggerDescription, string participantInfo)
+        {
+            var prompt = new StringBuilder();
+            prompt.AppendLine("请为以下化学元素角色生成对话序列：");
+            prompt.AppendLine($"情境：{triggerDescription}");
+            prompt.AppendLine($"背景故事：{loreContext}");
+            prompt.AppendLine($"参与角色：{participantInfo}");
+            prompt.AppendLine();
+            prompt.AppendLine("要求：");
+            prompt.AppendLine("1. 每个角色都要有至少一句对话");
+            prompt.AppendLine("2. 对话要符合角色的元素特性");
+            prompt.AppendLine("3. 每句对话不超过20个字");
+            prompt.AppendLine("4. 请按照以下格式返回：");
+            prompt.AppendLine("[角色名]: 对话内容");
+            prompt.AppendLine();
+            prompt.AppendLine("请生成对话：");
+            
+            return prompt.ToString();
+        }
+
+        private string GetParticipantInfo(List<CharacterView> participants)
+        {
+            var info = participants.Select(p => {
+                string name = p.GetModel().GetCharacterName();
+                string type = p.GetModel().GetCharacterType();
+                string trait = GetDefaultSpeakingTrait(type);
+                return $"{name}（{type}，{trait}）";
+            });
+            
+            return string.Join("，", info);
+        }
+
+        private List<DialogueLine> ParseMultiCharacterDialogue(string aiResponse, List<CharacterView> participants)
+        {
+            var dialogueLines = new List<DialogueLine>();
+            
+            try
+            {
+                // Split response into lines and parse each dialogue line
+                var lines = aiResponse.Split('\n');
+                
+                foreach (var line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    
+                    // Look for pattern: [CharacterName]: dialogue text
+                    var colonIndex = line.IndexOf(':');
+                    if (colonIndex > 0)
+                    {
+                        var characterPart = line.Substring(0, colonIndex).Trim();
+                        var dialogueText = line.Substring(colonIndex + 1).Trim();
+                        
+                        // Extract character name (remove brackets if present)
+                        var characterName = characterPart.Replace("[", "").Replace("]", "").Trim();
+                        
+                        // Verify this character exists in participants
+                        var character = participants.FirstOrDefault(p => 
+                            p.GetModel().GetCharacterName().Equals(characterName, System.StringComparison.OrdinalIgnoreCase));
+                        
+                        if (character != null && !string.IsNullOrEmpty(dialogueText))
+                        {
+                            var dialogueLine = new DialogueLine
+                            {
+                                characterName = character.GetModel().GetCharacterName(),
+                                text = dialogueText,
+                                duration = Mathf.Max(2f, 1f + dialogueText.Length * 0.05f),
+                                audioClip = null
+                            };
+                            
+                            dialogueLines.Add(dialogueLine);
+                        }
+                    }
+                }
+                
+                // Ensure all participants have at least one line
+                foreach (var participant in participants)
+                {
+                    string participantName = participant.GetModel().GetCharacterName();
+                    if (!dialogueLines.Any(d => d.characterName == participantName))
+                    {
+                        // Generate a simple line for missing participants
+                        var simpleLine = new DialogueLine
+                        {
+                            characterName = participantName,
+                            text = GenerateSimpleDialogueText(SpeechTriggerType.GameStart, participantName, participant.GetModel().GetCharacterType()),
+                            duration = 2f,
+                            audioClip = null
+                        };
+                        dialogueLines.Add(simpleLine);
+                    }
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Failed to parse AI dialogue response: {e.Message}");
+                return new List<DialogueLine>();
+            }
+            
+            return dialogueLines;
         }
 
         private IEnumerator GenerateDialogueWithAPI(string prompt)
         {
-            // Modify the API call to use our dialogue prompt
-            API.Instance.chemicalFormula = prompt;
-            yield return StartCoroutine(CallAPIForDialogue(prompt));
-        }
-
-        private IEnumerator CallAPIForDialogue(string prompt)
-        {
-            // Create a custom API call for dialogue generation
-            string dialoguePrompt = $"请为化学角色生成一句简短的对话回应。背景信息：{prompt}。请只返回对话内容，不超过20个字。";
-            
-            // This would need to be implemented similar to the existing API call in api.cs
-            // For now, we'll use a placeholder
-            yield return new WaitForSeconds(1f); // Simulate API call delay
-        }
-
-        private string CreateDialoguePrompt(SpeechTriggerType triggerType, string characterName, string characterType, string speakingTrait, string loreContext)
-        {
-            string triggerDescription = GetTriggerDescription(triggerType);
-            
-            return $"角色：{characterName}（{characterType}元素）\n" +
-                   $"说话特点：{speakingTrait}\n" +
-                   $"情境：{triggerDescription}\n" +
-                   $"背景故事：{loreContext}\n" +
-                   $"请生成一句符合角色特点和情境的简短对话（不超过15字）";
+            // Use the dialogue generation API instead of chemical formula analysis
+            API.Instance.GenerateDialogue(prompt);
+            yield return null; // The API handles the coroutine internally
         }
 
         private string GetTriggerDescription(SpeechTriggerType triggerType)
@@ -226,35 +306,37 @@ namespace Elementor.Core.Speech
 
         private string GetCharacterSpeakingTrait(CharacterView character)
         {
-            var characterData = character.GetComponent<CharacterModel>();
-            if (characterData != null)
+            var characterModel = character.GetModel();
+            var personality = characterModel?.GetPersonality();
+            
+            if (personality?.speakingTrait != null && !string.IsNullOrEmpty(personality.speakingTrait))
             {
-                // This would need to be implemented to get the character data
-                // For now, return a default trait based on character type
-                string characterType = character.GetModel().GetCharacterType();
-                return GetDefaultSpeakingTrait(characterType);
+                return personality.speakingTrait;
             }
-            return "说话平和友善";
+            
+            // Fall back to default trait based on character type
+            string characterType = character.GetModel().GetCharacterType();
+            return GetDefaultSpeakingTrait(characterType);
         }
 
         private string GetDefaultSpeakingTrait(string characterType)
         {
-            // Provide default speaking traits based on element type
             if (characterType.Contains("金属") || characterType.Contains("Metal"))
                 return "说话坚定有力，充满自信";
             else if (characterType.Contains("非金属") || characterType.Contains("NonMetal"))
                 return "说话机智敏锐，富有逻辑";
+            else if (characterType.Contains("稀有气体") || characterType.Contains("NobleGas"))
+                return "说话冷静淡然，不易激动";
             else
                 return "说话温和友善，乐于合作";
         }
 
         private string GetLoreContext(SpeechTriggerType triggerType)
         {
-            var loreController = FindObjectOfType<LoreController>();
-            if (loreController?.CurrentLore == null) 
+            if (LoreController.Instance?.CurrentLore == null) 
                 return "在元素山的电离领域中，各种元素正在进行化学反应";
 
-            var story = loreController.GetStory();
+            var story = LoreController.Instance.GetStory();
             if (story == null) 
                 return "在元素山的电离领域中，各种元素正在进行化学反应";
 
@@ -265,28 +347,6 @@ namespace Elementor.Core.Speech
             }
 
             return context;
-        }
-
-        private string ExtractDialogueFromAIResponse(string aiResponse, string characterName)
-        {
-            if (string.IsNullOrEmpty(aiResponse))
-                return "";
-
-            // Simple extraction - in a real implementation, you'd parse the JSON response
-            // and extract the actual dialogue content
-            try
-            {
-                // For now, return a portion of the response or generate based on character
-                if (aiResponse.Length > 50)
-                {
-                    return aiResponse.Substring(0, 15) + "..."; // Truncate to reasonable length
-                }
-                return aiResponse;
-            }
-            catch
-            {
-                return "";
-            }
         }
 
         private List<DialogueLine> GenerateSimpleDialogue(SpeechTriggerType triggerType, List<CharacterView> participants)
@@ -354,22 +414,32 @@ namespace Elementor.Core.Speech
             {
                 var currentLine = currentDialogueQueue.Dequeue();
                 
-                // Find the character and trigger their speech
+                // Find the character and trigger their speech through CharacterSpeech
                 var character = FindCharacterByName(currentLine.characterName);
                 if (character != null)
                 {
                     var speechComponent = character.GetComponent<CharacterSpeech>();
                     if (speechComponent != null)
                     {
+                        // Let CharacterSpeech handle the TTS API call
                         speechComponent.Speak(currentLine.text, currentLine.audioClip, currentLine.duration);
+                        Debug.Log($"[{currentLine.characterName}]: {currentLine.text}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"No CharacterSpeech component found on {currentLine.characterName}");
                     }
                 }
+                else
+                {
+                    Debug.LogWarning($"Character not found: {currentLine.characterName}");
+                }
 
-                Debug.Log($"[{currentLine.characterName}]: {currentLine.text}");
-                yield return new WaitForSeconds(currentLine.duration);
+                yield return new WaitForSeconds(currentLine.duration + 0.5f); // Small gap between speakers
             }
 
             isPlayingDialogue = false;
+            Debug.Log("Dialogue sequence completed");
         }
 
         private CharacterView FindCharacterByName(string characterName)

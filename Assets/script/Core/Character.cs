@@ -16,7 +16,17 @@ namespace Elementor.Core
     [Serializable]
     public class CharacterPersonality
     {
-        public string speakingTrait; // e.g., "speaks cheerfully and optimistically", "talks in a serious and scholarly manner", "uses mysterious and poetic language"
+        [SerializeField] public string speakingTrait = "说话温和友善"; // Default speaking trait
+        
+        public CharacterPersonality()
+        {
+            speakingTrait = "说话温和友善"; // Ensure default value
+        }
+        
+        public CharacterPersonality(string trait)
+        {
+            speakingTrait = trait;
+        }
     }
 
     [Serializable]
@@ -26,7 +36,12 @@ namespace Elementor.Core
         public string name;
         public string prefabPath;
         public string groupId;
-        public CharacterPersonality personality;
+        [SerializeField] public CharacterPersonality personality;
+        
+        public CharacterData()
+        {
+            personality = new CharacterPersonality();
+        }
         
         public Character ToCharacter()
         {
@@ -43,7 +58,7 @@ namespace Elementor.Core
         public string name;
         public string prefabPath;
         public string groupId;
-        public CharacterPersonality personality;
+        [SerializeField] public CharacterPersonality personality;
         
         public Character(string type, string name, string prefabPath = "", string groupId = "")
         {
