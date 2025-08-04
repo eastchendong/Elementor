@@ -1,0 +1,109 @@
+Version 1.10.1
+- Fixed an issue causing paper edges to appear black.
+
+Version 1.10.0
+- Book (Inspector): Decreased the minimum valid thickness of paper to 0.0001.
+- Book (Inspector): Renamed "Start State" property to "Initial Open Progress".
+- Book (class): Deprecated "void GetActivePageIndices(List<int> indices)" method.
+- Book (class): Added "void GetActivePaperSideIndices(List<int> indices)" method.
+- Book (class): Added "void SetOpenProgress(float openProgress)" method.
+- Book (class): Added "void SetOpenProgress(int paperSideIndex)" method.
+- Book (class): Added "float initialOpenProgress {get; set;}" property.
+- Book (class): Added "int paperCount {get;}" property.
+- Book (class): Added "int coverPaperCount {get;}" property.
+- Book (class): Added "int pagePaperCount {get;}" property.
+- Book Content (class): Deprecated "int pageCount {get;}" property.
+- Book Content (class): Added "int ConvertCoverIndexToPaperSideIndex(int coverIndex)" method.
+- Book Content (class): Added "int ConvertPageIndexToPaperSideIndex(int pageIndex)" method.
+- Book Content (class): Added "int ConvertPaperSideIndexToCoverIndex(int paperSideIndex)" method.
+- Book Content (class): Added "int ConvertPaperSideIndexToPageIndex(int paperSideIndex)" method.
+- Book Content (class): Added "float ConvertPaperSideIndexToOpenProgress(int paperSideIndex)" method.
+- Book Content (class): Added "bool IsCoverPaperSideIndex(int paperSideIndex)" method.
+- Book Content (class): Added "bool IsPagePaperSideIndex(int paperSideIndex)" method.
+
+Version 1.9.0
+- Book (Inspector): Added "Reduce Shadows" property.
+- Book (Inspector): Added "Reduce SubMeshes" property.
+- Book (Inspector): Added "Reduce Overdraw" property.
+- Book (Inspector): Added "Use Paper GPU Instancing" property (only for wiro books).
+- Book (Inspector): Added "Paper Instancing Material" property (only for wiro books).
+- Book (Inspector): Decreased the minimum valid thickness of paper to 0.001.
+- Book: Disabled the motion vectors of the book renderers.
+- Book: Increasing the maximum efficient paper count from 32 to 128.
+
+Version 1.8.0
+- Book Content (class): Added "covers" property.
+- Book Content (class): Added "pages" property.
+- Book (class): Added "isBuilt" property.
+- Book (class): Documented "Build" method.
+- Book (class): Documented "binding" property.
+- Book (class): Documented "content" property.
+
+Version 1.7.1
+- Fixed an issue with the book layer.
+
+Version 1.7.0
+- LivePageCanvasRaycaster (class): Added "camera" static property.
+
+Version 1.6.2
+- Fixed an issue with LivePageCanvasRaycaster not calculating hit coordinates correctly.
+- Fixed an issue that caused multiple LivePageCanvasRaycaster components to be added to the Canvas GameObject.
+
+Version 1.6.1
+- Fixed an issue with the book not showing in the build.
+
+Version 1.6.0
+Book (Inspector): Added "Hide Binder" property.
+
+Version 1.5.0
+- Enhanced the page falling animation.
+- Added "05 Auto Turning" scene.
+- Added "Auto Turning Demo" component.
+- Added "AutoTurnDirection" enum.
+- Added "AutoTurnSettings" class.
+- Added "AutoTurnSetting" struct.
+- Added "AutoTurnSettingMode" enum.
+- Added "AutoTurnSettingCurveTimeMode" enum.
+- Book (class): Added "StartAutoTurning(AutoTurnDirection direction, AutoTurnSettings settings)" method.
+- Book (class): Added "StartAutoTurning(AutoTurnDirection direction, AutoTurnSettings settings, int turnCount, float delyPerTurn)" method.
+- Book (class): Added "StartAutoTurning(AutoTurnDirection direction, AutoTurnSettings settings, int turnCount, AutoTurnSetting delyPerTurn)" method.
+- Book (class): Added "CancelPendingAutoTurns()" method.
+- Book (class): Added "isAutoTurning" property.
+- Book (class): Added "autoTurningEndTime" property.
+- Book (class): Added "hasPendingAutoTurns" property.
+- Book (Inspector): Renamed the property "Hardness" to "Stiffness" in the Paper Setup.
+- Book: Fixed the frame drops that occurred after each turn, caused by unnecessary mesh creation, which eventually resulted in an OutOfMemoryException error.
+
+Version 1.4.0
+- Added "04 Vertical" scene.
+- Book Content (Inspector): Added "Up To Down" and "Down To Up" options to the "Direction" property.
+- Fixed an issue where the book did not update when editing the Book Content or Book Binding properties.
+- Fixed the Paper Setup UV Margin direction issue, where the margin was applied to the wrong side.
+- Fixed the Slider drag offset issue.
+- Fixed the Dropdown not working.
+
+Version 1.3.0
+- Book (class): Added "GetActivePageIndices(List<int> indices)" method.
+- Book (class): Added "isFalling" property.
+- Book (class): Added "isIdle" property.
+- PageContent (class): Added "onActiveChangedCallback" property.
+- PageContent (class): Added "isActive" property.
+
+Version 1.2.1
+- Fixed the "Scene view texture is null" error that occurs when selecting a book GameObject.
+- Fixed errors that occur when entering Play mode with scene reload disabled.
+
+Version 1.2.0
+- Added "03 Page Content" scene.
+- Added "Sprite Page Content" component.
+- Added "Live Page Content" component.
+- Added "Render Texture Factory" component.
+
+Version 1.1.0
+- Book (Inspector): Added "Align To Ground" property.
+- Staple Binding: Fixed the intersection issue of middle papers.
+- Book Content (Inspector): Fixed the sprite drag-and-drop functionality.
+- Book Content (Inspector): Fixed an issue where selecting a page did not correctly highlight the corresponding page of the book in the Scene.
+
+Version 1.0.0
+- First release.
