@@ -338,5 +338,89 @@ namespace Elementor
             chemicalFormula = formula;
             StartCoroutine(AnalyzeChemicalFormula(formula));
         }
+
+        public void GenerateDialogue(string prompt)
+        {
+            StartCoroutine(GenerateDialogueCoroutine(prompt));
+        }
+
+        IEnumerator GenerateDialogueCoroutine(string prompt)
+        {
+            IsAnalyzing = true;
+
+            // 构造简化的system prompt for dialogue
+            string systemPrompt = "你是一个化学教育游戏的角色对话生成器。根据给出的角色信息和情境，生成一句简短、符合角色特点的对话。对话应该简洁有趣，不超过15个字。只返回对话内容，不要其他格式。";
+
+            string jsonBody = @"{
+        ""model"": ""gpt-4o"",
+        ""messages"": [
+        {
+            ""role"": ""system"",
+            ""content"": """ + systemPrompt.Replace("\"", "\\\"") + @"""
+        },
+        {
+            ""role"": ""user"",
+            ""content"": """ + prompt.Replace("\"", "\\\"") + @"""
+        }
+        ],
+        ""max_tokens"": 100,
+        ""temperature"": 0.7
+        }";
+
+            // 创建请求
+            UnityWebRequest request = new UnityWebRequest(apiUrl, "POST");
+            request.redirectLimit = 10;
+            request.timeout = 30; // Shorter timeout for dialogue
+            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("Authorization", "Bearer " + apiKey);
+            request.SetRequestHeader("Accept", "application/json");
+
+            Debug.Log("Generating dialogue with prompt: " + prompt);
+
+            // 发送请求
+            yield return request.SendWebRequest();
+
+            // 处理响应
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                string responseText = request.downloadHandler.text;
+                Debug.Log("Dialogue generation response: " + responseText);
+                
+                // Extract dialogue content
+                string dialogueContent = ExtractDialogueContent(responseText);
+                
+                // Notify completion
+                IsAnalyzing = false;
+                OnAnalysisComplete?.Invoke(dialogueContent);
+            }
+            else
+            {
+                Debug.LogError("Dialogue generation error: " + request.error);
+                IsAnalyzing = false;
+                OnAnalysisComplete?.Invoke("");
+            }
+        }
+
+        private string ExtractDialogueContent(string responseText)
+        {
+            try
+            {
+                var apiResponse = JsonUtility.FromJson<ApiResponse>(responseText);
+                if (apiResponse?.choices != null && apiResponse.choices.Length > 0)
+                {
+                    string content = apiResponse.choices[0].message.content;
+                    return content.Trim().Trim('"'); // Remove quotes if present
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to extract dialogue content: {ex.Message}");
+            }
+            
+            return "";
+        }
     }
 }

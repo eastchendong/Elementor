@@ -1,0 +1,9 @@
+{
+    "type": "Nonmetal",
+    "name": "C",
+    "prefabPath": "Characters/C",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "多才多艺的艺术家"
+    }
+}

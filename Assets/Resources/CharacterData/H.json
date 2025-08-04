@@ -1,0 +1,9 @@
+{
+    "type": "Nonmetal",
+    "name": "H",
+    "prefabPath": "Characters/H",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "活泼可爱的小精灵"
+    }
+}

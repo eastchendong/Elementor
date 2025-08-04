@@ -1,0 +1,9 @@
+{
+    "type": "Alkaline Earth Metal",
+    "name": "Ca",
+    "prefabPath": "Characters/Ca",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "稳重可靠的守护者"
+    }
+}

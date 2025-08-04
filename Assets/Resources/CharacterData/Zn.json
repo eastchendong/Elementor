@@ -1,0 +1,9 @@
+{
+    "type": "Transition Metal",
+    "name": "Zn",
+    "prefabPath": "Characters/Zn",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "勤劳朴实的保护者"
+    }
+}

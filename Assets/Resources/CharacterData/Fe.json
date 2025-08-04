@@ -1,0 +1,9 @@
+﻿{
+    "type": "Metal",
+    "name": "Fe",
+    "prefabPath": "Characters/Fe",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "speaks cheerfully and optimistically with a warm, encouraging tone"
+    }
+}

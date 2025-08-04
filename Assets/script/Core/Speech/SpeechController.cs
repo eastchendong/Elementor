@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
-using Elementor.Lore;
 
 namespace Elementor.Core.Speech
 {
@@ -31,15 +30,28 @@ namespace Elementor.Core.Speech
         public List<DialogueLine> lines;
     }
 
+    [System.Serializable]
+    public class CharacterVoiceMapping
+    {
+        public string characterName;
+        public string voiceId;
+        public string apiKey;
+    }
+
     public class SpeechController : MonoBehaviour
     {
         public static SpeechController Instance { get; private set; }
 
         [SerializeField] private List<DialogueSequence> predefinedSequences;
+        [SerializeField] private List<CharacterVoiceMapping> characterVoiceMappings;
         [SerializeField] private bool isPlayingDialogue = false;
+        [SerializeField] private bool useElevenLabsForAllCharacters = false;
+        [SerializeField] private bool useAIForDialogue = true;
+        [SerializeField] private string defaultApiKey;
+        [SerializeField] private string defaultVoiceId;
         
-        private LoreController loreController;
         private Queue<DialogueLine> currentDialogueQueue = new Queue<DialogueLine>();
+        private API apiController;
 
         private void Awake()
         {
@@ -56,11 +68,59 @@ namespace Elementor.Core.Speech
 
         private void Start()
         {
-            loreController = LoreController.Instance;
-            if (loreController == null)
+            // Find API controller
+            apiController = FindObjectOfType<API>();
+            if (apiController == null && useAIForDialogue)
             {
-                Debug.LogWarning("LoreController not found. SpeechController may not work properly.");
+                Debug.LogWarning("API controller not found. AI dialogue generation will not work.");
             }
+
+            // Configure all existing characters with ElevenLabs if enabled
+            if (useElevenLabsForAllCharacters)
+            {
+                ConfigureAllCharactersWithElevenLabs();
+            }
+        }
+
+        [ContextMenu("Test Speech System")]
+        public void TestSpeechSystem()
+        {
+            var testCharacters = FindObjectsOfType<CharacterView>().Take(2).ToList();
+            if (testCharacters.Count > 0)
+            {
+                TriggerSpeech(SpeechTriggerType.GameStart, testCharacters);
+            }
+            else
+            {
+                Debug.LogWarning("No characters found for speech test.");
+            }
+        }
+
+        private void ConfigureAllCharactersWithElevenLabs()
+        {
+            var allCharacters = FindObjectsOfType<CharacterView>();
+            
+            foreach (var character in allCharacters)
+            {
+                var speechComponent = character.GetComponent<CharacterSpeech>();
+                if (speechComponent != null)
+                {
+                    var voiceMapping = GetVoiceMappingForCharacter(character.GetModel().GetCharacterName());
+                    string apiKey = voiceMapping?.apiKey ?? defaultApiKey;
+                    string voiceId = voiceMapping?.voiceId ?? defaultVoiceId;
+                    
+                    speechComponent.SetElevenLabsCredentials(apiKey, voiceId);
+                    speechComponent.EnableElevenLabs(true);
+                    
+                    Debug.Log($"Configured ElevenLabs for character: {character.GetModel().GetCharacterName()}");
+                }
+            }
+        }
+
+        private CharacterVoiceMapping GetVoiceMappingForCharacter(string characterName)
+        {
+            return characterVoiceMappings.FirstOrDefault(mapping => 
+                mapping.characterName.Equals(characterName, System.StringComparison.OrdinalIgnoreCase));
         }
 
         public void TriggerSpeech(SpeechTriggerType triggerType, List<CharacterView> participants)
@@ -81,36 +141,220 @@ namespace Elementor.Core.Speech
                 return;
             }
 
-            // Generate dynamic dialogue based on lore and personalities
-            var generatedDialogue = GenerateDialogue(triggerType, participants);
-            if (generatedDialogue.Count > 0)
+            // Generate dialogue using AI or fallback to simple generation
+            if (useAIForDialogue && apiController != null)
             {
-                PlayDialogueSequence(generatedDialogue);
+                StartCoroutine(GenerateAIDialogue(triggerType, participants));
+            }
+            else
+            {
+                var generatedDialogue = GenerateSimpleDialogue(triggerType, participants);
+                if (generatedDialogue.Count > 0)
+                {
+                    PlayDialogueSequence(generatedDialogue);
+                }
             }
         }
 
-        private List<DialogueLine> GenerateDialogue(SpeechTriggerType triggerType, List<CharacterView> participants)
+        private IEnumerator GenerateAIDialogue(SpeechTriggerType triggerType, List<CharacterView> participants)
+        {
+            if (participants.Count == 0) yield break;
+
+            var dialogueLines = new List<DialogueLine>();
+            
+            // Get lore context
+            string loreContext = GetLoreContext(triggerType);
+            
+            foreach (var character in participants)
+            {
+                string characterName = character.GetModel().GetCharacterName();
+                string characterType = character.GetModel().GetCharacterType();
+                string speakingTrait = GetCharacterSpeakingTrait(character);
+                
+                // Create prompt for AI
+                string prompt = CreateDialoguePrompt(triggerType, characterName, characterType, speakingTrait, loreContext);
+                
+                // Request AI response
+                bool responseReceived = false;
+                string aiResponse = "";
+                
+                // Subscribe to API completion
+                System.Action<string> onComplete = (response) => {
+                    aiResponse = response;
+                    responseReceived = true;
+                };
+                
+                apiController.OnAnalysisComplete += onComplete;
+                
+                // Use the API to generate dialogue (reusing the existing analyze method)
+                yield return StartCoroutine(GenerateDialogueWithAPI(prompt));
+                
+                // Wait for response
+                float timeout = 10f;
+                float elapsed = 0f;
+                while (!responseReceived && elapsed < timeout)
+                {
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+                
+                apiController.OnAnalysisComplete -= onComplete;
+                
+                // Parse AI response and extract dialogue
+                string dialogueText = ExtractDialogueFromAIResponse(aiResponse, characterName);
+                if (string.IsNullOrEmpty(dialogueText))
+                {
+                    dialogueText = GenerateSimpleDialogueText(triggerType, characterName, characterType);
+                }
+                
+                var dialogueLine = new DialogueLine
+                {
+                    characterName = characterName,
+                    text = dialogueText,
+                    duration = 2f + dialogueText.Length * 0.05f,
+                    audioClip = null
+                };
+                
+                dialogueLines.Add(dialogueLine);
+            }
+            
+            if (dialogueLines.Count > 0)
+            {
+                PlayDialogueSequence(dialogueLines);
+            }
+        }
+
+        private IEnumerator GenerateDialogueWithAPI(string prompt)
+        {
+            // Modify the API call to use our dialogue prompt
+            apiController.chemicalFormula = prompt;
+            yield return StartCoroutine(CallAPIForDialogue(prompt));
+        }
+
+        private IEnumerator CallAPIForDialogue(string prompt)
+        {
+            // Create a custom API call for dialogue generation
+            string dialoguePrompt = $"请为化学角色生成一句简短的对话回应。背景信息：{prompt}。请只返回对话内容，不超过20个字。";
+            
+            // This would need to be implemented similar to the existing API call in api.cs
+            // For now, we'll use a placeholder
+            yield return new WaitForSeconds(1f); // Simulate API call delay
+        }
+
+        private string CreateDialoguePrompt(SpeechTriggerType triggerType, string characterName, string characterType, string speakingTrait, string loreContext)
+        {
+            string triggerDescription = GetTriggerDescription(triggerType);
+            
+            return $"角色：{characterName}（{characterType}元素）\n" +
+                   $"说话特点：{speakingTrait}\n" +
+                   $"情境：{triggerDescription}\n" +
+                   $"背景故事：{loreContext}\n" +
+                   $"请生成一句符合角色特点和情境的简短对话（不超过15字）";
+        }
+
+        private string GetTriggerDescription(SpeechTriggerType triggerType)
+        {
+            switch (triggerType)
+            {
+                case SpeechTriggerType.ReactionSuccess:
+                    return "化学反应成功完成";
+                case SpeechTriggerType.ReactionFailure:
+                    return "化学反应失败";
+                case SpeechTriggerType.SynthesisSuccess:
+                    return "成功合成新物质";
+                case SpeechTriggerType.GameStart:
+                    return "游戏开始，角色介绍自己";
+                case SpeechTriggerType.CharacterMeet:
+                    return "角色初次相遇";
+                default:
+                    return "一般情况";
+            }
+        }
+
+        private string GetCharacterSpeakingTrait(CharacterView character)
+        {
+            var characterData = character.GetComponent<CharacterModel>();
+            if (characterData != null)
+            {
+                // This would need to be implemented to get the character data
+                // For now, return a default trait based on character type
+                string characterType = character.GetModel().GetCharacterType();
+                return GetDefaultSpeakingTrait(characterType);
+            }
+            return "说话平和友善";
+        }
+
+        private string GetDefaultSpeakingTrait(string characterType)
+        {
+            // Provide default speaking traits based on element type
+            if (characterType.Contains("金属") || characterType.Contains("Metal"))
+                return "说话坚定有力，充满自信";
+            else if (characterType.Contains("非金属") || characterType.Contains("NonMetal"))
+                return "说话机智敏锐，富有逻辑";
+            else
+                return "说话温和友善，乐于合作";
+        }
+
+        private string GetLoreContext(SpeechTriggerType triggerType)
+        {
+            var loreController = FindObjectOfType<LoreController>();
+            if (loreController?.CurrentLore == null) 
+                return "在元素山的电离领域中，各种元素正在进行化学反应";
+
+            var story = loreController.GetStory();
+            if (story == null) 
+                return "在元素山的电离领域中，各种元素正在进行化学反应";
+
+            string context = story.title;
+            if (story.plot != null)
+            {
+                context += "。" + string.Join("，", story.plot);
+            }
+
+            return context;
+        }
+
+        private string ExtractDialogueFromAIResponse(string aiResponse, string characterName)
+        {
+            if (string.IsNullOrEmpty(aiResponse))
+                return "";
+
+            // Simple extraction - in a real implementation, you'd parse the JSON response
+            // and extract the actual dialogue content
+            try
+            {
+                // For now, return a portion of the response or generate based on character
+                if (aiResponse.Length > 50)
+                {
+                    return aiResponse.Substring(0, 15) + "..."; // Truncate to reasonable length
+                }
+                return aiResponse;
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private List<DialogueLine> GenerateSimpleDialogue(SpeechTriggerType triggerType, List<CharacterView> participants)
         {
             var dialogueLines = new List<DialogueLine>();
 
             if (participants.Count == 0) return dialogueLines;
-
-            // Get personality data from lore if available
-            string contextInfo = GetContextFromLore(triggerType);
 
             foreach (var character in participants)
             {
                 string characterName = character.GetModel().GetCharacterName();
                 string characterType = character.GetModel().GetCharacterType();
                 
-                string dialogueText = GenerateDialogueText(triggerType, characterName, characterType, contextInfo);
+                string dialogueText = GenerateSimpleDialogueText(triggerType, characterName, characterType);
                 
                 var dialogueLine = new DialogueLine
                 {
                     characterName = characterName,
                     text = dialogueText,
-                    duration = 2f + dialogueText.Length * 0.05f, // Estimate duration based on text length
-                    audioClip = null // Could be assigned from resources
+                    duration = 2f + dialogueText.Length * 0.05f,
+                    audioClip = null
                 };
                 
                 dialogueLines.Add(dialogueLine);
@@ -119,29 +363,8 @@ namespace Elementor.Core.Speech
             return dialogueLines;
         }
 
-        private string GetContextFromLore(SpeechTriggerType triggerType)
+        private string GenerateSimpleDialogueText(SpeechTriggerType triggerType, string characterName, string characterType)
         {
-            if (loreController?.CurrentLore == null) return "";
-
-            var story = loreController.GetStory();
-            if (story == null) return "";
-
-            switch (triggerType)
-            {
-                case SpeechTriggerType.ReactionSuccess:
-                    return $"Reaction succeeded in the context of {story.title}";
-                case SpeechTriggerType.ReactionFailure:
-                    return $"Reaction failed in the context of {story.title}";
-                case SpeechTriggerType.SynthesisSuccess:
-                    return $"Synthesis completed in the context of {story.title}";
-                default:
-                    return story.title;
-            }
-        }
-
-        private string GenerateDialogueText(SpeechTriggerType triggerType, string characterName, string characterType, string context)
-        {
-            // Simple dialogue generation based on trigger type and character
             switch (triggerType)
             {
                 case SpeechTriggerType.ReactionSuccess:
@@ -155,54 +378,8 @@ namespace Elementor.Core.Speech
                 case SpeechTriggerType.CharacterMeet:
                     return GetMeetingDialogue(characterName, characterType);
                 default:
-                    return $"Hello, I'm {characterName}!";
+                    return $"你好，我是{characterName}！";
             }
-        }
-
-        private string GetSuccessDialogue(string name, string type)
-        {
-            var successLines = new[]
-            {
-                $"Excellent! The reaction worked perfectly!",
-                $"Great success! I knew we could do it!",
-                $"The elements combined beautifully!",
-                $"Perfect harmony achieved!"
-            };
-            return successLines[Random.Range(0, successLines.Length)];
-        }
-
-        private string GetFailureDialogue(string name, string type)
-        {
-            var failureLines = new[]
-            {
-                $"Hmm, that didn't work as expected...",
-                $"Let's try a different approach next time.",
-                $"The elements aren't ready to combine yet.",
-                $"We need to adjust our method."
-            };
-            return failureLines[Random.Range(0, failureLines.Length)];
-        }
-
-        private string GetSynthesisDialogue(string name, string type)
-        {
-            var synthesisLines = new[]
-            {
-                $"A new creation emerges!",
-                $"The synthesis is complete!",
-                $"Something wonderful has been born!",
-                $"The elements have found their true form!"
-            };
-            return synthesisLines[Random.Range(0, synthesisLines.Length)];
-        }
-
-        private string GetIntroDialogue(string name, string type)
-        {
-            return $"Hello! I'm {name}, a {type} element. Ready for some alchemy?";
-        }
-
-        private string GetMeetingDialogue(string name, string type)
-        {
-            return $"Nice to meet you! I'm {name}. Let's work together!";
         }
 
         private void PlayDialogueSequence(List<DialogueLine> dialogueLines)
@@ -248,9 +425,76 @@ namespace Elementor.Core.Speech
             return allCharacters.FirstOrDefault(c => c.GetModel().GetCharacterName() == characterName);
         }
 
+        private string GetSuccessDialogue(string name, string type)
+        {
+            var successLines = new[]
+            {
+                $"太好了！反应成功了！",
+                $"完美的化学反应！",
+                $"我们做到了！",
+                $"元素和谐共鸣！"
+            };
+            return successLines[Random.Range(0, successLines.Length)];
+        }
+
+        private string GetFailureDialogue(string name, string type)
+        {
+            var failureLines = new[]
+            {
+                $"嗯，这次没成功...",
+                $"让我们再试试别的方法",
+                $"元素还没准备好",
+                $"需要调整一下"
+            };
+            return failureLines[Random.Range(0, failureLines.Length)];
+        }
+
+        private string GetSynthesisDialogue(string name, string type)
+        {
+            var synthesisLines = new[]
+            {
+                $"新的创造诞生了！",
+                $"合成完成！",
+                $"奇妙的新物质！",
+                $"元素找到了真正的形态！"
+            };
+            return synthesisLines[Random.Range(0, synthesisLines.Length)];
+        }
+
+        private string GetIntroDialogue(string name, string type)
+        {
+            return $"你好！我是{name}，{type}元素。准备开始炼金术吧！";
+        }
+
+        private string GetMeetingDialogue(string name, string type)
+        {
+            return $"很高兴认识你！我是{name}。让我们一起合作吧！";
+        }
+
         public bool IsPlayingDialogue()
         {
             return isPlayingDialogue;
+        }
+
+        public void AddCharacterVoiceMapping(string characterName, string voiceId, string apiKey = "")
+        {
+            var existingMapping = characterVoiceMappings.FirstOrDefault(m => 
+                m.characterName.Equals(characterName, System.StringComparison.OrdinalIgnoreCase));
+            
+            if (existingMapping != null)
+            {
+                existingMapping.voiceId = voiceId;
+                existingMapping.apiKey = string.IsNullOrEmpty(apiKey) ? defaultApiKey : apiKey;
+            }
+            else
+            {
+                characterVoiceMappings.Add(new CharacterVoiceMapping
+                {
+                    characterName = characterName,
+                    voiceId = voiceId,
+                    apiKey = string.IsNullOrEmpty(apiKey) ? defaultApiKey : apiKey
+                });
+            }
         }
     }
 }

@@ -35,17 +35,17 @@ namespace Elementor
 
         private void SpawnCharacters()
         {
-            if (spawnData?.characters == null) return;
+            if (spawnData?.characterNames == null) return;
             if (CharacterSpawnController.Instance == null)
             {
                 Debug.LogError("CharacterSpawnController instance not found. Cannot spawn characters.");
                 return;
             }
 
-            for (int i = 0; i < spawnData.characters.Length; i++)
+            for (int i = 0; i < spawnData.characterNames.Length; i++)
             {
                 Vector3 spawnPosition = GetRandomSpawnPosition();
-                CharacterSpawnController.Instance.SpawnCharacter(spawnData.characters[i], spawnPosition, spawnArea.parent);
+                CharacterSpawnController.Instance.SpawnCharacter(spawnData.characterNames[i], spawnPosition, spawnArea.parent);
             }
         }
 

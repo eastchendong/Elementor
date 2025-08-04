@@ -1,0 +1,9 @@
+{
+    "type": "Alkaline Earth Metal",
+    "name": "Ba",
+    "prefabPath": "Characters/Ba",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "热情活泼的表演者"
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "type": "Alkaline Earth Metal",
+    "name": "Mg",
+    "prefabPath": "Characters/Mg",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "温和友善的治愈师"
+    }
+}

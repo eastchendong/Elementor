@@ -7,45 +7,67 @@ namespace Elementor.Core.Speech
     public class CharacterSpeech : MonoBehaviour
     {
         [SerializeField] private AudioSource audioSource;
-        [SerializeField] private GameObject speechBubble;
-        [SerializeField] private TextMeshProUGUI speechText;
+        [SerializeField] private GameObject speechUIPanel; // Reference to the UI panel in the character prefab
+        [SerializeField] private GameObject speechTextObject; // Reference to the text GameObject in the UI panel
         [SerializeField] private Animator characterAnimator;
-        
+        [SerializeField] private ElevenlabsAPI elevenlabsAPI;
+
+        [Header("ElevenLabs Configuration")]
+        [SerializeField] private string apiKey;
+        [SerializeField] private string voiceId;
+        [SerializeField] private bool useElevenLabs = false;
+
         private bool isSpeaking = false;
         private Coroutine currentSpeechCoroutine;
+        private string pendingText;
+        private float pendingDuration;
+        private TextMeshProUGUI speechText;
 
         private void Awake()
         {
             // Try to find components if not assigned
             if (audioSource == null)
                 audioSource = GetComponent<AudioSource>();
-            
+
             if (characterAnimator == null)
                 characterAnimator = GetComponentInChildren<Animator>();
 
-            // Create speech bubble if not assigned
-            if (speechBubble == null)
-                CreateSpeechBubble();
+            // Get the TextMeshProUGUI component from the speechTextObject
+            if (speechTextObject != null)
+            {
+                speechText = speechTextObject.GetComponent<TextMeshProUGUI>();
+                if (speechText == null)
+                {
+                    Debug.LogWarning($"No TextMeshProUGUI found on speechTextObject for {gameObject.name}");
+                }
+            }
+
+            // Initially hide the UI panel
+            if (speechUIPanel != null)
+            {
+                speechUIPanel.SetActive(false);
+            }
+
+            // Setup ElevenLabs API if enabled
+            if (useElevenLabs)
+                SetupElevenLabsAPI();
         }
 
-        private void CreateSpeechBubble()
+        private void SetupElevenLabsAPI()
         {
-            // Create a simple speech bubble UI element
-            speechBubble = new GameObject("SpeechBubble");
-            speechBubble.transform.SetParent(transform);
-            speechBubble.transform.localPosition = Vector3.up * 2f; // Position above character
+            if (elevenlabsAPI == null)
+            {
+                elevenlabsAPI = gameObject.AddComponent<ElevenlabsAPI>();
+            }
 
-            Canvas canvas = speechBubble.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvas.worldCamera = Camera.main;
+            if (!string.IsNullOrEmpty(apiKey))
+                elevenlabsAPI.SetApiKey(apiKey);
 
-            speechText = speechBubble.AddComponent<TextMeshProUGUI>();
-            speechText.text = "";
-            speechText.fontSize = 24;
-            speechText.alignment = TextAlignmentOptions.Center;
-            speechText.rectTransform.sizeDelta = new Vector2(200, 100);
+            if (!string.IsNullOrEmpty(voiceId))
+                elevenlabsAPI.SetVoiceId(voiceId);
 
-            speechBubble.SetActive(false);
+            // Subscribe to audio received event
+            elevenlabsAPI.AudioReceived.AddListener(OnElevenLabsAudioReceived);
         }
 
         public void Speak(string text, AudioClip audioClip = null, float duration = 2f)
@@ -55,25 +77,56 @@ namespace Elementor.Core.Speech
                 StopCoroutine(currentSpeechCoroutine);
             }
 
-            currentSpeechCoroutine = StartCoroutine(SpeakCoroutine(text, audioClip, duration));
+            if (useElevenLabs && elevenlabsAPI != null && audioClip == null)
+            {
+                // Store text and duration for when audio is received
+                pendingText = text;
+                pendingDuration = duration;
+
+                // Request audio from ElevenLabs
+                elevenlabsAPI.GetAudio(text);
+
+                // Show text immediately while waiting for audio
+                ShowSpeechUI(text);
+            }
+            else
+            {
+                currentSpeechCoroutine = StartCoroutine(SpeakCoroutine(text, audioClip, duration));
+            }
+        }
+
+        private void OnElevenLabsAudioReceived(AudioClip audioClip)
+        {
+            Debug.Log($"Received ElevenLabs audio for character: {gameObject.name}");
+
+            // Use the actual audio duration if available, otherwise use pending duration
+            float duration = audioClip != null ? audioClip.length : pendingDuration;
+
+            currentSpeechCoroutine = StartCoroutine(SpeakCoroutine(pendingText, audioClip, duration));
+        }
+
+        private void ShowSpeechUI(string text)
+        {
+            if (speechUIPanel != null && speechText != null)
+            {
+                speechText.text = text;
+                speechUIPanel.SetActive(true);
+            }
         }
 
         private IEnumerator SpeakCoroutine(string text, AudioClip audioClip, float duration)
         {
             isSpeaking = true;
 
-            // Show speech bubble
-            if (speechBubble != null && speechText != null)
-            {
-                speechText.text = text;
-                speechBubble.SetActive(true);
-            }
+            // Show speech UI
+            ShowSpeechUI(text);
 
             // Play audio if available
             if (audioSource != null && audioClip != null)
             {
                 audioSource.clip = audioClip;
                 audioSource.Play();
+                Debug.Log($"Playing generated audio for: {text}");
             }
 
             // Trigger speaking animation
@@ -87,10 +140,10 @@ namespace Elementor.Core.Speech
             // Wait for speech duration
             yield return new WaitForSeconds(duration);
 
-            // Hide speech bubble
-            if (speechBubble != null)
+            // Hide speech UI
+            if (speechUIPanel != null)
             {
-                speechBubble.SetActive(false);
+                speechUIPanel.SetActive(false);
             }
 
             // Stop speaking animation
@@ -103,6 +156,57 @@ namespace Elementor.Core.Speech
             currentSpeechCoroutine = null;
         }
 
+        [ContextMenu("Test ElevenLabs Speech")]
+        public void TestElevenLabsSpeech()
+        {
+            if (!useElevenLabs)
+            {
+                Debug.LogWarning("ElevenLabs is not enabled for this character.");
+                return;
+            }
+
+            string testText = $"Hello! I am {GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "a character"}. Testing ElevenLabs integration!";
+            Speak(testText);
+        }
+
+        public void SetSpeechUIReferences(GameObject uiPanel, GameObject textObject)
+        {
+            speechUIPanel = uiPanel;
+            speechTextObject = textObject;
+
+            if (speechTextObject != null)
+            {
+                speechText = speechTextObject.GetComponent<TextMeshProUGUI>();
+            }
+
+            // Initially hide the UI panel
+            if (speechUIPanel != null)
+            {
+                speechUIPanel.SetActive(false);
+            }
+        }
+
+        public void SetElevenLabsCredentials(string newApiKey, string newVoiceId)
+        {
+            apiKey = newApiKey;
+            voiceId = newVoiceId;
+
+            if (elevenlabsAPI != null)
+            {
+                elevenlabsAPI.SetApiKey(apiKey);
+                elevenlabsAPI.SetVoiceId(voiceId);
+            }
+        }
+
+        public void EnableElevenLabs(bool enable)
+        {
+            useElevenLabs = enable;
+            if (enable && elevenlabsAPI == null)
+            {
+                SetupElevenLabsAPI();
+            }
+        }
+
         public void StopSpeaking()
         {
             if (currentSpeechCoroutine != null)
@@ -111,8 +215,8 @@ namespace Elementor.Core.Speech
                 currentSpeechCoroutine = null;
             }
 
-            if (speechBubble != null)
-                speechBubble.SetActive(false);
+            if (speechUIPanel != null)
+                speechUIPanel.SetActive(false);
 
             if (characterAnimator != null)
                 characterAnimator.SetBool("IsSpeaking", false);

@@ -1,0 +1,9 @@
+{
+    "type": "Nonmetal",
+    "name": "O",
+    "prefabPath": "Characters/O",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "生机勃勃的生命源泉"
+    }
+}

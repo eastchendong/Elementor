@@ -10,10 +10,6 @@ namespace Elementor
         [SerializeField] private List<string> characterNames = new List<string>();
         [SerializeField] private List<Transform> spawnTransforms = new List<Transform>();
         
-        [Header("Character Properties")]
-        [SerializeField] private string defaultCharacterType = "NPC";
-        [SerializeField] private string defaultGroupId = "";
-        
         [Header("Offset Settings")]
         [SerializeField] private Vector3 positionOffset = Vector3.zero;
         [SerializeField] private Vector3 rotationOffset = Vector3.zero;
@@ -96,23 +92,11 @@ namespace Elementor
 
         private void CreateCharacterAtTransform(string characterName, Transform spawnTransform)
         {
-            // Create prefab path using character name
-            string characterPrefabPath = $"Characters/{characterName}";
-            
-            // Create character data using the proper constructor
-            Character character = new Character(
-                defaultCharacterType,  // type (required first parameter)
-                characterName,         // name (required second parameter)
-                characterPrefabPath,   // prefabPath (using character name)
-                defaultGroupId         // groupId (optional fourth parameter)
-            );
-
-            // Calculate spawn position with offset
             Vector3 spawnPosition = CalculateSpawnPosition(spawnTransform);
-
-            // Spawn the character
-            CharacterSpawnController.Instance.SpawnCharacter(character, spawnPosition, spawnTransform.parent);
-
+            
+            // Use the simplified spawn method that automatically loads character data
+            CharacterSpawnController.Instance.SpawnCharacter(characterName, spawnPosition, spawnTransform.parent);
+            
             Debug.Log($"Generated character '{characterName}' at {spawnPosition}");
         }
 

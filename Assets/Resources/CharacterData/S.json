@@ -1,0 +1,9 @@
+{
+    "type": "Nonmetal",
+    "name": "S",
+    "prefabPath": "Characters/S",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "神秘独特的炼金术师"
+    }
+}

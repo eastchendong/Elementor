@@ -27,7 +27,14 @@ namespace Elementor.Core
             }
         }
 
-        public void SpawnCharacter(Character character, Vector3? location = null, Transform parent = null)
+        public void SpawnCharacter(string characterName, Vector3? location = null, Transform parent = null)
+        {
+            CharacterData characterData = CharacterDataLoader.LoadCharacterData(characterName);
+            Character character = Character.CreateFromData(characterData);
+            SpawnCharacterInternal(character, location, parent);
+        }
+
+        private void SpawnCharacterInternal(Character character, Vector3? location = null, Transform parent = null)
         {
             Vector3 spawnPosition = location ?? Vector3.zero;
             Transform parentTransform = parent ?? transform;
