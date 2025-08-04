@@ -237,6 +237,65 @@ Transform:
   - {fileID: 1067987170}
   m_Father: {fileID: 579491042}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &110863105
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 110863107}
+  - component: {fileID: 110863106}
+  m_Layer: 0
+  m_Name: Content
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &110863106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 110863105}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb01ea22278058e41b954948fa69b853, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Direction: 0
+  m_Covers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  m_Pages:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+--- !u!4 &110863107
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 110863105}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1091166494}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &131042702
 GameObject:
   m_ObjectHideFlags: 0
@@ -331,20 +390,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4f260431e887ac44ae4ec7ed358aab6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterNames:
-  - H
-  - O
-  - Zn
-  spawnTransforms:
-  - {fileID: 594002213}
-  defaultCharacterType: Metal
-  defaultGroupId: 
-  positionOffset: {x: 0, y: 0, z: 0}
-  rotationOffset: {x: 0, y: 0, z: 0}
-  useRandomOffset: 0
-  randomOffsetRange: {x: 1, y: 0, z: 1}
-  generateAtAllTransforms: 0
-  selectedTransformIndex: 0
 --- !u!4 &203737400
 Transform:
   m_ObjectHideFlags: 0
@@ -455,6 +500,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   webcamManager: {fileID: 414414013}
   quadRenderer: {fileID: 1299679671}
+  apiComponent: {fileID: 0}
 --- !u!4 &228603509
 Transform:
   m_ObjectHideFlags: 0
@@ -2087,6 +2133,297 @@ Transform:
   - {fileID: 413559327}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1091166491
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1091166494}
+  - component: {fileID: 1091166493}
+  - component: {fileID: 1091166492}
+  - component: {fileID: 1091166495}
+  m_Layer: 0
+  m_Name: Book
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1091166492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091166491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76d4cb129c49a8e41942c270567fb8a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Quality: 3
+  m_StapleSetup:
+    m_Material: {fileID: 0}
+    m_Color: {r: 1, g: 1, b: 1, a: 1}
+    m_Thickness: 0.05
+    m_Crown: 0.2
+    m_Margin: 0.1
+    m_Count: 4
+    m_Quality: 3
+--- !u!114 &1091166493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091166491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ab79da0e11c80a4d9708e0ad7217b6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Content: {fileID: 110863106}
+  m_Binding: {fileID: 1091166492}
+  m_InitialOpenProgress: 0
+  m_BuildOnAwake: 1
+  m_CastShadows: 1
+  m_AlignToGround: 1
+  m_HideBinder: 0
+  m_ReduceShadows: 0
+  m_ReduceSubMeshes: 0
+  m_ReduceOverdraw: 1
+  m_UsePaperGPUInstancing: 0
+  m_PaperInstancingMaterial: {fileID: 0}
+  m_CoverPaperSetup:
+    m_Material: {fileID: 0}
+    m_Color: {r: 1, g: 0, b: 0, a: 1}
+    m_Width: 2.1
+    m_Height: 3.1
+    m_Thickness: 0.04
+    m_Stiffness: 0.5
+    m_Quality: 3
+    m_UVMargin:
+      m_Left: 0
+      m_Right: 0
+      m_Down: 0
+      m_Up: 0
+  m_PagePaperSetup:
+    m_Material: {fileID: 0}
+    m_Color: {r: 1, g: 1, b: 1, a: 1}
+    m_Width: 2
+    m_Height: 3
+    m_Thickness: 0.02
+    m_Stiffness: 0.2
+    m_Quality: 3
+    m_UVMargin:
+      m_Left: 0
+      m_Right: 0
+      m_Down: 0
+      m_Up: 0
+--- !u!4 &1091166494
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091166491}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.5647618, y: -0, z: -0, w: 0.82525396}
+  m_LocalPosition: {x: 0, y: 1.371, z: 1.765}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_ConstrainProportionsScale: 1
+  m_Children:
+  - {fileID: 110863107}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: -68.772, y: 0, z: 0}
+--- !u!114 &1091166495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091166491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8555288a295731f4e8b73178b5c1217e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Book: {fileID: 1091166493}
+  m_SingleTurnSettings:
+    m_Mode: 0
+    m_Twist:
+      m_Mode: 0
+      m_Constant: 0
+      m_ConstantMin: 0
+      m_ConstantMax: 0
+      m_Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMin:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMax:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveTimeMode: 0
+    m_Bend:
+      m_Mode: 0
+      m_Constant: 1
+      m_ConstantMin: 1
+      m_ConstantMax: 1
+      m_Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMin:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMax:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveTimeMode: 0
+    m_Duration:
+      m_Mode: 0
+      m_Constant: 0.5
+      m_ConstantMin: 0.5
+      m_ConstantMax: 0.5
+      m_Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMin:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMax:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveTimeMode: 0
+  m_MultiTurnSettings:
+    m_Mode: 0
+    m_Twist:
+      m_Mode: 0
+      m_Constant: 0
+      m_ConstantMin: 0
+      m_ConstantMax: 0
+      m_Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMin:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMax:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveTimeMode: 0
+    m_Bend:
+      m_Mode: 0
+      m_Constant: 1
+      m_ConstantMin: 1
+      m_ConstantMax: 1
+      m_Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMin:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMax:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveTimeMode: 0
+    m_Duration:
+      m_Mode: 0
+      m_Constant: 0.5
+      m_ConstantMin: 0.5
+      m_ConstantMax: 0.5
+      m_Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMin:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveMax:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      m_CurveTimeMode: 0
+  m_DelyPerTurn:
+    m_Mode: 0
+    m_Constant: 0.5
+    m_ConstantMin: 0.5
+    m_ConstantMax: 0.5
+    m_Curve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_CurveMin:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_CurveMax:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_CurveTimeMode: 0
 --- !u!1 &1299679669
 GameObject:
   m_ObjectHideFlags: 0
@@ -2851,3 +3188,4 @@ SceneRoots:
   - {fileID: 1694895709}
   - {fileID: 228603509}
   - {fileID: 1299679673}
+  - {fileID: 1091166494}

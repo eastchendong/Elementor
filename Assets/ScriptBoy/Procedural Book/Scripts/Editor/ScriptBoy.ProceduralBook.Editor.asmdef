@@ -1,0 +1,18 @@
+{
+    "name": "ScriptBoy.ProceduralBook.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d8f1eab695270e046a7c5860707aa386"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

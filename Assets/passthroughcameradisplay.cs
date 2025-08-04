@@ -50,8 +50,7 @@ namespace Elementor
             // 保存图片到文件
             // SavePictureToFile();
 
-            // 如果配置了API组件，自动触发分析
-           
+            // 如果配置了API组件，自动触发分析2
 
             quadRenderer.material.mainTexture = webcamManager.WebCamTexture;
         }

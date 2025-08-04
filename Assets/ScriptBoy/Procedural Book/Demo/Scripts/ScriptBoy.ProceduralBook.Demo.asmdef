@@ -1,0 +1,17 @@
+{
+    "name": "ScriptBoy.ProceduralBook.Demo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d8f1eab695270e046a7c5860707aa386",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
