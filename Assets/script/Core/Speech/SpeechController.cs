@@ -11,6 +11,7 @@ namespace Elementor.Core.Speech
         ReactionSuccess,
         ReactionFailure,
         SynthesisSuccess,
+        SynthesisFailure,
         GameStart,
         CharacterMeet
     }
@@ -291,7 +292,9 @@ namespace Elementor.Core.Speech
                 case SpeechTriggerType.ReactionFailure:
                     return "化学反应失败";
                 case SpeechTriggerType.SynthesisSuccess:
-                    return "成功合成新物质";
+                    return "成功合成新化合物";
+                case SpeechTriggerType.SynthesisFailure:
+                    return "合成新化合物失败";
                 case SpeechTriggerType.GameStart:
                     return "游戏开始，角色介绍自己";
                 case SpeechTriggerType.CharacterMeet:

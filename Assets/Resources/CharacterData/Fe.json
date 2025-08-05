@@ -4,6 +4,7 @@
     "prefabPath": "Characters/Fe",
     "groupId": "",
     "personality": {
-        "speakingTrait": "speaks cheerfully and optimistically with a warm, encouraging tone"
+        "speakingTrait": "speaks cheerfully and optimistically with a warm, encouraging tone",
+        "voiceId": "TX3LPaxmHKxFdv7VOQHJ"
     }
 }

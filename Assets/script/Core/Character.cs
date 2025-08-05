@@ -17,15 +17,12 @@ namespace Elementor.Core
     public class CharacterPersonality
     {
         [SerializeField] public string speakingTrait = "说话温和友善"; // Default speaking trait
+        [SerializeField] public string voiceId = "NULL"; // Default ElevenLabs voice ID
         
         public CharacterPersonality()
         {
             speakingTrait = "说话温和友善"; // Ensure default value
-        }
-        
-        public CharacterPersonality(string trait)
-        {
-            speakingTrait = trait;
+            voiceId = "NULL"; // Ensure default voice ID
         }
     }
 

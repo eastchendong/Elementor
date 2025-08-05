@@ -9,13 +9,10 @@ namespace Elementor.Core.Speech
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private GameObject speechUIPanel; // Reference to the UI panel in the character prefab
         [SerializeField] private GameObject speechTextObject; // Reference to the text GameObject in the UI panel
-        [SerializeField] private Animator characterAnimator;
+        [SerializeField] public Animator characterAnimator;
         [SerializeField] private ElevenlabsAPI elevenlabsAPI;
 
-        [Header("ElevenLabs Configuration")]
-        [SerializeField] private string apiKey;
-        [SerializeField] private string voiceId;
-        [SerializeField] private bool useElevenLabs = false;
+        public string characterVoiceId = "21m00Tcm4TlvDq8ikWAM"; // Character-specific voice ID
 
         private bool isSpeaking = false;
         private Coroutine currentSpeechCoroutine;
@@ -25,14 +22,9 @@ namespace Elementor.Core.Speech
 
         private void Awake()
         {
-            // Try to find components if not assigned
             if (audioSource == null)
                 audioSource = GetComponent<AudioSource>();
 
-            if (characterAnimator == null)
-                characterAnimator = GetComponentInChildren<Animator>();
-
-            // Get the TextMeshProUGUI component from the speechTextObject
             if (speechTextObject != null)
             {
                 speechText = speechTextObject.GetComponent<TextMeshProUGUI>();
@@ -42,15 +34,12 @@ namespace Elementor.Core.Speech
                 }
             }
 
-            // Initially hide the UI panel
             if (speechUIPanel != null)
             {
                 speechUIPanel.SetActive(false);
             }
 
-            // Setup ElevenLabs API if enabled
-            if (useElevenLabs)
-                SetupElevenLabsAPI();
+            SetupElevenLabsAPI();
         }
 
         private void SetupElevenLabsAPI()
@@ -60,9 +49,9 @@ namespace Elementor.Core.Speech
                 elevenlabsAPI = gameObject.AddComponent<ElevenlabsAPI>();
             }
 
-            // Subscribe to audio received event
             elevenlabsAPI.AudioReceived.AddListener(OnElevenLabsAudioReceived);
         }
+
 
         public void Speak(string text, AudioClip audioClip = null, float duration = 2f)
         {
@@ -71,14 +60,14 @@ namespace Elementor.Core.Speech
                 StopCoroutine(currentSpeechCoroutine);
             }
 
-            if (useElevenLabs && elevenlabsAPI != null && audioClip == null)
+            if (elevenlabsAPI != null && audioClip == null)
             {
                 // Store text and duration for when audio is received
                 pendingText = text;
                 pendingDuration = duration;
 
-                // Request audio from ElevenLabs
-                elevenlabsAPI.GetAudio(text);
+                // Request audio from ElevenLabs using character-specific voice ID
+                elevenlabsAPI.GetAudio(text, characterVoiceId);
 
                 // Show text immediately while waiting for audio
                 ShowSpeechUI(text);
@@ -153,40 +142,8 @@ namespace Elementor.Core.Speech
         [ContextMenu("Test ElevenLabs Speech")]
         public void TestElevenLabsSpeech()
         {
-            if (!useElevenLabs)
-            {
-                Debug.LogWarning("ElevenLabs is not enabled for this character.");
-                return;
-            }
-
-            string testText = $"Hello! I am {GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "a character"}. Testing ElevenLabs integration! 你好吗你好吗听得到嘛？";
+            string testText = $"Hello! I am {GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "a character"}. Testing ElevenLabs integration with voice ID: {characterVoiceId}";
             Speak(testText);
-        }
-
-        public void SetSpeechUIReferences(GameObject uiPanel, GameObject textObject)
-        {
-            speechUIPanel = uiPanel;
-            speechTextObject = textObject;
-
-            if (speechTextObject != null)
-            {
-                speechText = speechTextObject.GetComponent<TextMeshProUGUI>();
-            }
-
-            // Initially hide the UI panel
-            if (speechUIPanel != null)
-            {
-                speechUIPanel.SetActive(false);
-            }
-        }
-
-        public void EnableElevenLabs(bool enable)
-        {
-            useElevenLabs = enable;
-            if (enable && elevenlabsAPI == null)
-            {
-                SetupElevenLabsAPI();
-            }
         }
 
         public void StopSpeaking()

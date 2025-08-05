@@ -235,8 +235,7 @@ namespace Elementor
 
                 outcome.outputSlot.Occupy(newGroup);
                 
-                // Trigger synthesis success speech for the new group
-                SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.SynthesisSuccess, charactersForNewGroup);
+                SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.ReactionSuccess, charactersForNewGroup);
             }
 
             // Handle any remaining single characters if needed

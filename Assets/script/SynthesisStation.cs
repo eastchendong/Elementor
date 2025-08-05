@@ -55,6 +55,11 @@ namespace Elementor
                     Synthesize(recipe);
                     return; // Synthesize one group at a time
                 }
+                else
+                {
+                    Debug.Log($"Recipe for {recipe.resultingGroupName} does not match current characters on station.");
+                    SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.SynthesisFailure, charactersOnStation);
+                }
             }
             Debug.Log("No valid group combination found on the station.");
         }
@@ -92,7 +97,6 @@ namespace Elementor
             List<CharacterView> members = new List<CharacterView>();
             List<string> namesToFind = new List<string>(recipe.requiredCharacterNames);
 
-            // Create a copy to iterate over while removing from the original list
             List<CharacterView> stationCharactersCopy = new List<CharacterView>(charactersOnStation);
 
             foreach (var character in stationCharactersCopy)
@@ -106,18 +110,16 @@ namespace Elementor
                 }
             }
 
-            // Create the group using the controller
             CharacterGroup group = CharacterSpawnController.Instance.CreateCharacterGroup(recipe.resultingGroupName, transform.position, transform.parent);
             if (group == null) return;
 
-            // Add members to the group using the controller
             foreach (var member in members)
             {
                 CharacterSpawnController.Instance.AddCharacterToGroup(group, member);
             }
 
-            // Set group to falling so it settles on the station
             group.SetState(CharacterAnimationState.Falling);
+            SpeechController.Instance.TriggerSpeech(SpeechTriggerType.SynthesisSuccess, members);
         }
     }
 }

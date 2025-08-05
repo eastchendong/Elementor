@@ -14,10 +14,7 @@ namespace Elementor.Core.Speech
         private string _apiUrl => APIConfigManager.Config.elevenlabs_api_url;
         
         [SerializeField]
-        public string defaultVoiceId = "21m00Tcm4TlvDq8ikWAM"; // Default ElevenLabs voice
-        
-        private AudioClip _audioClip;
-
+        private string defaultVoiceId = "21m00Tcm4TlvDq8ikWAM"; // Default ElevenLabs voice
         public bool Streaming;
 
         [Range(0, 4)]

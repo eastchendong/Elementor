@@ -50,7 +50,8 @@ namespace Elementor.Core
                 groupId = "",
                 personality = new CharacterPersonality
                 {
-                    speakingTrait = "speaks in a neutral tone"
+                    speakingTrait = "speaks in a neutral tone",
+                    voiceId = "21m00Tcm4TlvDq8ikWAM" // Default voice ID
                 }
             };
         }

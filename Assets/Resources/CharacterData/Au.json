@@ -4,6 +4,7 @@
     "prefabPath": "Characters/Au",
     "groupId": "",
     "personality": {
-        "speakingTrait": "高贵优雅的贵族"
+        "speakingTrait": "高贵优雅的贵族",
+        "voiceId": "bVMeCyTHy58xNoL34h3p"
     }
 }

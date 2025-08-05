@@ -4,6 +4,7 @@
     "prefabPath": "Characters/Cl",
     "groupId": "",
     "personality": {
-        "speakingTrait": "独立自主的小公主"
+        "speakingTrait": "独立自主的小公主",
+        "voiceId": "Xb7hH8MSUJpSbSDYk0k2"
     }
 }

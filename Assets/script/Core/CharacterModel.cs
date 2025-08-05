@@ -2,6 +2,7 @@
 using System;
 using Oculus.Interaction;
 using System.Collections;
+using Elementor.Core.Speech;
 
 namespace Elementor.Core
 {
@@ -11,7 +12,7 @@ namespace Elementor.Core
 
         private CharacterAnimationState currentState = CharacterAnimationState.Idle;
         private CharacterSlot currentSlot;
-        private CharacterSlot potentialSlot; // The slot trigger we are currently inside
+        private CharacterSlot potentialSlot;
         private CharacterGroup characterGroup;
         public CharacterAnimationState CurrentAnimationState => currentState;
         public event Action<CharacterAnimationState, CharacterAnimationState> OnAnimationStateChanged;
@@ -22,6 +23,11 @@ namespace Elementor.Core
         {
             characterData = character;
             SetAnimationState(CharacterAnimationState.Idle);
+            CharacterSpeech speech = GetComponent<CharacterSpeech>();
+            if (speech != null)
+            {
+                speech.characterVoiceId = characterData?.personality.voiceId ?? "NULL";
+            }
         }
 
         public void SetAnimationState(CharacterAnimationState newState)

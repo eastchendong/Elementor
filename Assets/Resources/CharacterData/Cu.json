@@ -4,6 +4,7 @@
     "prefabPath": "Characters/Cu",
     "groupId": "",
     "personality": {
-        "speakingTrait": "说话很少的寡言骑士"
+        "speakingTrait": "说话很少的寡言骑士",
+        "voiceId": "pqHfZKP75CvOlQylNhV4"
     }
 }
