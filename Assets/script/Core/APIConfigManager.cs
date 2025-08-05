@@ -7,9 +7,10 @@ namespace Elementor.Core
     public class APIConfiguration
     {
         public string openai_api_key;
-        public string elevenlabs_api_key;
+        public string doubao_appid;
+        public string doubao_access_token;
         public string openai_api_url;
-        public string elevenlabs_api_url;
+        public string doubao_api_url;
     }
 
     public static class APIConfigManager
@@ -35,18 +36,19 @@ namespace Elementor.Core
             {
                 // First try to load from environment variables
                 string openaiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-                string elevenlabsKey = Environment.GetEnvironmentVariable("ELEVENLABS_API_KEY");
-                string elevenlabsVoiceId = Environment.GetEnvironmentVariable("ELEVENLABS_VOICE_ID");
+                string doubaoAppId = Environment.GetEnvironmentVariable("DOUBAO_APPID");
+                string doubaoAccessToken = Environment.GetEnvironmentVariable("DOUBAO_ACCESS_TOKEN");
                 
-                if (!string.IsNullOrEmpty(openaiKey) || !string.IsNullOrEmpty(elevenlabsKey))
+                if (!string.IsNullOrEmpty(openaiKey) || !string.IsNullOrEmpty(doubaoAppId))
                 {
                     // Use environment variables
                     _config = new APIConfiguration
                     {
                         openai_api_key = openaiKey ?? "",
-                        elevenlabs_api_key = elevenlabsKey ?? "",
+                        doubao_appid = doubaoAppId ?? "",
+                        doubao_access_token = doubaoAccessToken ?? "",
                         openai_api_url = Environment.GetEnvironmentVariable("OPENAI_API_URL") ?? "https://yibuapi.com/v1/chat/completions",
-                        elevenlabs_api_url = Environment.GetEnvironmentVariable("ELEVENLABS_API_URL") ?? "https://api.elevenlabs.io"
+                        doubao_api_url = Environment.GetEnvironmentVariable("DOUBAO_API_URL") ?? "https://openspeech.bytedance.com/api/v1/tts"
                     };
                     Debug.Log("API Configuration loaded from environment variables");
                 }
@@ -86,12 +88,17 @@ namespace Elementor.Core
                 isValid = false;
             }
 
-            if (string.IsNullOrEmpty(config.elevenlabs_api_key))
+            if (string.IsNullOrEmpty(config.doubao_appid))
             {
-                Debug.LogWarning("ElevenLabs API key is not configured. Set ELEVENLABS_API_KEY environment variable or update Resources/APIConfig.json");
+                Debug.LogWarning("Doubao AppID is not configured. Set DOUBAO_APPID environment variable or update Resources/APIConfig.json");
                 isValid = false;
             }
 
+            if (string.IsNullOrEmpty(config.doubao_access_token))
+            {
+                Debug.LogWarning("Doubao Access Token is not configured. Set DOUBAO_ACCESS_TOKEN environment variable or update Resources/APIConfig.json");
+                isValid = false;
+            }
 
             return isValid;
         }

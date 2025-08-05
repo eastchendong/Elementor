@@ -248,7 +248,7 @@ GameObject:
   - component: {fileID: 8361306681625712971}
   - component: {fileID: 438017140045818959}
   - component: {fileID: 7472241166912018206}
-  - component: {fileID: -5979754297925799654}
+  - component: {fileID: -5694208067029445543}
   m_Layer: 0
   m_Name: CharacterModel
   m_TagString: Untagged
@@ -362,6 +362,7 @@ MonoBehaviour:
     groupId: 
     personality:
       speakingTrait: 
+      voiceId: 21m00Tcm4TlvDq8ikWAM
   HandGrabbableController: {fileID: 759374506886638983}
 --- !u!114 &2423755591418637661
 MonoBehaviour:
@@ -451,10 +452,8 @@ MonoBehaviour:
   speechUIPanel: {fileID: 3376507725524218597}
   speechTextObject: {fileID: 7160201029437471601}
   characterAnimator: {fileID: 0}
-  elevenlabsAPI: {fileID: -5979754297925799654}
-  apiKey: sk_db2e686a923a318ebef080a307002828a39ffaa73b2f6d02
-  voiceId: 0Aj540a9UWvQPWdx9Zq4
-  useElevenLabs: 1
+  doubaoTTSAPI: {fileID: -5694208067029445543}
+  characterVoiceType: zh_male_M392_conversation_wvae_bigtts
 --- !u!82 &7472241166912018206
 AudioSource:
   m_ObjectHideFlags: 0
@@ -551,7 +550,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &-5979754297925799654
+--- !u!114 &-5694208067029445543
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -560,12 +559,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 8744643762706610891}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9ba0c87f58de944eacdf9b900c80c8a, type: 3}
+  m_Script: {fileID: 11500000, guid: f49f7a6ebc1a8f44596d52379af0429c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultVoiceId: D9bZgM9Er0PhIxuW9Jqa
-  Streaming: 0
-  LatencyOptimization: 0
+  defaultVoiceType: zh_male_M392_conversation_wvae_bigtts
+  audioEncoding: mp3
+  speedRatio: 1
   AudioReceived:
     m_PersistentCalls:
       m_Calls: []

@@ -26,7 +26,7 @@ namespace Elementor.Core
             CharacterSpeech speech = GetComponent<CharacterSpeech>();
             if (speech != null)
             {
-                speech.characterVoiceId = characterData?.personality.voiceId ?? "NULL";
+                speech.characterVoiceType = characterData?.personality.voiceId ?? "NULL";
             }
         }
 

@@ -10,8 +10,8 @@ namespace Elementor.Core.Speech
 {
     public class ElevenlabsAPI : MonoBehaviour 
     {
-        private string _apiKey => APIConfigManager.Config.elevenlabs_api_key;
-        private string _apiUrl => APIConfigManager.Config.elevenlabs_api_url;
+        private string _apiKey => APIConfigManager.Config.doubao_access_token;
+        private string _apiUrl => APIConfigManager.Config.doubao_api_url;
         
         [SerializeField]
         private string defaultVoiceId = "21m00Tcm4TlvDq8ikWAM"; // Default ElevenLabs voice

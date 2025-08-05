@@ -10,9 +10,9 @@ namespace Elementor.Core.Speech
         [SerializeField] private GameObject speechUIPanel; // Reference to the UI panel in the character prefab
         [SerializeField] private GameObject speechTextObject; // Reference to the text GameObject in the UI panel
         [SerializeField] public Animator characterAnimator;
-        [SerializeField] private ElevenlabsAPI elevenlabsAPI;
+        [SerializeField] private DoubaoTTSAPI doubaoTTSAPI;
 
-        public string characterVoiceId = "21m00Tcm4TlvDq8ikWAM"; // Character-specific voice ID
+        public string characterVoiceType = "zh_male_M392_conversation_wvae_bigtts"; // Character-specific voice type
 
         private bool isSpeaking = false;
         private Coroutine currentSpeechCoroutine;
@@ -44,12 +44,12 @@ namespace Elementor.Core.Speech
 
         private void SetupElevenLabsAPI()
         {
-            if (elevenlabsAPI == null)
+            if (doubaoTTSAPI == null)
             {
-                elevenlabsAPI = gameObject.AddComponent<ElevenlabsAPI>();
+                doubaoTTSAPI = gameObject.AddComponent<DoubaoTTSAPI>();
             }
 
-            elevenlabsAPI.AudioReceived.AddListener(OnElevenLabsAudioReceived);
+            doubaoTTSAPI.AudioReceived.AddListener(OnDoubaoAudioReceived);
         }
 
 
@@ -60,14 +60,14 @@ namespace Elementor.Core.Speech
                 StopCoroutine(currentSpeechCoroutine);
             }
 
-            if (elevenlabsAPI != null && audioClip == null)
+            if (doubaoTTSAPI != null && audioClip == null)
             {
                 // Store text and duration for when audio is received
                 pendingText = text;
                 pendingDuration = duration;
 
-                // Request audio from ElevenLabs using character-specific voice ID
-                elevenlabsAPI.GetAudio(text, characterVoiceId);
+                // Request audio from Doubao TTS using character-specific voice type
+                doubaoTTSAPI.GetAudio(text, characterVoiceType);
 
                 // Show text immediately while waiting for audio
                 ShowSpeechUI(text);
@@ -78,9 +78,9 @@ namespace Elementor.Core.Speech
             }
         }
 
-        private void OnElevenLabsAudioReceived(AudioClip audioClip)
+        private void OnDoubaoAudioReceived(AudioClip audioClip)
         {
-            Debug.Log($"Received ElevenLabs audio for character: {gameObject.name}");
+            Debug.Log($"Received Doubao TTS audio for character: {gameObject.name}");
 
             // Use the actual audio duration if available, otherwise use pending duration
             float duration = audioClip != null ? audioClip.length : pendingDuration;
@@ -139,10 +139,10 @@ namespace Elementor.Core.Speech
             currentSpeechCoroutine = null;
         }
 
-        [ContextMenu("Test ElevenLabs Speech")]
-        public void TestElevenLabsSpeech()
+        [ContextMenu("Test Doubao TTS Speech")]
+        public void TestDoubaoSpeech()
         {
-            string testText = $"Hello! I am {GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "a character"}. Testing ElevenLabs integration with voice ID: {characterVoiceId}";
+            string testText = $"你好！我是{GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "一个角色"}。正在测试豆包语音合成，使用音色：{characterVoiceType}";
             Speak(testText);
         }
 
