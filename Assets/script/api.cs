@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using Elementor.Core;
 
@@ -130,10 +129,10 @@ namespace Elementor
                 return;
             }
 
-            StartCoroutine(AnalyzeChemicalFormula(chemicalFormula));
+            StartCoroutine(AnalyzeChemicalFormula());
         }
 
-        IEnumerator AnalyzeChemicalFormula(string chemicalFormula)
+        IEnumerator AnalyzeChemicalFormula()
         {
             IsAnalyzing = true;
 
@@ -321,10 +320,9 @@ namespace Elementor
             public string content;
         }
 
-        public void AnalyzeFormula(string formula)
+        public void AnalyzeFormula()
         {
-            chemicalFormula = formula;
-            StartCoroutine(AnalyzeChemicalFormula(formula));
+            StartCoroutine(AnalyzeChemicalFormula());
         }
 
         public void GenerateDialogue(string prompt)
@@ -339,16 +337,20 @@ namespace Elementor
             // 构造简化的system prompt for dialogue
             string systemPrompt = "你是一个化学教育游戏的角色对话生成器。根据给出的角色信息和情境，生成一句简短、符合角色特点的对话。对话应该简洁有趣，不超过15个字。只返回对话内容，不要其他格式。";
 
+            // Sanitize the prompt to remove problematic characters
+            string sanitizedPrompt = SanitizeJsonString(prompt);
+            string sanitizedSystemPrompt = SanitizeJsonString(systemPrompt);
+
             string jsonBody = @"{
         ""model"": ""gpt-4o"",
         ""messages"": [
         {
             ""role"": ""system"",
-            ""content"": """ + systemPrompt.Replace("\"", "\\\"") + @"""
+            ""content"": """ + sanitizedSystemPrompt + @"""
         },
         {
             ""role"": ""user"",
-            ""content"": """ + prompt.Replace("\"", "\\\"") + @"""
+            ""content"": """ + sanitizedPrompt + @"""
         }
         ],
         ""max_tokens"": 100,
@@ -358,7 +360,7 @@ namespace Elementor
             // 创建请求
             UnityWebRequest request = new UnityWebRequest(apiUrl, "POST");
             request.redirectLimit = 10;
-            request.timeout = 30; // Shorter timeout for dialogue
+            request.timeout = 60; // Match the timeout with AnalyzeChemicalFormula
             byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             request.downloadHandler = new DownloadHandlerBuffer();
@@ -367,6 +369,8 @@ namespace Elementor
             request.SetRequestHeader("Accept", "application/json");
 
             Debug.Log("Generating dialogue with prompt: " + prompt);
+            Debug.Log("Request URL: " + apiUrl);
+            Debug.Log("Request Body: " + jsonBody);
 
             // 发送请求
             yield return request.SendWebRequest();
@@ -375,7 +379,7 @@ namespace Elementor
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string responseText = request.downloadHandler.text;
-                Debug.Log("Dialogue generation response: " + responseText);
+                Debug.Log("Complete dialogue response: " + responseText);
                 
                 // Extract dialogue content
                 string dialogueContent = ExtractDialogueContent(responseText);
@@ -387,6 +391,12 @@ namespace Elementor
             else
             {
                 Debug.LogError("Dialogue generation error: " + request.error);
+                Debug.LogError("Response Code: " + request.responseCode);
+                Debug.LogError("Response Headers: " + request.GetResponseHeader("Content-Type"));
+                if (request.downloadHandler != null)
+                {
+                    Debug.LogError("Error Response Body: " + request.downloadHandler.text);
+                }
                 IsAnalyzing = false;
                 OnAnalysisComplete?.Invoke("");
             }
@@ -396,19 +406,44 @@ namespace Elementor
         {
             try
             {
+                Debug.Log("Extracting dialogue from: " + responseText);
                 var apiResponse = JsonUtility.FromJson<ApiResponse>(responseText);
                 if (apiResponse?.choices != null && apiResponse.choices.Length > 0)
                 {
                     string content = apiResponse.choices[0].message.content;
+                    Debug.Log("Extracted dialogue content: " + content);
                     return content.Trim().Trim('"'); // Remove quotes if present
+                }
+                else
+                {
+                    Debug.LogError("No choices found in API response");
                 }
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"Failed to extract dialogue content: {ex.Message}");
+                Debug.LogError($"Response text: {responseText}");
             }
             
             return "";
+        }
+
+        // Helper method to sanitize strings for JSON
+        private string SanitizeJsonString(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return "";
+
+            // Replace problematic characters
+            return input
+                .Replace("\\", "\\\\")    // Escape backslashes first
+                .Replace("\"", "\\\"")    // Escape quotes
+                .Replace("\r\n", "\\n")   // Replace Windows line endings
+                .Replace("\n", "\\n")     // Replace Unix line endings
+                .Replace("\r", "\\n")     // Replace Mac line endings
+                .Replace("\t", "\\t")     // Replace tabs
+                .Replace("\b", "\\b")     // Replace backspace
+                .Replace("\f", "\\f");    // Replace form feed
         }
     }
 }

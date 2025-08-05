@@ -180,19 +180,16 @@ namespace Elementor.Core.Speech
         private string CreateMultiCharacterDialoguePrompt(SpeechTriggerType triggerType, List<CharacterView> participants, string loreContext, string triggerDescription, string participantInfo)
         {
             var prompt = new StringBuilder();
-            prompt.AppendLine("请为以下化学元素角色生成对话序列：");
-            prompt.AppendLine($"情境：{triggerDescription}");
-            prompt.AppendLine($"背景故事：{loreContext}");
-            prompt.AppendLine($"参与角色：{participantInfo}");
-            prompt.AppendLine();
-            prompt.AppendLine("要求：");
-            prompt.AppendLine("1. 每个角色都要有至少一句对话");
-            prompt.AppendLine("2. 对话要符合角色的元素特性");
-            prompt.AppendLine("3. 每句对话不超过20个字");
-            prompt.AppendLine("4. 请按照以下格式返回：");
-            prompt.AppendLine("[角色名]: 对话内容");
-            prompt.AppendLine();
-            prompt.AppendLine("请生成对话：");
+            prompt.Append("请为以下化学元素角色生成对话序列：");
+            prompt.Append($"情境：{triggerDescription}；");
+            prompt.Append($"背景故事：{loreContext}；");
+            prompt.Append($"参与角色：{participantInfo}；");
+            prompt.Append("要求：");
+            prompt.Append("1. 每个角色都要有至少一句对话；");
+            prompt.Append("2. 对话要符合角色的元素特性；");
+            prompt.Append("3. 每句对话不超过20个字；");
+            prompt.Append("4. 请按照以下格式返回：[角色名]: 对话内容；");
+            prompt.Append("请生成对话。");
             
             return prompt.ToString();
         }

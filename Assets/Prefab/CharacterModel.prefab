@@ -164,8 +164,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Dialogue
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3e2e65fba50d19f47a2cb90076afb6e7, type: 2}
+  m_sharedMaterial: {fileID: -6921188777934836801, guid: 3e2e65fba50d19f47a2cb90076afb6e7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -563,10 +563,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ba0c87f58de944eacdf9b900c80c8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _voiceId: 0Aj540a9UWvQPWdx9Zq4
-  _apiKey: sk_db2e686a923a318ebef080a307002828a39ffaa73b2f6d02
-  _apiUrl: https://api.elevenlabs.io
-  Streaming: 1
+  defaultVoiceId: D9bZgM9Er0PhIxuW9Jqa
+  Streaming: 0
   LatencyOptimization: 0
   AudioReceived:
     m_PersistentCalls:

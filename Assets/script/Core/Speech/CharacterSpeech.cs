@@ -159,7 +159,7 @@ namespace Elementor.Core.Speech
                 return;
             }
 
-            string testText = $"Hello! I am {GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "a character"}. Testing ElevenLabs integration!";
+            string testText = $"Hello! I am {GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "a character"}. Testing ElevenLabs integration! 你好吗你好吗听得到嘛？";
             Speak(testText);
         }
 

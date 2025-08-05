@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
-using Elementor.Core;
 
 namespace Elementor.Core.Speech
 {
