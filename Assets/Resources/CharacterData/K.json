@@ -4,6 +4,7 @@
     "prefabPath": "Characters/K",
     "groupId": "",
     "personality": {
-        "speakingTrait": "积极向上的运动员"
+        "speakingTrait": "积极向上的运动员",
+        "voiceId": "zh_female_shuangkuaisisi_emo_v2_mars_bigtts"
     }
 }

@@ -142,7 +142,7 @@ namespace Elementor.Core.Speech
         [ContextMenu("Test Doubao TTS Speech")]
         public void TestDoubaoSpeech()
         {
-            string testText = $"你好！我是{GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "一个角色"}。正在测试豆包语音合成，使用音色：{characterVoiceType}";
+            string testText = $"你好我是{GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "a character"}. 正在测试豆包，使用的声音: {characterVoiceType}";
             Speak(testText);
         }
 

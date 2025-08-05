@@ -4,6 +4,7 @@
     "prefabPath": "Characters/Mg",
     "groupId": "",
     "personality": {
-        "speakingTrait": "温和友善的治愈师"
+        "speakingTrait": "温和友善的治愈师",
+        "voiceId": "zh_female_shuangkuaisisi_emo_v2_mars_bigtts"
     }
 }

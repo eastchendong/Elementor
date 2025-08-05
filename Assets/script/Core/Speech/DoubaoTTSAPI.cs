@@ -62,7 +62,7 @@ namespace Elementor.Core.Speech
                 app = new AppConfig
                 {
                     appid = _appId,
-                    token = "access_token", // 根据文档，这里应该是固定字符串
+                    token = "access_token",
                     cluster = "volcano_tts"
                 },
                 user = new UserConfig
@@ -84,7 +84,6 @@ namespace Elementor.Core.Speech
             };
             
             var json = JsonConvert.SerializeObject(postData);
-            Debug.Log($"Request JSON: {json}");
             
             var request = new UnityWebRequest(_apiUrl, "POST");
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
@@ -94,7 +93,6 @@ namespace Elementor.Core.Speech
             request.SetRequestHeader("Authorization", $"Bearer;{_accessToken}");
             
             Debug.Log($"Sending TTS request to Doubao: {text}");
-            Debug.Log($"Authorization header: Bearer;{_accessToken}");
             yield return request.SendWebRequest();
 
             if (request.result != UnityWebRequest.Result.Success) 
@@ -102,60 +100,62 @@ namespace Elementor.Core.Speech
                 Debug.LogError("Error from Doubao TTS API: " + request.error);
                 Debug.LogError("Response: " + request.downloadHandler.text);
                 Debug.LogError($"Response Code: {request.responseCode}");
+                request.Dispose();
                 yield break;
             }
             
+            DoubaoTTSResponse response = null;
+            bool parseSuccess = false;
+            
             try
             {
-                var response = JsonConvert.DeserializeObject<DoubaoTTSResponse>(request.downloadHandler.text);
-                
-                if (response.code == 3000) // Success code
+                response = JsonConvert.DeserializeObject<DoubaoTTSResponse>(request.downloadHandler.text);
+                parseSuccess = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to parse Doubao TTS response: {ex.Message}");
+                parseSuccess = false;
+            }
+            
+            request.Dispose();
+            
+            if (parseSuccess && response != null)
+            {
+                if (response.code == 3000)
                 {
                     byte[] audioBytes = Convert.FromBase64String(response.data);
-                    AudioClip audioClip = CreateAudioClipFromMP3(audioBytes, "DoubaoTTS_" + reqId);
+                    Debug.Log($"Received audio data: {audioBytes.Length} bytes");
                     
-                    if (audioClip != null)
-                    {
-                        Debug.Log($"Successfully received audio clip: {audioClip.name}, length: {audioClip.length}s");
-                        AudioReceived.Invoke(audioClip);
-                    }
-                    else
-                    {
-                        Debug.LogError("Failed to create AudioClip from received data");
-                    }
+                    yield return StartCoroutine(CreateAudioClipFromMP3(audioBytes, "DoubaoTTS_" + reqId));
                 }
                 else
                 {
                     Debug.LogError($"Doubao TTS API returned error code: {response.code}, message: {response.message}");
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.LogError($"Failed to parse Doubao TTS response: {ex.Message}");
-            }
-            
-            request.Dispose();
         }
 
-        private AudioClip CreateAudioClipFromMP3(byte[] audioData, string clipName)
+        private IEnumerator CreateAudioClipFromMP3(byte[] audioData, string clipName)
         {
-            // For MP3 data, we need to save it temporarily and load it
-            // Unity's AudioClip.Create doesn't directly support MP3 decoding
             string tempPath = System.IO.Path.Combine(Application.temporaryCachePath, clipName + ".mp3");
+            bool writeSuccess = false;
             
             try
             {
                 System.IO.File.WriteAllBytes(tempPath, audioData);
-                
-                // Use UnityWebRequest to load the MP3 file
-                StartCoroutine(LoadAudioClipFromFile(tempPath, clipName));
-                
-                return null; // Will be handled in coroutine
+                Debug.Log($"Saved temporary MP3 file: {tempPath} ({audioData.Length} bytes)");
+                writeSuccess = true;
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Failed to create temporary MP3 file: {ex.Message}");
-                return null;
+                writeSuccess = false;
+            }
+            
+            if (writeSuccess)
+            {
+                yield return StartCoroutine(LoadAudioClipFromFile(tempPath, clipName));
             }
         }
 
@@ -168,12 +168,22 @@ namespace Elementor.Core.Speech
                 if (request.result == UnityWebRequest.Result.Success)
                 {
                     AudioClip audioClip = DownloadHandlerAudioClip.GetContent(request);
-                    audioClip.name = clipName;
-                    AudioReceived.Invoke(audioClip);
+                    if (audioClip != null)
+                    {
+                        audioClip.name = clipName;
+                        Debug.Log($"Successfully created AudioClip: {audioClip.name}, length: {audioClip.length}s, frequency: {audioClip.frequency}Hz");
+                        AudioReceived.Invoke(audioClip);
+                    }
+                    else
+                    {
+                        Debug.LogError("DownloadHandlerAudioClip.GetContent returned null");
+                    }
                 }
                 else
                 {
                     Debug.LogError($"Failed to load audio from file: {request.error}");
+                    Debug.LogError($"File path: {filePath}");
+                    Debug.LogError($"File exists: {System.IO.File.Exists(filePath)}");
                 }
             }
 
@@ -183,6 +193,7 @@ namespace Elementor.Core.Speech
                 if (System.IO.File.Exists(filePath))
                 {
                     System.IO.File.Delete(filePath);
+                    Debug.Log($"Cleaned up temporary file: {filePath}");
                 }
             }
             catch (Exception ex)
