@@ -22,54 +22,37 @@ namespace Elementor.Core.Speech
 
         private void Awake()
         {
-            if (audioSource == null)
-                audioSource = GetComponent<AudioSource>();
+            if (audioSource == null) audioSource = GetComponent<AudioSource>();
 
             if (speechTextObject != null)
             {
                 speechText = speechTextObject.GetComponent<TextMeshProUGUI>();
-                if (speechText == null)
-                {
-                    Debug.LogWarning($"No TextMeshProUGUI found on speechTextObject for {gameObject.name}");
-                }
+                if (speechText == null) Debug.LogWarning($"No TextMeshProUGUI found on speechTextObject for {gameObject.name}");
             }
 
-            if (speechUIPanel != null)
-            {
-                speechUIPanel.SetActive(false);
-            }
-
-            SetupElevenLabsAPI();
+            if (speechUIPanel != null) speechUIPanel.SetActive(false);
+            
+            SetupTTSAPI();
         }
 
-        private void SetupElevenLabsAPI()
+        private void SetupTTSAPI()
         {
-            if (doubaoTTSAPI == null)
-            {
-                doubaoTTSAPI = gameObject.AddComponent<DoubaoTTSAPI>();
-            }
-
+            if (doubaoTTSAPI == null) doubaoTTSAPI = gameObject.AddComponent<DoubaoTTSAPI>();
             doubaoTTSAPI.AudioReceived.AddListener(OnDoubaoAudioReceived);
         }
 
 
         public void Speak(string text, AudioClip audioClip = null, float duration = 2f)
         {
-            if (isSpeaking && currentSpeechCoroutine != null)
-            {
-                StopCoroutine(currentSpeechCoroutine);
-            }
+            if (isSpeaking && currentSpeechCoroutine != null) StopCoroutine(currentSpeechCoroutine);
 
             if (doubaoTTSAPI != null && audioClip == null)
             {
-                // Store text and duration for when audio is received
                 pendingText = text;
                 pendingDuration = duration;
 
-                // Request audio from Doubao TTS using character-specific voice type
                 doubaoTTSAPI.GetAudio(text, characterVoiceType);
 
-                // Show text immediately while waiting for audio
                 ShowSpeechUI(text);
             }
             else
@@ -142,8 +125,7 @@ namespace Elementor.Core.Speech
         [ContextMenu("Test Doubao TTS Speech")]
         public void TestDoubaoSpeech()
         {
-            string testText = $"你好我是{GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "a character"}. 正在测试豆包，使用的声音: {characterVoiceType}";
-            Speak(testText);
+            Speak($"你好我是{GetComponent<CharacterView>()?.GetModel()?.GetCharacterName() ?? "a character"}. 正在测试豆包，使用的声音: {characterVoiceType}");
         }
 
         public void StopSpeaking()

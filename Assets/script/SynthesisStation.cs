@@ -16,12 +16,28 @@ namespace Elementor
     [RequireComponent(typeof(Collider))]
     public class SynthesisStation : MonoBehaviour
     {
-        [SerializeField] private List<SynthesisRecipe> recipes;
+        [SerializeField] private List<SynthesisRecipe> recipes; // Keep for fallback
         private List<CharacterView> charactersOnStation = new List<CharacterView>();
+        private bool isCheckingSynthesis = false;
 
         private void Awake()
         {
             GetComponent<Collider>().isTrigger = true;
+            
+            // Subscribe to API synthesis response
+            if (API.Instance != null)
+            {
+                API.Instance.OnSynthesisCheckComplete += OnSynthesisCheckComplete;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Unsubscribe from API events
+            if (API.Instance != null)
+            {
+                API.Instance.OnSynthesisCheckComplete -= OnSynthesisCheckComplete;
+            }
         }
 
         private void OnTriggerEnter(Collider other)
@@ -48,20 +64,104 @@ namespace Elementor
         [ContextMenu("Try Synthesize Group")]
         public void TrySynthesizeGroup()
         {
+            if (isCheckingSynthesis)
+            {
+                Debug.Log("Already checking synthesis possibility...");
+                return;
+            }
+
+            if (charactersOnStation.Count < 2)
+            {
+                Debug.Log("Need at least 2 characters for synthesis.");
+                SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.SynthesisFailure, charactersOnStation);
+                return;
+            }
+
+            // Get element names from characters
+            List<string> elementNames = charactersOnStation
+                .Select(c => c.GetModel().GetCharacterName())
+                .ToList();
+
+            Debug.Log($"Checking synthesis for elements: {string.Join(", ", elementNames)}");
+
+            // Use API to check synthesis possibility
+            if (API.Instance != null)
+            {
+                isCheckingSynthesis = true;
+                API.Instance.CheckSynthesisPossibility(elementNames);
+            }
+            else
+            {
+                Debug.LogError("API Instance not found, falling back to predefined recipes.");
+                TrySynthesizeWithRecipes();
+            }
+        }
+
+        private void OnSynthesisCheckComplete(API.SynthesisResponse response)
+        {
+            isCheckingSynthesis = false;
+
+            if (response.can_synthesize)
+            {
+                Debug.Log($"Synthesis successful: {response.compound_formula} ({response.compound_name})");
+                Debug.Log($"Explanation: {response.explanation}");
+                
+                // Store the current characters before clearing them
+                List<CharacterView> successfulCharacters = new List<CharacterView>(charactersOnStation);
+                SynthesizeWithAPIResult(response);
+                SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.SynthesisSuccess, successfulCharacters);
+            }
+            else
+            {
+                Debug.Log($"Synthesis failed: {response.explanation}");
+                // Pass the current characters on station for failure speech
+                SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.SynthesisFailure, new List<CharacterView>(charactersOnStation));
+            }
+        }
+
+        private void SynthesizeWithAPIResult(API.SynthesisResponse response)
+        {
+            if (CharacterSpawnController.Instance == null)
+            {
+                Debug.LogError("Cannot synthesize, CharacterSpawnController instance is missing.");
+                return;
+            }
+
+            // Use the compound formula as the group name
+            string resultingGroupName = response.compound_formula;
+            
+            List<CharacterView> members = new List<CharacterView>(charactersOnStation);
+            charactersOnStation.Clear();
+
+            CharacterGroup group = CharacterSpawnController.Instance.CreateCharacterGroup(
+                resultingGroupName, 
+                transform.position, 
+                transform.parent
+            );
+            
+            if (group == null) return;
+
+            foreach (var member in members)
+            {
+                CharacterSpawnController.Instance.AddCharacterToGroup(group, member);
+            }
+
+            group.SetState(CharacterAnimationState.Falling);
+        }
+
+        // Fallback method using predefined recipes
+        private void TrySynthesizeWithRecipes()
+        {
             foreach (var recipe in recipes)
             {
                 if (CanSynthesize(recipe))
                 {
                     Synthesize(recipe);
-                    return; // Synthesize one group at a time
-                }
-                else
-                {
-                    Debug.Log($"Recipe for {recipe.resultingGroupName} does not match current characters on station.");
-                    SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.SynthesisFailure, charactersOnStation);
+                    return;
                 }
             }
             Debug.Log("No valid group combination found on the station.");
+            SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.SynthesisFailure, charactersOnStation);
         }
 
         private bool CanSynthesize(SynthesisRecipe recipe)

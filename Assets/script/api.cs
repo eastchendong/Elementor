@@ -1,7 +1,6 @@
-using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.Networking;
-using System.Text;
 using System.IO;
 using Elementor.Core;
 
@@ -96,15 +95,21 @@ namespace Elementor
             public bool story_continuation;
         }
 
-        // API configuration - now loaded from environment or resources
-        private string apiKey => APIConfigManager.Config.openai_api_key;
-        private string apiUrl => APIConfigManager.Config.openai_api_url;
+        [System.Serializable]
+        public class SynthesisResponse
+        {
+            public bool can_synthesize;
+            public string compound_formula;
+            public string compound_name;
+            public string explanation;
+        }
 
-        [HideInInspector]public string chemicalFormula = "";
+        [HideInInspector] public string chemicalFormula = "";
 
         public System.Action<string> OnAnalysisComplete;
+        public System.Action<SynthesisResponse> OnSynthesisCheckComplete;
 
-        public bool IsAnalyzing { get; private set; } = false;
+        public bool IsAnalyzing => HttpRequestManager.Instance?.IsRequesting ?? false;
 
         void Awake()
         {
@@ -119,8 +124,6 @@ namespace Elementor
             }
         }
 
-
-
         public void StartAnalysisFromImage()
         {
             if (IsAnalyzing)
@@ -129,27 +132,21 @@ namespace Elementor
                 return;
             }
 
-            StartCoroutine(AnalyzeChemicalFormula());
+            AnalyzeChemicalFormula();
         }
 
-        IEnumerator AnalyzeChemicalFormula()
+        void AnalyzeChemicalFormula()
         {
-            IsAnalyzing = true;
-
-            // 构造system prompt
             string systemPrompt = @"你是一个为化学教育游戏生成剧情与交互数据的AI引擎，根据我给出的图片提取化学方程式并教学。游戏背景设定如下：在世界的中心矗立着元素山，由金属堡与非金属谷双峰构成。金属（金属性越强越躁动），不愿携带能量球；非金属居民（非金属性越强越躁动），善于收集与操控能量球。千百年来，两族隔山相望，彼此误解，文明也停止在相对简单的阶段。某一天山下出现了""电离领域""，是唯一能连接两族的神秘地区。元素们陆续下山，在此抛弃或吸收电子球，获得对应灵力，化身为更强大的离子个体、军团或商队，在此之后互相结盟，产生新物质。玩家作为旁观者，见证来来往往的联盟变化，一次次踏入电离之河，签订新契约，发生新故事，产生新物质。请你：1. 分析反应物、生成物、反应条件、电子流动路径；2. 根据游戏世界观创作剧情大标题与3~4句15字以内的剧情短句，""标题"": ""包含角色，概括剧情"", ""情节"": [ ""开始（根据情况分成两到三句）：故事性表达：拆解反应物集团，解释每个离子个人，军团或商队（展现和电子球关联）的来历以及契约者决定分开/取消合作的理由"", ""发展：离子们在离子河产生围绕电子球的争夺/交易/合作，有故事性的接触或冲突，生成新的生成物集团，达成新的契约"", ""结尾：可选结尾句，总结或留下悬念"" ]加入奇幻故事性，除了精准的单质元素名称（字母表示）和电子球外避免直接的化学描述（离子团），语言简洁易懂，故事简洁经典具有逻辑性，展现反应过程，每句15字以内。；3. 精确列出反应中每个化学物质所含元素的种类与个数，明确电子的转移方向与数量；4. 输出一份完整的 JSON 文件，结构必须符合以下字段规范（字段名、顺序与嵌套不可更改）：JSON结构字段说明：{ ""scene_id"": ""string（唯一场景ID）"", ""story"": { ""title"": ""string（剧情标题）"", ""plot"": [""string"", ""string"", ""string"", ""string（每句≤10字）""] }, ""reaction"": { ""equation"": ""string（配平反应式）"", ""type"": ""string（反应类型）"", ""conditions"": [""string"", ...], ""reactants"": [ { ""name"": ""string（化学式）"", ""type"": ""单质 / 离子团"", ""count"": int（反应系数）, ""elements"": [ { ""element"": ""string"", ""count"": int } ] } ], ""products"": [ { ""name"": ""string"", ""type"": ""单质 / 离子团"", ""count"": int, ""elements"": [ { ""element"": ""string"", ""count"": int } ] } ] }, ""electron_transfer"": { ""from"": ""string（失电子物）"", ""to"": ""string（得电子物）"", ""electron_count"": int, ""description"": ""string（电子流简述）"" }, ""gameplay_trigger"": { ""required_ions"": [ { ""name"": ""string（离子名称）"", ""from"": ""string（来源化合物）"", ""elements"": [ { ""element"": ""string"", ""count"": int } ] } ], ""reaction_area"": ""string（反应台名称）"", ""success_effects"": { ""animation"": ""string（动画代号）"", ""new_items"": [""string"", ...], ""story_continuation"": true } } } }。请严格按照此JSON格式返回，不要添加任何其他内容。";
 
-            // 读取图片文件 - 修改为使用StreamingAssets/Images/路径
             string imagePath = Path.Combine(Application.streamingAssetsPath, "Images", "zn.jpg");
             if (!System.IO.File.Exists(imagePath))
             {
                 Debug.LogError("Image file not found: " + imagePath);
-                IsAnalyzing = false;
                 OnAnalysisComplete?.Invoke("{}");
-                yield break;
+                return;
             }
 
-            // 读取图片并转换为base64
             byte[] imageBytes = System.IO.File.ReadAllBytes(imagePath);
             string base64Image = System.Convert.ToBase64String(imageBytes);
 
@@ -178,168 +175,34 @@ namespace Elementor
         ],
         ""max_tokens"": 4000,
         ""temperature"": 0.1
-        }   ";
+        }";
 
-            // 创建请求
-            UnityWebRequest request = new UnityWebRequest(apiUrl, "POST");
-            request.redirectLimit = 10; // 设置重定向限制
-            request.timeout = 60; // 设置60秒超时
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("Authorization", "Bearer " + apiKey);
-            request.SetRequestHeader("Accept", "application/json");
-
-            // 调试：打印请求信息
-            Debug.Log("Request URL: " + apiUrl);
-            Debug.Log("Request Body: " + jsonBody);
-
-            // 发送请求
-            yield return request.SendWebRequest();
-
-            // 处理响应
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                string responseText = request.downloadHandler.text;
-                Debug.Log("Complete AI response: " + responseText);
-                ParseChemicalResponse(responseText);
-            }
-            else
-            {
-                Debug.LogError("Error: " + request.error);
-                Debug.LogError("Response Code: " + request.responseCode);
-                Debug.LogError("Response Headers: " + request.GetResponseHeader("Content-Type"));
-
-                // Notify completion even on error
-                IsAnalyzing = false;
-                OnAnalysisComplete?.Invoke("{}");
-            }
+            HttpRequestManager.Instance?.SendRequest(
+                jsonBody,
+                OnAnalysisSuccess,
+                OnAnalysisError
+            );
         }
 
-        // 解析化学响应
-        void ParseChemicalResponse(string jsonResponse)
+        void OnAnalysisSuccess(string responseText)
         {
-            Debug.Log("Complete AI response content: " + jsonResponse);
-
-            // Extract the actual JSON from the response
-            string cleanedJson = ExtractJsonFromResponse(jsonResponse);
-
-            // Mark analysis as complete and notify
-            IsAnalyzing = false;
+            Debug.Log("Chemical analysis response received");
+            string cleanedJson = HttpRequestManager.ExtractJsonFromResponse(responseText);
             OnAnalysisComplete?.Invoke(cleanedJson);
         }
 
-        // Helper method to extract JSON from API response
-        private string ExtractJsonFromResponse(string responseText)
+        void OnAnalysisError(string error)
         {
-            try
-            {
-                // Parse the API response to get the actual content
-                var apiResponse = JsonUtility.FromJson<ApiResponse>(responseText);
-                if (apiResponse?.choices != null && apiResponse.choices.Length > 0)
-                {
-                    string content = apiResponse.choices[0].message.content;
-                    return CleanJsonContent(content);
-                }
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"Failed to parse API response: {ex.Message}");
-            }
-            
-            // Fallback: try to clean the original response
-            return CleanJsonContent(responseText);
-        }
-        
-        // Helper method to clean JSON content from markdown formatting
-        private string CleanJsonContent(string content)
-        {
-            if (string.IsNullOrEmpty(content))
-                return "{}";
-                
-            // Remove markdown code block formatting
-            content = content.Trim();
-            
-            // Remove ```json at the beginning
-            if (content.StartsWith("```json"))
-            {
-                content = content.Substring(7);
-            }
-            else if (content.StartsWith("```"))
-            {
-                content = content.Substring(3);
-            }
-            
-            // Remove ``` at the end
-            if (content.EndsWith("```"))
-            {
-                content = content.Substring(0, content.Length - 3);
-            }
-            
-            // Trim whitespace again
-            content = content.Trim();
-            
-            // Validate that it starts and ends with braces
-            if (!content.StartsWith("{") || !content.EndsWith("}"))
-            {
-                Debug.LogWarning("Content doesn't appear to be valid JSON format");
-                // Try to find JSON within the content
-                int startIndex = content.IndexOf('{');
-                int endIndex = content.LastIndexOf('}');
-                
-                if (startIndex >= 0 && endIndex > startIndex)
-                {
-                    content = content.Substring(startIndex, endIndex - startIndex + 1);
-                }
-                else
-                {
-                    Debug.LogError("Could not extract valid JSON from response");
-                    return "{}";
-                }
-            }
-            
-            return content;
-        }
-
-        [System.Serializable]
-        private class ApiResponse
-        {
-            public Choice[] choices;
-        }
-
-        [System.Serializable]
-        private class Choice
-        {
-            public Message message;
-        }
-
-        [System.Serializable]
-        private class Message
-        {
-            public string content;
-        }
-
-        public void AnalyzeFormula()
-        {
-            StartCoroutine(AnalyzeChemicalFormula());
+            Debug.LogError("Chemical analysis failed: " + error);
+            OnAnalysisComplete?.Invoke("{}");
         }
 
         public void GenerateDialogue(string prompt)
         {
-            StartCoroutine(GenerateDialogueCoroutine(prompt));
-        }
-
-        IEnumerator GenerateDialogueCoroutine(string prompt)
-        {
-            IsAnalyzing = true;
-
-            // 构造简化的system prompt for dialogue
             string systemPrompt = "你是一个化学教育游戏的角色对话生成器。根据给出的角色信息和情境，生成一句简短、符合角色特点的对话。对话应该简洁有趣，不超过15个字。只返回对话内容，不要其他格式。";
 
-            // Sanitize the prompt to remove problematic characters
-            string sanitizedPrompt = SanitizeJsonString(prompt);
-            string sanitizedSystemPrompt = SanitizeJsonString(systemPrompt);
+            string sanitizedPrompt = HttpRequestManager.SanitizeJsonString(prompt);
+            string sanitizedSystemPrompt = HttpRequestManager.SanitizeJsonString(systemPrompt);
 
             string jsonBody = @"{
         ""model"": ""gpt-4o"",
@@ -357,93 +220,161 @@ namespace Elementor
         ""temperature"": 0.7
         }";
 
-            // 创建请求
-            UnityWebRequest request = new UnityWebRequest(apiUrl, "POST");
-            request.redirectLimit = 10;
-            request.timeout = 60; // Match the timeout with AnalyzeChemicalFormula
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("Authorization", "Bearer " + apiKey);
-            request.SetRequestHeader("Accept", "application/json");
-
             Debug.Log("Generating dialogue with prompt: " + prompt);
-            Debug.Log("Request URL: " + apiUrl);
-            Debug.Log("Request Body: " + jsonBody);
 
-            // 发送请求
-            yield return request.SendWebRequest();
+            HttpRequestManager.Instance?.SendRequest(
+                jsonBody,
+                OnDialogueSuccess,
+                OnDialogueError
+            );
+        }
 
-            // 处理响应
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                string responseText = request.downloadHandler.text;
-                Debug.Log("Complete dialogue response: " + responseText);
-                
-                // Extract dialogue content
-                string dialogueContent = ExtractDialogueContent(responseText);
-                
-                // Notify completion
-                IsAnalyzing = false;
-                OnAnalysisComplete?.Invoke(dialogueContent);
-            }
-            else
-            {
-                Debug.LogError("Dialogue generation error: " + request.error);
-                Debug.LogError("Response Code: " + request.responseCode);
-                Debug.LogError("Response Headers: " + request.GetResponseHeader("Content-Type"));
-                if (request.downloadHandler != null)
-                {
-                    Debug.LogError("Error Response Body: " + request.downloadHandler.text);
-                }
-                IsAnalyzing = false;
-                OnAnalysisComplete?.Invoke("");
-            }
+        void OnDialogueSuccess(string responseText)
+        {
+            string dialogueContent = ExtractDialogueContent(responseText);
+            OnAnalysisComplete?.Invoke(dialogueContent);
+        }
+
+        void OnDialogueError(string error)
+        {
+            Debug.LogError("Dialogue generation failed: " + error);
+            OnAnalysisComplete?.Invoke("");
         }
 
         private string ExtractDialogueContent(string responseText)
         {
             try
             {
-                Debug.Log("Extracting dialogue from: " + responseText);
-                var apiResponse = JsonUtility.FromJson<ApiResponse>(responseText);
+                string cleanedJson = HttpRequestManager.ExtractJsonFromResponse(responseText);
+                var apiResponse = JsonUtility.FromJson<HttpRequestManager.ApiResponse>(cleanedJson);
                 if (apiResponse?.choices != null && apiResponse.choices.Length > 0)
                 {
                     string content = apiResponse.choices[0].message.content;
-                    Debug.Log("Extracted dialogue content: " + content);
-                    return content.Trim().Trim('"'); // Remove quotes if present
-                }
-                else
-                {
-                    Debug.LogError("No choices found in API response");
+                    return content.Trim().Trim('"');
                 }
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"Failed to extract dialogue content: {ex.Message}");
-                Debug.LogError($"Response text: {responseText}");
             }
             
             return "";
         }
 
-        // Helper method to sanitize strings for JSON
-        private string SanitizeJsonString(string input)
+        public void CheckSynthesisPossibility(List<string> elementNames)
         {
-            if (string.IsNullOrEmpty(input))
-                return "";
+            if (IsAnalyzing)
+            {
+                Debug.LogWarning("Analysis is already in progress.");
+                return;
+            }
 
-            // Replace problematic characters
-            return input
-                .Replace("\\", "\\\\")    // Escape backslashes first
-                .Replace("\"", "\\\"")    // Escape quotes
-                .Replace("\r\n", "\\n")   // Replace Windows line endings
-                .Replace("\n", "\\n")     // Replace Unix line endings
-                .Replace("\r", "\\n")     // Replace Mac line endings
-                .Replace("\t", "\\t")     // Replace tabs
-                .Replace("\b", "\\b")     // Replace backspace
-                .Replace("\f", "\\f");    // Replace form feed
+            Dictionary<string, int> elementCounts = new Dictionary<string, int>();
+            foreach (string element in elementNames)
+            {
+                if (elementCounts.ContainsKey(element))
+                    elementCounts[element]++;
+                else
+                    elementCounts[element] = 1;
+            }
+
+            string elementList = string.Join(", ", elementCounts.Select(kvp => $"{kvp.Value}个{kvp.Key}"));
+
+            string systemPrompt = @"你是一个化学合成判断AI。给定一组元素和它们的数量，判断是否能合成一个合理的化合物。
+
+规则：
+1. 只考虑元素原子个数的组合，判断能否形成稳定的化学化合物
+2. 包括但不限于：单质分子（如H2, O2, N2, Cl2, Br2, I2, F2等）、离子化合物、共价化合物
+3. 所有给定的元素都必须被使用，不能有剩余
+4. 常见的合成例子：
+   - 2个H → H2（氢气）
+   - 2个Cl → Cl2（氯气）
+   - 1个Na + 1个Cl → NaCl（氯化钠）
+   - 1个Fe + 2个Cl → FeCl2（氯化亚铁）
+   - 2个H + 1个O → H2O（水）
+5. 如果能合成，给出标准的化学分子式和化合物名称
+6. 如果不能合成，说明具体原因
+
+请严格按照以下JSON格式返回：
+{
+    ""can_synthesize"": true/false,
+    ""compound_formula"": ""化合物分子式（如果能合成）"",
+    ""compound_name"": ""化合物名称（如果能合成）"",
+    ""explanation"": ""简短解释""
+}";
+
+            string userPrompt = $"请判断以下元素是否能合成化合物：{elementList}";
+
+            string sanitizedSystemPrompt = HttpRequestManager.SanitizeJsonString(systemPrompt);
+            string sanitizedUserPrompt = HttpRequestManager.SanitizeJsonString(userPrompt);
+
+            string jsonBody = @"{
+        ""model"": ""gpt-4o"",
+        ""messages"": [
+        {
+            ""role"": ""system"",
+            ""content"": """ + sanitizedSystemPrompt + @"""
+        },
+        {
+            ""role"": ""user"",
+            ""content"": """ + sanitizedUserPrompt + @"""
         }
+        ],
+        ""max_tokens"": 500,
+        ""temperature"": 0.1
+        }";
+
+            Debug.Log("Checking synthesis possibility for: " + elementList);
+
+            HttpRequestManager.Instance?.SendRequest(
+                jsonBody,
+                OnSynthesisSuccess,
+                OnSynthesisError
+            );
+        }
+
+        void OnSynthesisSuccess(string responseText)
+        {
+            try
+            {
+                string cleanedJson = HttpRequestManager.ExtractJsonFromResponse(responseText);
+                SynthesisResponse response = JsonUtility.FromJson<SynthesisResponse>(cleanedJson);
+                
+                if (response != null)
+                {
+                    Debug.Log($"Synthesis result: {response.can_synthesize}, Formula: {response.compound_formula}");
+                    OnSynthesisCheckComplete?.Invoke(response);
+                }
+                else
+                {
+                    OnSynthesisCheckComplete?.Invoke(new SynthesisResponse 
+                    { 
+                        can_synthesize = false, 
+                        explanation = "解析响应失败" 
+                    });
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Error parsing synthesis response: {ex.Message}");
+                OnSynthesisCheckComplete?.Invoke(new SynthesisResponse 
+                { 
+                    can_synthesize = false, 
+                    explanation = "解析错误" 
+                });
+            }
+        }
+
+        void OnSynthesisError(string error)
+        {
+            Debug.LogError("Synthesis check failed: " + error);
+            OnSynthesisCheckComplete?.Invoke(new SynthesisResponse 
+            { 
+                can_synthesize = false, 
+                explanation = "API调用失败" 
+            });
+        }
+
+        public void AnalyzeFormula() => StartAnalysisFromImage();
     }
 }
