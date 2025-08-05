@@ -75,6 +75,8 @@ namespace ScriptBoy.ProceduralBook
         /// </summary>
         public void AutoTurnLast() => MultiAutoTurn(AutoTurnDirection.Next, int.MaxValue);
 
+
+
         /// <summary>
         /// Automatically turns a single page. (Returns true if it does not fail.)
         /// </summary>
@@ -104,6 +106,7 @@ namespace ScriptBoy.ProceduralBook
 
             m_Book.CancelPendingAutoTurns();
         }
+     
     }
 
 
