@@ -98,14 +98,11 @@ namespace Elementor.Core.Speech
                 PlayDialogueSequence(predefinedSequence.lines);
                 return;
             }
-
-            // Priority 3: Generate simple dialogue as last resort
-            var generatedDialogue = GenerateSimpleDialogue(triggerType, participants);
-            if (generatedDialogue.Count > 0)
+            else
             {
-                Debug.Log("Using simple generated dialogue as last resort");
-                PlayDialogueSequence(generatedDialogue);
+                Debug.LogWarning($"No predefined dialogue sequence found for trigger: {triggerType}");
             }
+
         }
 
         private IEnumerator GenerateAIDialogue(SpeechTriggerType triggerType, List<CharacterView> participants)
@@ -168,8 +165,7 @@ namespace Elementor.Core.Speech
                 }
                 else
                 {
-                    var simpleDialogue = GenerateSimpleDialogue(triggerType, participants);
-                    PlayDialogueSequence(simpleDialogue);
+                    Debug.LogError("No valid dialogue lines generated or found in predefined sequences");
                 }
                 yield break;
             }
@@ -349,32 +345,6 @@ namespace Elementor.Core.Speech
             return context;
         }
 
-        private List<DialogueLine> GenerateSimpleDialogue(SpeechTriggerType triggerType, List<CharacterView> participants)
-        {
-            var dialogueLines = new List<DialogueLine>();
-
-            if (participants.Count == 0) return dialogueLines;
-
-            foreach (var character in participants)
-            {
-                string characterName = character.GetModel().GetCharacterName();
-                string characterType = character.GetModel().GetCharacterType();
-                
-                string dialogueText = GenerateSimpleDialogueText(triggerType, characterName, characterType);
-                
-                var dialogueLine = new DialogueLine
-                {
-                    characterName = characterName,
-                    text = dialogueText,
-                    duration = 2f + dialogueText.Length * 0.05f,
-                    audioClip = null
-                };
-                
-                dialogueLines.Add(dialogueLine);
-            }
-
-            return dialogueLines;
-        }
 
         private string GenerateSimpleDialogueText(SpeechTriggerType triggerType, string characterName, string characterType)
         {
@@ -414,14 +384,12 @@ namespace Elementor.Core.Speech
             {
                 var currentLine = currentDialogueQueue.Dequeue();
                 
-                // Find the character and trigger their speech through CharacterSpeech
                 var character = FindCharacterByName(currentLine.characterName);
                 if (character != null)
                 {
                     var speechComponent = character.GetComponent<CharacterSpeech>();
                     if (speechComponent != null)
                     {
-                        // Let CharacterSpeech handle the TTS API call
                         speechComponent.Speak(currentLine.text, currentLine.audioClip, currentLine.duration);
                         Debug.Log($"[{currentLine.characterName}]: {currentLine.text}");
                     }
