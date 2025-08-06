@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine.UI;
 
 namespace Elementor
 {
@@ -15,8 +16,14 @@ namespace Elementor
         [Header("Settings")]
         public string pageContentFile = "page_content.json";
 
+        [Header("Book Control Buttons")]
+        public Button nextPageButton;
+        public Button previousPageButton;
+        public Button selectBookButton;
+
         private int lastPageIndex = -1;
         private PageContentData pageContentData;
+        private bool bookInteractionEnabled = true;
 
         [System.Serializable]
         public class PageContent
@@ -37,6 +44,73 @@ namespace Elementor
         void Start()
         {
             LoadPageContentData();
+            
+            // Subscribe to lore loading events
+            if (LoreController.Instance != null)
+            {
+                LoreController.Instance.OnLoreLoaded += OnLoreLoaded;
+            }
+            
+            // Subscribe directly to reaction completion static event
+            ReactionManager.OnGlobalReactionsCompleted += OnReactionCompleted;
+        }
+
+        private void OnDestroy()
+        {
+            // Unsubscribe from events
+            if (LoreController.Instance != null)
+            {
+                LoreController.Instance.OnLoreLoaded -= OnLoreLoaded;
+            }
+            
+            // Unsubscribe from reaction completion event
+            ReactionManager.OnGlobalReactionsCompleted -= OnReactionCompleted;
+        }
+
+        private void OnLoreLoaded()
+        {
+            Debug.Log("BookManager: Lore loaded, closing book and disabling interactions");
+            CloseBookAndDisableInteractions();
+        }
+
+        public void OnReactionCompleted()
+        {
+            Debug.Log("BookManager: All reactions completed, restoring book interactions");
+            RestoreBookInteractions();
+        }
+
+        private void CloseBookAndDisableInteractions()
+        {
+            if (book != null && book.isBuilt)
+            {
+                // Close the book (set to initial state)
+                book.SetOpenProgress(0f);
+            }
+            
+            // Disable book interaction buttons
+            SetBookInteractionEnabled(false);
+        }
+
+        private void RestoreBookInteractions()
+        {
+            // Re-enable book interaction buttons
+            SetBookInteractionEnabled(true);
+        }
+
+        private void SetBookInteractionEnabled(bool enabled)
+        {
+            bookInteractionEnabled = enabled;
+            
+            if (nextPageButton != null)
+                nextPageButton.interactable = enabled;
+                
+            if (previousPageButton != null)
+                previousPageButton.interactable = enabled;
+                
+            if (selectBookButton != null)
+                selectBookButton.interactable = enabled;
+                
+            Debug.Log($"BookManager: Book interactions {(enabled ? "enabled" : "disabled")}");
         }
 
         void LoadPageContentData()

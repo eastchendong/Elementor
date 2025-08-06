@@ -496,7 +496,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7dd9533430c87e4ca0184438920abee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chemicalFormula: 
 --- !u!114 &255017181
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -529,7 +528,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   loreJsonReader: {fileID: 255017183}
-  bookPagePrinter: {fileID: 1747454604}
+  bookPagePrinter: {fileID: 0}
   resultText: {fileID: 1683026573}
   outputFilePrefix: generated_lore_
 --- !u!114 &255017183
@@ -2903,6 +2902,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1646635021}
+  - component: {fileID: 1646635022}
   m_Layer: 0
   m_Name: BookParent
   m_TagString: Untagged
@@ -2927,6 +2927,25 @@ Transform:
   - {fileID: 1778592938}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1646635022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1646635020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0455536722b9534c8381b8f4c9ec618, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  book: {fileID: 1778592937}
+  currentPageIndex: 0
+  analysisHelper: {fileID: 255017182}
+  pageContentFile: page_content.json
+  nextPageButton: {fileID: 939436428}
+  previousPageButton: {fileID: 557708464}
+  selectBookButton: {fileID: 1747454606}
 --- !u!1 &1666034604
 GameObject:
   m_ObjectHideFlags: 0
@@ -3313,7 +3332,6 @@ GameObject:
   - component: {fileID: 1747454608}
   - component: {fileID: 1747454607}
   - component: {fileID: 1747454606}
-  - component: {fileID: 1747454604}
   m_Layer: 0
   m_Name: Button
   m_TagString: Untagged
@@ -3341,22 +3359,6 @@ RectTransform:
   m_AnchoredPosition: {x: -13.5, y: -9.387154}
   m_SizeDelta: {x: 96.6, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1747454604
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1747454602}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0455536722b9534c8381b8f4c9ec618, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  book: {fileID: 1778592937}
-  currentPageIndex: 1
-  analysisHelper: {fileID: 255017182}
-  pageContentFile: page_content.json
 --- !u!114 &1747454606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3401,7 +3403,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1747454604}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: Elementor.BookPagePrinter, Assembly-CSharp
         m_MethodName: TriggerAnalysisForCurrentPage
         m_Mode: 1

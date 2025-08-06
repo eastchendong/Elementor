@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine.Events;
 using Elementor.Core.Speech;
 using Elementor.Core;
+using System;
 
 
 namespace Elementor
@@ -39,6 +40,12 @@ namespace Elementor
         [SerializeField] private List<ReactionStage> reactionStages;
         [SerializeField] private int currentReactionIndex = 0;
         [SerializeField] private CharacterSpawnController characterSpawnController;
+
+        [Header("Events")]
+        public UnityEvent OnAllReactionsCompleted = new UnityEvent();
+        
+        // Static event for global subscription
+        public static event Action OnGlobalReactionsCompleted;
 
         public void SetupStages(List<ReactionStage> stages)
         {
@@ -82,6 +89,14 @@ namespace Elementor
                 ProcessReaction(currentReaction);
 
                 currentReactionIndex++;
+
+                // Check if all reactions are completed
+                if (currentReactionIndex >= reactionStages.Count)
+                {
+                    Debug.Log("All reaction stages completed! Triggering completion event.");
+                    OnAllReactionsCompleted?.Invoke();
+                    OnGlobalReactionsCompleted?.Invoke();
+                }
             }
             else
             {

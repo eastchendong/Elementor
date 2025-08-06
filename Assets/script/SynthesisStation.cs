@@ -97,7 +97,7 @@ namespace Elementor
             }
         }
 
-        private void OnSynthesisCheckComplete(API.SynthesisResponse response)
+        private void OnSynthesisCheckComplete(SynthesisResponse response)
         {
             isCheckingSynthesis = false;
 
@@ -119,7 +119,7 @@ namespace Elementor
             }
         }
 
-        private void SynthesizeWithAPIResult(API.SynthesisResponse response)
+        private void SynthesizeWithAPIResult(SynthesisResponse response)
         {
             if (CharacterSpawnController.Instance == null)
             {
