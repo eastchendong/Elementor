@@ -9,6 +9,7 @@ namespace Elementor
     {
         [Header("Components")]
         public LoreJsonReader loreJsonReader;
+        public BookPagePrinter bookPagePrinter;
         public TMP_Text resultText;
         
         [Header("Settings")]
@@ -18,9 +19,32 @@ namespace Elementor
         private string currentGeneratedFileName;
         
         /// <summary>
-        /// Public method to start the complete workflow
+        /// Public method to start the complete workflow using current book page
         /// </summary>
         public void StartChemicalAnalysisWorkflow()
+        {
+            if (bookPagePrinter != null)
+            {
+                string content = bookPagePrinter.GetCurrentPageTextContent();
+                if (!string.IsNullOrEmpty(content))
+                {
+                    StartWorkflowWithText(content);
+                }
+                else
+                {
+                    Debug.LogError("No content available from BookPagePrinter!");
+                }
+            }
+            else
+            {
+                Debug.LogError("BookPagePrinter is not assigned!");
+            }
+        }
+
+        /// <summary>
+        /// Start workflow with specific text content (more generic)
+        /// </summary>
+        public void StartWorkflowWithText(string content)
         {
             if (isProcessing)
             {
@@ -34,26 +58,33 @@ namespace Elementor
                 return;
             }
             
+            if (string.IsNullOrEmpty(content))
+            {
+                Debug.LogError("Content is empty!");
+                return;
+            }
+            
             string timestamp = System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
             currentGeneratedFileName = $"{outputFilePrefix}{timestamp}.json";
             
-            StartCoroutine(ExecuteWorkflow());
+            StartCoroutine(ExecuteWorkflowWithText(content));
         }
         
-        private IEnumerator ExecuteWorkflow()
+        private IEnumerator ExecuteWorkflowWithText(string content)
         {
             isProcessing = true;
-            Debug.Log($"Starting Chemical Analysis Workflow... Output file: {currentGeneratedFileName}");
+            Debug.Log($"Starting Chemical Analysis Workflow with content: {content.Substring(0, Mathf.Min(50, content.Length))}...");
+            Debug.Log($"Output file: {currentGeneratedFileName}");
             
             // Update UI
             if (resultText != null)
             {
-                resultText.text = "Loading...";
+                resultText.text = "Analyzing content...";
             }
             
             API.Instance.OnAnalysisComplete += OnAnalysisComplete;
             
-            API.Instance.StartAnalysisFromImage();
+            API.Instance.AnalyzeFromText(content);
             
             float timeout = 120f;
             float elapsed = 0f;
@@ -193,5 +224,18 @@ namespace Elementor
                 Debug.Log($"Manually loaded lore from: {fullPath}");
             }
         }
+        
+        /// <summary>
+        /// Start workflow with specific page index (for testing)
+        /// </summary>
+        public void StartWorkflowWithPageIndex(int pageIndex)
+        {
+            if (bookPagePrinter != null)
+            {
+                bookPagePrinter.currentPageIndex = pageIndex;
+            }
+            StartChemicalAnalysisWorkflow();
+        }
     }
 }
+    
