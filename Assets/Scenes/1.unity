@@ -423,7 +423,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: page
+  m_text: "\u5B66\u4E60\u8FD9\u4E00\u9875"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 3e2e65fba50d19f47a2cb90076afb6e7, type: 2}
   m_sharedMaterial: {fileID: -6921188777934836801, guid: 3e2e65fba50d19f47a2cb90076afb6e7, type: 2}
@@ -450,8 +450,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 20
-  m_fontSizeBase: 20
+  m_fontSize: 15
+  m_fontSizeBase: 15
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1129,6 +1129,7 @@ GameObject:
   - component: {fileID: 486456741}
   - component: {fileID: 486456740}
   - component: {fileID: 486456739}
+  - component: {fileID: 486456743}
   m_Layer: 0
   m_Name: Button
   m_TagString: Untagged
@@ -1213,9 +1214,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1091166496}
-        m_TargetAssemblyTypeName: PageCounter, ScriptBoy.ProceduralBook.Demo
-        m_MethodName: OnDisplayClick
+      - m_Target: {fileID: 486456743}
+        m_TargetAssemblyTypeName: BookPagePrinter, ScriptBoy.ProceduralBook.Runtime
+        m_MethodName: PrintPageCount
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1263,6 +1264,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 486456737}
   m_CullTransparentMesh: 1
+--- !u!114 &486456743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 486456737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0455536722b9534c8381b8f4c9ec618, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  book: {fileID: 1091166493}
+  currentPageIndex: 1
 --- !u!1001 &514407103
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3326,7 +3341,6 @@ GameObject:
   - component: {fileID: 1091166493}
   - component: {fileID: 1091166492}
   - component: {fileID: 1091166495}
-  - component: {fileID: 1091166496}
   m_Layer: 0
   m_Name: chemistryBook
   m_TagString: Untagged
@@ -3609,25 +3623,6 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     m_CurveTimeMode: 0
---- !u!114 &1091166496
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1091166491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e61731d5f4161d3469906caef6b415a2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  previousButton: {fileID: 1780004868}
-  nextButton: {fileID: 1819802188}
-  displayButton: {fileID: 486456740}
-  pageDisplay: {fileID: 0}
-  currentPage: 0
-  minPage: 0
-  maxPage: 10
 --- !u!1001 &1195673658
 PrefabInstance:
   m_ObjectHideFlags: 0
