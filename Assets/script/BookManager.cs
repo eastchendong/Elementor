@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Elementor
 {
-    public class BookPagePrinter : MonoBehaviour
+    public class BookManager : MonoBehaviour
     {
         public ScriptBoy.ProceduralBook.Book book;
         public int currentPageIndex; // Inspector里显示当前页码
@@ -48,7 +48,7 @@ namespace Elementor
                 {
                     string jsonContent = File.ReadAllText(filePath);
                     pageContentData = JsonUtility.FromJson<PageContentData>(jsonContent);
-                    Debug.Log($"BookPagePrinter loaded page content data with {pageContentData.pages.Length} pages");
+                    Debug.Log($"BookManager loaded page content data with {pageContentData.pages.Length} pages");
                 }
                 catch (System.Exception ex)
                 {

@@ -9,7 +9,7 @@ namespace Elementor
     {
         [Header("Components")]
         public LoreJsonReader loreJsonReader;
-        public BookPagePrinter bookPagePrinter;
+        public BookManager bookPagePrinter;
         public TMP_Text resultText;
         
         [Header("Settings")]

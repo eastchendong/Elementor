@@ -431,11 +431,11 @@ GameObject:
   m_Component:
   - component: {fileID: 255017178}
   - component: {fileID: 255017176}
+  - component: {fileID: 255017183}
   - component: {fileID: 255017179}
-  - component: {fileID: 255017180}
   - component: {fileID: 255017181}
   - component: {fileID: 255017182}
-  - component: {fileID: 255017183}
+  - component: {fileID: 255017180}
   - component: {fileID: 255017184}
   m_Layer: 0
   m_Name: GameManager
