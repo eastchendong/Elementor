@@ -331,11 +331,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4f260431e887ac44ae4ec7ed358aab6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterNames:
-  - Fe
-  - Cl
+  characterNames: []
   spawnTransforms:
   - {fileID: 594002213}
+  groupInputText: 
+  parsedGroups:
+  - Cl2
   positionOffset: {x: 0, y: 0, z: 0}
   rotationOffset: {x: 0, y: 0, z: 0}
   useRandomOffset: 0

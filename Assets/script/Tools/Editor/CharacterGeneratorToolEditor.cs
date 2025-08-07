@@ -41,6 +41,48 @@ namespace Elementor
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
 
+            // Group generation section
+            EditorGUILayout.Space(5);
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Chemical Formula Generation", EditorStyles.boldLabel);
+            
+            EditorGUILayout.LabelField("Input chemical formulas (separated by commas):");
+            EditorGUILayout.LabelField("Examples: Fe, Cl2, Fe3O4, H2O, NaCl", EditorStyles.helpBox);
+            
+            string currentGroupText = tool.GetGroupInputText();
+            string newGroupText = EditorGUILayout.TextArea(currentGroupText, GUILayout.Height(60));
+            
+            if (newGroupText != currentGroupText)
+            {
+                tool.SetGroupInputText(newGroupText);
+                EditorUtility.SetDirty(tool);
+            }
+            
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Parse and Generate", GUILayout.Height(25)))
+            {
+                tool.ParseAndGenerateGroups();
+            }
+            EditorGUILayout.EndHorizontal();
+            
+            // Show parsed groups
+            List<string> parsedGroups = tool.GetParsedGroups();
+            if (parsedGroups.Count > 0)
+            {
+                EditorGUILayout.LabelField("Parsed Formulas:", EditorStyles.boldLabel);
+                foreach (string group in parsedGroups)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField($"• {group}", GUILayout.Width(150));
+                    if (GUILayout.Button("Generate", GUILayout.Width(80)))
+                    {
+                        tool.GenerateFromFormula(group);
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+            }
+            EditorGUILayout.EndVertical();
+
             // Individual character generation
             EditorGUILayout.Space(5);
             EditorGUILayout.BeginVertical("box");
@@ -81,7 +123,7 @@ namespace Elementor
             if (GUILayout.Button("Clear All Generated", GUILayout.Height(30)))
             {
                 if (EditorUtility.DisplayDialog("Clear Characters", 
-                    "Are you sure you want to clear all generated characters?", 
+                    "Are you sure you want to clear all generated characters and groups?", 
                     "Yes", "No"))
                 {
                     tool.ClearGeneratedCharacters();

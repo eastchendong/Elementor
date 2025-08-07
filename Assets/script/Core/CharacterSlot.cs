@@ -14,6 +14,7 @@ namespace Elementor.Core
 
         // Coefficient system for stoichiometry
         [SerializeField] private int coefficient = 1;
+        [SerializeField] private bool showCoefficientUI = false; // Controls whether to show coefficient controls
         [SerializeField] private GameObject coefficientUI;
         [SerializeField] private TextMeshProUGUI coefficientText;
         [SerializeField] private Button increaseButton;
@@ -190,7 +191,7 @@ namespace Elementor.Core
 
         private void ShowCoefficientUI()
         {
-            if (coefficientUI != null)
+            if (coefficientUI != null && showCoefficientUI)
             {
                 coefficientUI.SetActive(true);
             }
@@ -198,7 +199,7 @@ namespace Elementor.Core
 
         private void HideCoefficientUI()
         {
-            if (coefficientUI != null)
+            if (coefficientUI != null && showCoefficientUI)
             {
                 coefficientUI.SetActive(false);
             }
@@ -217,6 +218,24 @@ namespace Elementor.Core
             if (_renderer != null && originalMaterial != null)
             {
                 _renderer.material = originalMaterial;
+            }
+        }
+
+        // Property to control coefficient UI visibility at runtime
+        public bool ifShowCoefficientUI
+        {
+            get => showCoefficientUI;
+            set
+            {
+                showCoefficientUI = value;
+                if (!showCoefficientUI && coefficientUI != null)
+                {
+                    coefficientUI.SetActive(false);
+                }
+                else if (showCoefficientUI && IsOccupied && coefficientUI != null)
+                {
+                    coefficientUI.SetActive(true);
+                }
             }
         }
     }

@@ -821,6 +821,7 @@ MonoBehaviour:
   slotAnchor: {fileID: 8450241966165500496}
   shiningMaterial: {fileID: 0}
   coefficient: 1
+  showCoefficientUI: 1
   coefficientUI: {fileID: 5905055261535771972}
   coefficientText: {fileID: 8801555153437750063}
   increaseButton: {fileID: 1126790095596216292}
