@@ -128,17 +128,20 @@ namespace Elementor.Core.Speech
             bool responseReceived = false;
             string aiResponse = "";
             
-            System.Action<string> onComplete = (response) => {
+            System.Action<string> onDialogueComplete = (response) => {
                 aiResponse = response;
                 responseReceived = true;
+                Debug.Log($"Received dialogue response: {response}");
             };
             
-            API.Instance.OnAnalysisComplete += onComplete;
+            // Subscribe to the dedicated dialogue event BEFORE making the request
+            API.Instance.OnDialogueGenerated += onDialogueComplete;
             
-            yield return StartCoroutine(GenerateDialogueWithAPI(prompt));
+            // Make the API request
+            API.Instance.GenerateDialogue(prompt);
             
             // Wait for response with timeout
-            float timeout = 15f;
+            float timeout = 10f; // Reduced timeout
             float elapsed = 0f;
             while (!responseReceived && elapsed < timeout)
             {
@@ -146,12 +149,18 @@ namespace Elementor.Core.Speech
                 yield return null;
             }
             
-            API.Instance.OnAnalysisComplete -= onComplete;
+            // Always unsubscribe to prevent memory leaks
+            API.Instance.OnDialogueGenerated -= onDialogueComplete;
             
             if (responseReceived && !string.IsNullOrEmpty(aiResponse))
             {
                 // Parse AI response to extract dialogue for each character
                 dialogueLines = ParseMultiCharacterDialogue(aiResponse, participants);
+                Debug.Log($"Parsed {dialogueLines.Count} dialogue lines from AI response");
+            }
+            else
+            {
+                Debug.LogWarning($"No AI response received within timeout ({timeout}s)");
             }
             
             // If AI generation failed, fall back to predefined or simple dialogue
@@ -165,7 +174,29 @@ namespace Elementor.Core.Speech
                 }
                 else
                 {
-                    Debug.LogError("No valid dialogue lines generated or found in predefined sequences");
+                    // Generate simple fallback dialogue for each participant
+                    Debug.Log("Generating simple fallback dialogue");
+                    var fallbackLines = new List<DialogueLine>();
+                    foreach (var participant in participants)
+                    {
+                        var simpleLine = new DialogueLine
+                        {
+                            characterName = participant.GetModel().GetCharacterName(),
+                            text = GenerateSimpleDialogueText(triggerType, participant.GetModel().GetCharacterName(), participant.GetModel().GetCharacterType()),
+                            duration = 2f,
+                            audioClip = null
+                        };
+                        fallbackLines.Add(simpleLine);
+                    }
+                    
+                    if (fallbackLines.Count > 0)
+                    {
+                        PlayDialogueSequence(fallbackLines);
+                    }
+                    else
+                    {
+                        Debug.LogError("No valid dialogue lines generated or found in predefined sequences");
+                    }
                 }
                 yield break;
             }
@@ -209,14 +240,16 @@ namespace Elementor.Core.Speech
             
             try
             {
+                Debug.Log($"Parsing dialogue response: {aiResponse}");
+                
                 // Split response into lines and parse each dialogue line
-                var lines = aiResponse.Split('\n');
+                var lines = aiResponse.Split(new char[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
                 
                 foreach (var line in lines)
                 {
                     if (string.IsNullOrWhiteSpace(line)) continue;
                     
-                    // Look for pattern: [CharacterName]: dialogue text
+                    // Look for pattern: [CharacterName]: dialogue text or CharacterName: dialogue text
                     var colonIndex = line.IndexOf(':');
                     if (colonIndex > 0)
                     {
@@ -226,9 +259,13 @@ namespace Elementor.Core.Speech
                         // Extract character name (remove brackets if present)
                         var characterName = characterPart.Replace("[", "").Replace("]", "").Trim();
                         
-                        // Verify this character exists in participants
-                        var character = participants.FirstOrDefault(p => 
-                            p.GetModel().GetCharacterName().Equals(characterName, System.StringComparison.OrdinalIgnoreCase));
+                        // Try to find matching character (case insensitive, partial match)
+                        var character = participants.FirstOrDefault(p => {
+                            string participantName = p.GetModel().GetCharacterName();
+                            return participantName.Equals(characterName, System.StringComparison.OrdinalIgnoreCase) ||
+                                   participantName.Contains(characterName) || 
+                                   characterName.Contains(participantName);
+                        });
                         
                         if (character != null && !string.IsNullOrEmpty(dialogueText))
                         {
@@ -241,6 +278,11 @@ namespace Elementor.Core.Speech
                             };
                             
                             dialogueLines.Add(dialogueLine);
+                            Debug.Log($"Added dialogue for {character.GetModel().GetCharacterName()}: {dialogueText}");
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"No matching character found for: {characterName}");
                         }
                     }
                 }
@@ -255,11 +297,12 @@ namespace Elementor.Core.Speech
                         var simpleLine = new DialogueLine
                         {
                             characterName = participantName,
-                            text = GenerateSimpleDialogueText(SpeechTriggerType.GameStart, participantName, participant.GetModel().GetCharacterType()),
+                            text = "我是" + participantName + "！",
                             duration = 2f,
                             audioClip = null
                         };
                         dialogueLines.Add(simpleLine);
+                        Debug.Log($"Added fallback dialogue for {participantName}");
                     }
                 }
             }
@@ -270,13 +313,6 @@ namespace Elementor.Core.Speech
             }
             
             return dialogueLines;
-        }
-
-        private IEnumerator GenerateDialogueWithAPI(string prompt)
-        {
-            // Use the dialogue generation API instead of chemical formula analysis
-            API.Instance.GenerateDialogue(prompt);
-            yield return null; // The API handles the coroutine internally
         }
 
         private string GetTriggerDescription(SpeechTriggerType triggerType)

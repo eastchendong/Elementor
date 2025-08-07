@@ -121,6 +121,7 @@ namespace Elementor.Core
                 
             content = content.Trim();
             
+            // Remove markdown code blocks
             if (content.StartsWith("```json"))
             {
                 content = content.Substring(7);
@@ -137,6 +138,7 @@ namespace Elementor.Core
             
             content = content.Trim();
             
+            // Handle cases where response might contain extra text before/after JSON
             if (!content.StartsWith("{") || !content.EndsWith("}"))
             {
                 Debug.LogWarning("Content doesn't appear to be valid JSON format");
@@ -149,6 +151,14 @@ namespace Elementor.Core
                 }
                 else
                 {
+                    // If no JSON found, try to wrap plain text as dialogue content
+                    if (!string.IsNullOrEmpty(content) && content.Contains("[") && content.Contains("]:"))
+                    {
+                        // Format dialogue-like content into JSON
+                        Debug.Log("Attempting to format dialogue text as JSON");
+                        return $"{{\"raw_dialogue\": \"{SanitizeJsonString(content)}\"}}";
+                    }
+                    
                     Debug.LogError("Could not extract valid JSON from response");
                     return "{}";
                 }

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,8 +12,11 @@ namespace Elementor
 
         public System.Action<string> OnAnalysisComplete;
         public System.Action<SynthesisResponse> OnSynthesisCheckComplete;
+        public System.Action<string> OnDialogueGenerated; // Add dedicated dialogue event
 
         public bool IsAnalyzing => HttpRequestManager.Instance?.IsRequesting ?? false;
+
+        private bool isDialogueRequesting = false; // Add separate flag for dialogue requests
 
         void Awake()
         {
@@ -80,7 +84,40 @@ namespace Elementor
 
         public void GenerateDialogue(string prompt)
         {
-            string systemPrompt = "你是一个化学教育游戏的角色对话生成器。根据给出的角色信息和情境，生成一句简短、符合角色特点的对话。对话应该简洁有趣，不超过15个字。只返回对话内容，不要其他格式。";
+            if (isDialogueRequesting)
+            {
+                Debug.LogWarning("Dialogue generation is already in progress.");
+                OnDialogueGenerated?.Invoke("");
+                return;
+            }
+
+            if (HttpRequestManager.Instance?.IsRequesting == true)
+            {
+                Debug.LogWarning("Another API request is in progress, queuing dialogue request...");
+                // Wait a bit and retry
+                StartCoroutine(RetryDialogueGeneration(prompt, 1f));
+                return;
+            }
+
+            isDialogueRequesting = true;
+
+            string systemPrompt = @"你是一个化学教育游戏的角色对话生成器。根据给出的角色信息和情境，生成符合角色特点的对话。
+
+请严格按照以下JSON格式返回对话内容：
+{
+    ""dialogues"": [
+        {
+            ""character"": ""角色名"",
+            ""line"": ""对话内容（不超过20字）""
+        }
+    ]
+}
+
+要求：
+1. 每个角色都要有至少一句对话
+2. 对话要符合角色的元素特性
+3. 每句对话不超过20个字
+4. 严格按照JSON格式返回，不要添加任何其他内容";
 
             string sanitizedPrompt = HttpRequestManager.SanitizeJsonString(prompt);
             string sanitizedSystemPrompt = HttpRequestManager.SanitizeJsonString(systemPrompt);
@@ -97,7 +134,7 @@ namespace Elementor
             ""content"": """ + sanitizedPrompt + @"""
         }
         ],
-        ""max_tokens"": 100,
+        ""max_tokens"": 500,
         ""temperature"": 0.7
         }";
 
@@ -110,16 +147,78 @@ namespace Elementor
             );
         }
 
+        private IEnumerator RetryDialogueGeneration(string prompt, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            
+            if (!HttpRequestManager.Instance?.IsRequesting == true)
+            {
+                GenerateDialogue(prompt);
+            }
+            else
+            {
+                Debug.LogWarning("API still busy, failing dialogue generation");
+                OnDialogueGenerated?.Invoke("");
+            }
+        }
+
         void OnDialogueSuccess(string responseText)
         {
-            string dialogueContent = ExtractDialogueContent(responseText);
-            OnAnalysisComplete?.Invoke(dialogueContent);
+            isDialogueRequesting = false;
+            
+            try
+            {
+                string cleanedJson = HttpRequestManager.ExtractJsonFromResponse(responseText);
+                Debug.Log("Cleaned dialogue JSON: " + cleanedJson);
+                
+                // Check if it's the raw_dialogue fallback format
+                var rawDialogueCheck = JsonUtility.FromJson<RawDialogueResponse>(cleanedJson);
+                if (rawDialogueCheck?.raw_dialogue != null)
+                {
+                    Debug.Log("Using raw dialogue format");
+                    OnDialogueGenerated?.Invoke(rawDialogueCheck.raw_dialogue);
+                    return;
+                }
+                
+                // Try to parse as structured dialogue response
+                var dialogueResponse = JsonUtility.FromJson<DialogueResponse>(cleanedJson);
+                if (dialogueResponse?.dialogues != null && dialogueResponse.dialogues.Length > 0)
+                {
+                    // Format dialogue lines for the speech system
+                    var formattedLines = new System.Collections.Generic.List<string>();
+                    foreach (var dialogue in dialogueResponse.dialogues)
+                    {
+                        formattedLines.Add($"[{dialogue.character}]: {dialogue.line}");
+                    }
+                    string formattedDialogue = string.Join("\n", formattedLines);
+                    Debug.Log("Formatted dialogue: " + formattedDialogue);
+                    OnDialogueGenerated?.Invoke(formattedDialogue);
+                    return;
+                }
+                
+                // Fallback to direct content extraction
+                var apiResponse = JsonUtility.FromJson<HttpRequestManager.ApiResponse>(cleanedJson);
+                if (apiResponse?.choices != null && apiResponse.choices.Length > 0)
+                {
+                    string content = apiResponse.choices[0].message.content;
+                    OnDialogueGenerated?.Invoke(content.Trim().Trim('"'));
+                    return;
+                }
+                
+                OnDialogueGenerated?.Invoke("");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to extract dialogue content: {ex.Message}");
+                OnDialogueGenerated?.Invoke("");
+            }
         }
 
         void OnDialogueError(string error)
         {
+            isDialogueRequesting = false;
             Debug.LogError("Dialogue generation failed: " + error);
-            OnAnalysisComplete?.Invoke("");
+            OnDialogueGenerated?.Invoke("");
         }
 
         private string ExtractDialogueContent(string responseText)
@@ -256,5 +355,24 @@ namespace Elementor
             });
         }
 
+    }
+
+    [System.Serializable]
+    public class DialogueResponse
+    {
+        public DialogueLine[] dialogues;
+    }
+
+    [System.Serializable]
+    public class DialogueLine
+    {
+        public string character;
+        public string line;
+    }
+
+    [System.Serializable]
+    public class RawDialogueResponse
+    {
+        public string raw_dialogue;
     }
 }

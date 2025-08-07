@@ -253,8 +253,6 @@ namespace Elementor
                 SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.ReactionSuccess, charactersForNewGroup);
             }
 
-            // Handle any remaining single characters if needed
-            // ...
         }
     }
 }
