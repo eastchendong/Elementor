@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 namespace Elementor.Core
 {
@@ -10,9 +12,18 @@ namespace Elementor.Core
         private Material originalMaterial;
         private Renderer _renderer;
 
+        // Coefficient system for stoichiometry
+        [SerializeField] private int coefficient = 1;
+        [SerializeField] private GameObject coefficientUI;
+        [SerializeField] private TextMeshProUGUI coefficientText;
+        [SerializeField] private Button increaseButton;
+        [SerializeField] private Button decreaseButton;
+        [SerializeField] private int maxCoefficient = 10;
+
         private object occupant; // Can be CharacterView or CharacterGroup
 
         public bool IsOccupied => occupant != null;
+        public int Coefficient => coefficient;
 
         private void Awake()
         {
@@ -26,6 +37,28 @@ namespace Elementor.Core
             {
                 originalMaterial = _renderer.material;
             }
+
+            SetupCoefficientUI();
+        }
+
+        private void SetupCoefficientUI()
+        {
+            if (coefficientUI != null)
+            {
+                coefficientUI.SetActive(false);
+            }
+
+            if (increaseButton != null)
+            {
+                increaseButton.onClick.AddListener(IncreaseCoefficient);
+            }
+
+            if (decreaseButton != null)
+            {
+                decreaseButton.onClick.AddListener(DecreaseCoefficient);
+            }
+
+            UpdateCoefficientDisplay();
         }
 
         public bool Occupy(object newOccupant)
@@ -59,10 +92,11 @@ namespace Elementor.Core
                 {
                     occupantRigidbody.constraints = RigidbodyConstraints.FreezeAll;
                 }
-                StopShining(); // Stop shining when occupied
+                StopShining();
+                ShowCoefficientUI();
             }
             
-            Debug.Log($"{name} is now occupied.");
+            Debug.Log($"{name} is now occupied with coefficient {coefficient}.");
             return true;
         }
 
@@ -89,6 +123,8 @@ namespace Elementor.Core
                 occupantRigidbody.isKinematic = false;
             }
             
+            HideCoefficientUI();
+            ResetCoefficient();
             Debug.Log($"{name} is now free.");
             occupant = null;
         }
@@ -96,6 +132,76 @@ namespace Elementor.Core
         public object GetOccupant()
         {
             return occupant;
+        }
+
+        public string GetOccupantName()
+        {
+            if (occupant is CharacterView characterView)
+            {
+                return characterView.GetModel().GetCharacterName();
+            }
+            else if (occupant is CharacterGroup characterGroup)
+            {
+                return characterGroup.name;
+            }
+            return null;
+        }
+
+        // Coefficient management
+        public void IncreaseCoefficient()
+        {
+            if (coefficient < maxCoefficient)
+            {
+                coefficient++;
+                UpdateCoefficientDisplay();
+                Debug.Log($"{name} coefficient increased to {coefficient}");
+            }
+        }
+
+        public void DecreaseCoefficient()
+        {
+            if (coefficient > 1)
+            {
+                coefficient--;
+                UpdateCoefficientDisplay();
+                Debug.Log($"{name} coefficient decreased to {coefficient}");
+            }
+        }
+
+        public void SetCoefficient(int value)
+        {
+            coefficient = Mathf.Clamp(value, 1, maxCoefficient);
+            UpdateCoefficientDisplay();
+        }
+
+        private void ResetCoefficient()
+        {
+            coefficient = 1;
+            UpdateCoefficientDisplay();
+        }
+
+        private void UpdateCoefficientDisplay()
+        {
+            if (coefficientText != null)
+            {
+                coefficientText.text = coefficient.ToString();
+            }
+        }
+
+        private void ShowCoefficientUI()
+        {
+            if (coefficientUI != null)
+            {
+                coefficientUI.SetActive(true);
+            }
+        }
+
+        private void HideCoefficientUI()
+        {
+            if (coefficientUI != null)
+            {
+                coefficientUI.SetActive(false);
+            }
         }
 
         public void StartShining()

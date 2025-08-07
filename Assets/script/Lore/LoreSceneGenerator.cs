@@ -103,25 +103,34 @@ namespace Elementor
 
             var stage = new ReactionStage
             {
-                reactionName = loreReaction.type,
+                reactionName = loreReaction.equation, // Use equation instead of type
                 reactionCondition = string.Join(", ", loreReaction.conditions),
                 requirements = new List<SlotRequirement>(),
                 outcomes = new List<ReactionOutcome>()
             };
 
-            // Configure reaction requirements by finding slots within the new prefab
+            // Configure reaction requirements using new simplified structure
             int inputSlotIndex = 1;
             foreach (var reactant in loreReaction.reactants)
             {
                 CharacterSlot slot = FindSlotInPrefab(currentEnvironmentInstance.transform, $"InputSlot{inputSlotIndex}");
                 if (slot != null)
                 {
+                    string requiredName;
+                    requiredName = reactant.name;
+
                     stage.requirements.Add(new SlotRequirement
                     {
                         slot = slot,
-                        requiredGroupName = reactant.name,
-                        requiredCharacterName = ""
+                        requiredName = requiredName,
+                        requiredCount = reactant.count
                     });
+
+                    Debug.Log($"Added requirement: {requiredName} x{reactant.count} to {slot.name}");
+                }
+                else
+                {
+                    Debug.LogWarning($"Could not find InputSlot{inputSlotIndex} in environment prefab");
                 }
                 inputSlotIndex++;
             }
@@ -133,13 +142,28 @@ namespace Elementor
                 CharacterSlot slot = FindSlotInPrefab(currentEnvironmentInstance.transform, $"OutputSlot{outputSlotIndex}");
                 if (slot != null)
                 {
-                    var charactersInGroup = product.elements.SelectMany(e => Enumerable.Repeat(e.element, e.count)).ToList();
+                    var charactersInGroup = new List<string>();
+                    foreach (var element in product.elements)
+                    {
+                        for (int i = 0; i < element.count; i++)
+                        {
+                            charactersInGroup.Add(element.element);
+                        }
+                    }
+
                     stage.outcomes.Add(new ReactionOutcome
                     {
                         outputSlot = slot,
                         newGroupName = product.name,
-                        characterNamesInGroup = charactersInGroup
+                        characterNamesInGroup = charactersInGroup,
+                        productCount = product.count
                     });
+
+                    Debug.Log($"Added outcome: {product.name} x{product.count} to {slot.name}");
+                }
+                else
+                {
+                    Debug.LogWarning($"Could not find OutputSlot{outputSlotIndex} in environment prefab");
                 }
                 outputSlotIndex++;
             }
@@ -148,6 +172,9 @@ namespace Elementor
             stage.onReactionPhenomenon.AddListener(OnReactionCompleted);
 
             reactionManager.SetupStages(new List<ReactionStage> { stage });
+            
+            Debug.Log($"Scene generation completed for reaction: {loreReaction.equation}");
+            Debug.Log($"Requirements: {stage.requirements.Count}, Outcomes: {stage.outcomes.Count}");
         }
 
         /// <summary>
@@ -162,10 +189,7 @@ namespace Elementor
             currentEnvironmentInstance = null;
 
             // 2. Trigger the next lore reading (placeholder for future logic).
-            // For now, this could reload the same file for testing or be adapted to load "scene_002.json", etc.
             Debug.Log("Triggering next lore read... (Interface for next step)");
-            // Example: loreJsonReader.loreFilePath = "next_lore_file.json";
-            // loreJsonReader.LoadLoreFromJson();
         }
 
         private CharacterSlot FindSlotInPrefab(Transform parent, string slotName)
