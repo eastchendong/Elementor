@@ -17,6 +17,7 @@ namespace Elementor.Core
         public List<CharacterView> Characters => characters;
         private CharacterSlot currentSlot;
         private CharacterSlot potentialSlot;
+        private Grabbable grabbable;
 
         private void Awake()
         {
@@ -30,10 +31,35 @@ namespace Elementor.Core
                 collider.isTrigger = false;
             }
             
+            grabbable = GetComponent<Grabbable>();
+            if (grabbable != null)
+            {
+                grabbable.WhenPointerEventRaised += OnGrabStateChanged;
+            }
+            
             UpdateColliderSize();
         }
 
+        private void OnDestroy()
+        {
+            if (grabbable != null)
+            {
+                grabbable.WhenPointerEventRaised -= OnGrabStateChanged;
+            }
+        }
 
+        private void OnGrabStateChanged(PointerEvent pointerEvent)
+        {
+            switch (pointerEvent.Type)
+            {
+                case PointerEventType.Select:
+                    StartGrab();
+                    break;
+                case PointerEventType.Unselect:
+                    EndGrab();
+                    break;
+            }
+        }
 
         public void AddCharacter(CharacterView character)
         {
@@ -182,10 +208,16 @@ namespace Elementor.Core
                 currentSlot.Release();
                 currentSlot = null;
             }
+            
+            // Remove from parent hierarchy when grabbed
+            transform.SetParent(null, true);
+            
             // Ensure the Rigidbody is not kinematic when grabbing starts,
             // so the Grabbable component can manage it correctly.
             GetComponent<Rigidbody>().isKinematic = false;
             SetState(CharacterAnimationState.Grabbed);
+            
+            Debug.Log($"CharacterGroup {name} was grabbed and removed from parent hierarchy");
         }
 
         public void EndGrab()

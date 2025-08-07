@@ -29,8 +29,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 8450241966165500496}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -174,3 +174,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotAnchor: {fileID: 8450241966165500496}
+  shiningMaterial: {fileID: 0}
+  coefficient: 1
+  showCoefficientUI: 0
+  coefficientUI: {fileID: 0}
+  coefficientText: {fileID: 0}
+  increaseButton: {fileID: 0}
+  decreaseButton: {fileID: 0}
+  maxCoefficient: 10

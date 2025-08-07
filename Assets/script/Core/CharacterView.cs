@@ -207,6 +207,64 @@ namespace Elementor.Core
             return characterModel?.CurrentAnimationState ?? CharacterAnimationState.Idle;
         }
 
+        private Rigidbody rb;
+        private Grabbable grabbable;
+
+        private void Awake()
+        {
+            rb = GetComponent<Rigidbody>();
+            grabbable = GetComponent<Grabbable>();
+            
+            if (grabbable != null)
+            {
+                grabbable.WhenPointerEventRaised += OnGrabStateChanged;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (grabbable != null)
+            {
+                grabbable.WhenPointerEventRaised -= OnGrabStateChanged;
+            }
+        }
+
+        private void OnGrabStateChanged(PointerEvent pointerEvent)
+        {
+            switch (pointerEvent.Type)
+            {
+                case PointerEventType.Select:
+                    OnGrabStarted();
+                    break;
+                case PointerEventType.Unselect:
+                    OnGrabEnded();
+                    break;
+            }
+        }
+
+        private void OnGrabStarted()
+        {
+            // Remove from parent hierarchy when grabbed
+            transform.SetParent(null, true);
+            
+            if (characterModel != null)
+            {
+                characterModel.SetAnimationState(CharacterAnimationState.Grabbed);
+            }
+            
+            OnCharacterSelected?.Invoke(this);
+            Debug.Log($"{name} was grabbed and removed from parent hierarchy");
+        }
+
+        private void OnGrabEnded()
+        {
+            if (characterModel != null)
+            {
+                characterModel.SetAnimationState(CharacterAnimationState.Falling);
+            }
+            
+            Debug.Log($"{name} was released");
+        }
     }
 }
 

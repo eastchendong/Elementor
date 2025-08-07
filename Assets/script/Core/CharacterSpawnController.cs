@@ -41,6 +41,9 @@ namespace Elementor.Core
 
             
             GameObject controllerObj = Instantiate(characterControllerPrefab, spawnPosition, Quaternion.identity, parentTransform);
+            
+            // Ensure controller object scale is 1
+            controllerObj.transform.localScale = Vector3.one;
 
             if (controllerObj != null)
             {
@@ -127,6 +130,7 @@ namespace Elementor.Core
             GameObject modelObj = Instantiate(modelPrefab, parent);
             modelObj.transform.localPosition = Vector3.zero;
             modelObj.transform.localRotation = Quaternion.identity;
+            modelObj.transform.localScale = Vector3.one; // Ensure model scale is 1
             
             modelObj.name = $"{character.name}_Model";
             Debug.Log($"Model object name set to: '{modelObj.name}'");

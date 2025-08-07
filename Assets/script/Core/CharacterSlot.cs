@@ -22,6 +22,7 @@ namespace Elementor.Core
         [SerializeField] private int maxCoefficient = 10;
 
         private object occupant; // Can be CharacterView or CharacterGroup
+        private bool wasOccupiedLastFrame = false; // Track occupancy state
 
         public bool IsOccupied => occupant != null;
         public int Coefficient => coefficient;
@@ -40,6 +41,68 @@ namespace Elementor.Core
             }
 
             SetupCoefficientUI();
+        }
+
+        private void Update()
+        {
+            // Check if occupant has been moved away or destroyed
+            if (IsOccupied && !IsOccupantStillInSlot())
+            {
+                Debug.Log($"Occupant of {name} has left the slot area or been destroyed");
+                ForceRelease();
+            }
+            
+            // Track occupancy state changes
+            bool currentlyOccupied = IsOccupied;
+            if (wasOccupiedLastFrame != currentlyOccupied)
+            {
+                if (!currentlyOccupied)
+                {
+                    OnSlotBecameEmpty();
+                }
+                wasOccupiedLastFrame = currentlyOccupied;
+            }
+        }
+
+        private bool IsOccupantStillInSlot()
+        {
+            if (occupant == null) return false;
+            
+            Transform occupantTransform = null;
+            
+            if (occupant is CharacterView characterView)
+            {
+                if (characterView == null) return false;
+                occupantTransform = characterView.transform;
+            }
+            else if (occupant is CharacterGroup characterGroup)
+            {
+                if (characterGroup == null) return false;
+                occupantTransform = characterGroup.transform;
+            }
+            
+            if (occupantTransform == null) return false;
+            
+            // Check if occupant is still a child of this slot
+            if (occupantTransform.parent != slotAnchor) return false;
+            
+            // Check distance from slot anchor (additional safety check)
+            float distance = Vector3.Distance(occupantTransform.position, slotAnchor.position);
+            return distance < 2f; // Tolerance of 2 units
+        }
+
+        private void OnSlotBecameEmpty()
+        {
+            Debug.Log($"Slot {name} became empty");
+            // This can be used by other systems (like CharacterSpawner) to react to empty slots
+        }
+
+        private void ForceRelease()
+        {
+            Debug.Log($"Force releasing occupant from {name}");
+            occupant = null;
+            HideCoefficientUI();
+            ResetCoefficient();
         }
 
         private void SetupCoefficientUI()
@@ -106,16 +169,23 @@ namespace Elementor.Core
             if (!IsOccupied) return;
 
             Rigidbody occupantRigidbody = null;
+            Transform occupantTransform = null;
 
             if (occupant is CharacterView characterView)
             {
-                characterView.transform.SetParent(null, true);
+                occupantTransform = characterView.transform;
                 occupantRigidbody = characterView.GetComponent<Rigidbody>();
+                
+                // Remove parent hierarchy - make it independent
+                occupantTransform.SetParent(null, true);
             }
             else if (occupant is CharacterGroup characterGroup)
             {
-                characterGroup.transform.SetParent(null, true);
+                occupantTransform = characterGroup.transform;
                 occupantRigidbody = characterGroup.GetComponent<Rigidbody>();
+                
+                // Remove parent hierarchy - make it independent
+                occupantTransform.SetParent(null, true);
             }
 
             if (occupantRigidbody != null)
@@ -126,7 +196,7 @@ namespace Elementor.Core
             
             HideCoefficientUI();
             ResetCoefficient();
-            Debug.Log($"{name} is now free.");
+            Debug.Log($"{name} is now free. Occupant parent hierarchy removed.");
             occupant = null;
         }
 
