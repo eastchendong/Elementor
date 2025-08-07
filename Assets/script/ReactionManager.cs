@@ -170,9 +170,8 @@ namespace Elementor
 
         private void ProcessReaction(ReactionStage stage)
         {
-            // 1. Gather all available characters from input slots
-            List<CharacterView> availableCharacters = new List<CharacterView>();
-            List<CharacterGroup> availableGroups = new List<CharacterGroup>();
+            // 1. Handle coefficient-based spawning for each slot
+            List<CharacterView> allAvailableCharacters = new List<CharacterView>();
             List<CharacterGroup> groupsToDestroy = new List<CharacterGroup>();
 
             foreach (var requirement in stage.requirements)
@@ -182,233 +181,215 @@ namespace Elementor
 
                 if (occupant is CharacterView characterView)
                 {
-                    // For individual characters, add them based on coefficient
-                    for (int i = 0; i < coefficient; i++)
+                    // For individual characters, spawn additional copies based on coefficient
+                    allAvailableCharacters.Add(characterView);
+                    
+                    // Spawn additional characters if coefficient > 1
+                    for (int i = 1; i < coefficient; i++)
                     {
-                        availableCharacters.Add(characterView);
+                        Vector3 spawnPosition = characterView.transform.position + Vector3.up * 3.0f + UnityEngine.Random.insideUnitSphere * 1.0f;
+                        string characterName = characterView.GetModel().GetCharacterName();
+                        characterSpawnController.SpawnCharacter(characterName, spawnPosition, requirement.slot.transform.parent);
+                        
+                        // Get the newly spawned character
+                        var newCharacters = characterSpawnController.GetSpawnedCharacters();
+                        if (newCharacters.Count > 0)
+                        {
+                            var newCharacter = newCharacters[newCharacters.Count - 1];
+                            allAvailableCharacters.Add(newCharacter);
+                            newCharacter.GetModel().SetAnimationState(CharacterAnimationState.Falling);
+                        }
                     }
                 }
                 else if (occupant is CharacterGroup characterGroup)
                 {
-                    // For groups, add the group itself and track for running animation
-                    for (int i = 0; i < coefficient; i++)
-                    {
-                        availableGroups.Add(characterGroup);
-                        availableCharacters.AddRange(characterGroup.Characters);
-                    }
+                    // For groups, extract all characters and mark group for destruction
+                    var groupCharacters = new List<CharacterView>(characterGroup.Characters);
+                    allAvailableCharacters.AddRange(groupCharacters);
                     groupsToDestroy.Add(characterGroup);
+                    
+                    // Spawn additional copies based on coefficient
+                    for (int i = 1; i < coefficient; i++)
+                    {
+                        foreach (var character in groupCharacters)
+                        {
+                            Vector3 spawnPosition = character.transform.position + Vector3.up * 3.0f + UnityEngine.Random.insideUnitSphere * 1.0f;
+                            string characterName = character.GetModel().GetCharacterName();
+                            characterSpawnController.SpawnCharacter(characterName, spawnPosition, requirement.slot.transform.parent);
+                            
+                            // Get the newly spawned character
+                            var newCharacters = characterSpawnController.GetSpawnedCharacters();
+                            if (newCharacters.Count > 0)
+                            {
+                                var newCharacter = newCharacters[newCharacters.Count - 1];
+                                allAvailableCharacters.Add(newCharacter);
+                                newCharacter.GetModel().SetAnimationState(CharacterAnimationState.Falling);
+                            }
+                        }
+                    }
                 }
                 
                 requirement.slot.Release();
             }
 
-            // 2. Process each outcome with running animation
-            foreach (var outcome in stage.outcomes)
+            // 2. Disassemble groups - remove group relationships but keep characters
+            foreach (var group in groupsToDestroy)
             {
+                var groupCharacters = new List<CharacterView>(group.Characters);
+                foreach (var character in groupCharacters)
+                {
+                    group.RemoveCharacter(character);
+                    character.GetModel().EnableIndividualPhysics();
+                }
+                // Destroy the empty group
+                group.ClearAndDestroy();
+            }
+
+            // 3. Process each outcome sequentially with shared character list
+            StartCoroutine(ProcessAllOutcomes(stage.outcomes, allAvailableCharacters));
+        }
+
+        private System.Collections.IEnumerator ProcessAllOutcomes(List<ReactionOutcome> outcomes, List<CharacterView> allAvailableCharacters)
+        {
+            List<CharacterView> allProductCharacters = new List<CharacterView>();
+            
+            // Process each outcome sequentially
+            for (int i = 0; i < outcomes.Count; i++)
+            {
+                var outcome = outcomes[i];
                 if (outcome.outputSlot == null || string.IsNullOrEmpty(outcome.newGroupName)) continue;
 
-                StartCoroutine(ProcessReactionWithAnimation(outcome, availableCharacters, availableGroups, groupsToDestroy));
+                var productCharacters = ProcessSingleOutcome(outcome, allAvailableCharacters);
+                if (productCharacters != null && productCharacters.Count > 0)
+                {
+                    allProductCharacters.AddRange(productCharacters);
+                    
+                    // Start running animation for this outcome's characters
+                    Vector3 targetPosition = outcome.outputSlot.transform.position;
+                    foreach (var character in productCharacters)
+                    {
+                        character.GetModel().SetAnimationState(CharacterAnimationState.Running);
+                        StartCoroutine(MoveToTarget(character.transform, targetPosition + UnityEngine.Random.insideUnitSphere * 0.5f, 2.0f));
+                    }
+                    
+                    // Wait for running animation
+                    yield return new WaitForSeconds(2.5f);
+                    
+                    // Create the group for this outcome
+                    yield return StartCoroutine(CreateProductGroup(outcome, productCharacters, targetPosition));
+                }
+            }
+
+            // 4. Handle excess characters after all outcomes are processed
+            if (allAvailableCharacters.Count > 0)
+            {
+                Debug.Log($"Handling {allAvailableCharacters.Count} excess characters");
+                Vector3 exitPosition = transform.position + Vector3.left * 4.0f;
+                
+                foreach (var character in allAvailableCharacters)
+                {
+                    character.GetModel().SetAnimationState(CharacterAnimationState.Running);
+                    Vector3 randomExitPos = exitPosition + UnityEngine.Random.insideUnitSphere * 2.0f;
+                    randomExitPos.y = transform.position.y;
+                    StartCoroutine(MoveToTarget(character.transform, randomExitPos, 2.0f));
+                }
+                
+                yield return new WaitForSeconds(2.5f);
+                
+                // Make excess characters disappear or set to idle
+                foreach (var character in allAvailableCharacters)
+                {
+                    character.GetModel().SetAnimationState(CharacterAnimationState.Idle);
+                    // Optionally destroy excess characters
+                    // Destroy(character.gameObject);
+                }
+            }
+
+            // 5. Trigger speech after all outcomes are complete
+            if (allProductCharacters.Count > 0)
+            {
+                SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.ReactionSuccess, allProductCharacters);
             }
         }
 
-        private System.Collections.IEnumerator ProcessReactionWithAnimation(
-            ReactionOutcome outcome, 
-            List<CharacterView> availableCharacters, 
-            List<CharacterGroup> availableGroups,
-            List<CharacterGroup> groupsToDestroy)
+        private List<CharacterView> ProcessSingleOutcome(ReactionOutcome outcome, List<CharacterView> availableCharacters)
         {
-            // Calculate required elements for ONE unit of the product
-            Dictionary<string, int> singleProductElementCounts = new Dictionary<string, int>();
+            // Calculate required elements for this single product unit
+            Dictionary<string, int> requiredElementCounts = new Dictionary<string, int>();
             foreach (var elementName in outcome.characterNamesInGroup)
             {
-                if (singleProductElementCounts.ContainsKey(elementName))
-                    singleProductElementCounts[elementName]++;
+                if (requiredElementCounts.ContainsKey(elementName))
+                    requiredElementCounts[elementName]++;
                 else
-                    singleProductElementCounts[elementName] = 1;
+                    requiredElementCounts[elementName] = 1;
             }
 
-            Debug.Log($"Creating {outcome.productCount} independent units of {outcome.newGroupName}");
-            foreach (var req in singleProductElementCounts)
+            Debug.Log($"Processing outcome: {outcome.newGroupName}");
+            foreach (var req in requiredElementCounts)
             {
-                Debug.Log($"Each unit requires {req.Key}: {req.Value}");
+                Debug.Log($"Required {req.Key}: {req.Value}");
             }
 
-            // Count all available elements
-            Dictionary<string, int> totalAvailableCounts = new Dictionary<string, int>();
-            foreach (var character in availableCharacters)
-            {
-                string elementName = character.GetModel().GetCharacterName();
-                if (totalAvailableCounts.ContainsKey(elementName))
-                    totalAvailableCounts[elementName]++;
-                else
-                    totalAvailableCounts[elementName] = 1;
-            }
-
-            Debug.Log("Available elements:");
-            foreach (var avail in totalAvailableCounts)
-            {
-                Debug.Log($"Available {avail.Key}: {avail.Value}");
-            }
-
-            // Calculate total needed elements for all products
-            Dictionary<string, int> totalRequiredCounts = new Dictionary<string, int>();
-            foreach (var element in singleProductElementCounts)
-            {
-                totalRequiredCounts[element.Key] = element.Value * outcome.productCount;
-            }
-
-            // Separate participating and excess characters/groups
-            List<CharacterView> participatingCharacters = new List<CharacterView>();
-            List<CharacterGroup> participatingGroups = new List<CharacterGroup>();
-            List<CharacterView> excessCharacters = new List<CharacterView>();
-            List<CharacterGroup> excessGroups = new List<CharacterGroup>();
+            // Allocate required characters from available pool
+            List<CharacterView> allocatedCharacters = new List<CharacterView>();
             Dictionary<string, int> allocatedCounts = new Dictionary<string, int>();
 
-            // First, allocate from available groups
-            foreach (var group in availableGroups)
+            // Iterate backwards to safely remove elements
+            for (int i = availableCharacters.Count - 1; i >= 0; i--)
             {
-                bool groupParticipates = false;
-                foreach (var character in group.Characters)
-                {
-                    string elementName = character.GetModel().GetCharacterName();
-                    if (totalRequiredCounts.ContainsKey(elementName))
-                    {
-                        if (!allocatedCounts.ContainsKey(elementName))
-                            allocatedCounts[elementName] = 0;
-
-                        if (allocatedCounts[elementName] < totalRequiredCounts[elementName])
-                        {
-                            if (!groupParticipates)
-                            {
-                                participatingGroups.Add(group);
-                                groupParticipates = true;
-                            }
-                            allocatedCounts[elementName]++;
-                        }
-                    }
-                }
-                
-                if (!groupParticipates)
-                {
-                    excessGroups.Add(group);
-                }
-            }
-
-            // Then allocate from individual characters
-            foreach (var character in availableCharacters)
-            {
-                if (participatingGroups.Any(g => g.Characters.Contains(character)))
-                    continue;
-                
-                if (excessGroups.Any(g => g.Characters.Contains(character)))
-                    continue;
-
+                var character = availableCharacters[i];
                 string elementName = character.GetModel().GetCharacterName();
-                if (totalRequiredCounts.ContainsKey(elementName))
+                
+                if (requiredElementCounts.ContainsKey(elementName))
                 {
                     if (!allocatedCounts.ContainsKey(elementName))
                         allocatedCounts[elementName] = 0;
 
-                    if (allocatedCounts[elementName] < totalRequiredCounts[elementName])
+                    if (allocatedCounts[elementName] < requiredElementCounts[elementName])
                     {
-                        participatingCharacters.Add(character);
+                        allocatedCharacters.Add(character);
                         allocatedCounts[elementName]++;
-                    }
-                    else
-                    {
-                        excessCharacters.Add(character);
+                        
+                        // Remove from available characters pool
+                        availableCharacters.RemoveAt(i);
                     }
                 }
+            }
+
+            return allocatedCharacters;
+        }
+
+        private System.Collections.IEnumerator CreateProductGroup(ReactionOutcome outcome, List<CharacterView> productCharacters, Vector3 targetPosition)
+        {
+            // Spawn missing characters if needed
+            Dictionary<string, int> requiredElementCounts = new Dictionary<string, int>();
+            foreach (var elementName in outcome.characterNamesInGroup)
+            {
+                if (requiredElementCounts.ContainsKey(elementName))
+                    requiredElementCounts[elementName]++;
                 else
-                {
-                    excessCharacters.Add(character);
-                }
+                    requiredElementCounts[elementName] = 1;
             }
 
-            Debug.Log($"Participating characters: {participatingCharacters.Count}");
-            Debug.Log($"Participating groups: {participatingGroups.Count}");
-            Debug.Log($"Excess characters: {excessCharacters.Count}");
-            Debug.Log($"Excess groups: {excessGroups.Count}");
-
-            // 3. Start animations
-            Vector3 targetPosition = outcome.outputSlot.transform.position;
-            Vector3 exitPosition = targetPosition + Vector3.left * 4.0f;
-
-            // Make participating groups run to target
-            foreach (var group in participatingGroups)
+            Dictionary<string, int> currentCounts = new Dictionary<string, int>();
+            foreach (var character in productCharacters)
             {
-                group.SetState(CharacterAnimationState.Running);
-                StartCoroutine(MoveToTarget(group.transform, targetPosition, 2.0f));
+                string elementName = character.GetModel().GetCharacterName();
+                if (currentCounts.ContainsKey(elementName))
+                    currentCounts[elementName]++;
+                else
+                    currentCounts[elementName] = 1;
             }
 
-            // Make participating individual characters run to target
-            foreach (var character in participatingCharacters)
+            // Spawn missing characters
+            foreach (var required in requiredElementCounts)
             {
-                character.GetModel().SetAnimationState(CharacterAnimationState.Running);
-                StartCoroutine(MoveToTarget(character.transform, targetPosition + UnityEngine.Random.insideUnitSphere * 0.5f, 2.0f));
-            }
-
-            // Make excess groups run away from reaction
-            foreach (var group in excessGroups)
-            {
-                group.SetState(CharacterAnimationState.Running);
-                Vector3 randomExitPos = exitPosition + UnityEngine.Random.insideUnitSphere * 2.0f;
-                randomExitPos.y = targetPosition.y;
-                StartCoroutine(MoveToTarget(group.transform, randomExitPos, 2.0f));
-            }
-
-            // Make excess individual characters run away from reaction
-            foreach (var character in excessCharacters)
-            {
-                character.GetModel().SetAnimationState(CharacterAnimationState.Running);
-                Vector3 randomExitPos = exitPosition + UnityEngine.Random.insideUnitSphere * 2.0f;
-                randomExitPos.y = targetPosition.y;
-                StartCoroutine(MoveToTarget(character.transform, randomExitPos, 2.0f));
-            }
-
-            // Wait for running animation to complete
-            yield return new WaitForSeconds(2.5f);
-
-            // 4. Handle excess characters/groups - set them to idle after moving away
-            foreach (var group in excessGroups)
-            {
-                group.SetState(CharacterAnimationState.Idle);
-            }
-            foreach (var character in excessCharacters)
-            {
-                character.GetModel().SetAnimationState(CharacterAnimationState.Idle);
-            }
-
-            // 5. Destroy old participating groups and extract their characters
-            List<CharacterView> extractedCharacters = new List<CharacterView>(participatingCharacters);
-            foreach (var group in groupsToDestroy)
-            {
-                if (participatingGroups.Contains(group))
-                {
-                    var groupCharacters = new List<CharacterView>(group.Characters);
-                    foreach (var character in groupCharacters)
-                    {
-                        group.RemoveCharacter(character);
-                        if (!extractedCharacters.Contains(character))
-                        {
-                            extractedCharacters.Add(character);
-                        }
-                    }
-                    group.ClearAndDestroy();
-                }
-            }
-
-            // 6. Spawn missing characters if needed (系数驱动的额外生成)
-            List<CharacterView> allAvailableCharacters = new List<CharacterView>(extractedCharacters);
-            
-            foreach (var required in totalRequiredCounts)
-            {
-                int currentCount = allocatedCounts.ContainsKey(required.Key) ? allocatedCounts[required.Key] : 0;
+                int currentCount = currentCounts.ContainsKey(required.Key) ? currentCounts[required.Key] : 0;
                 int neededCount = required.Value - currentCount;
 
                 if (neededCount > 0)
                 {
-                    Debug.Log($"Coefficient-driven spawning: {neededCount} additional {required.Key} characters");
+                    Debug.Log($"Spawning {neededCount} additional {required.Key} characters");
                     
                     for (int i = 0; i < neededCount; i++)
                     {
@@ -421,7 +402,7 @@ namespace Elementor
                         if (newCharacters.Count > 0)
                         {
                             var newCharacter = newCharacters[newCharacters.Count - 1];
-                            allAvailableCharacters.Add(newCharacter);
+                            productCharacters.Add(newCharacter);
                             newCharacter.GetModel().SetAnimationState(CharacterAnimationState.Falling);
                         }
                     }
@@ -431,62 +412,29 @@ namespace Elementor
             // Wait for falling characters to settle
             yield return new WaitForSeconds(1.0f);
 
-            // 7. Create multiple independent product groups
-            List<CharacterGroup> createdGroups = new List<CharacterGroup>();
-            List<CharacterView> allCreatedCharacters = new List<CharacterView>();
-
-            for (int productIndex = 0; productIndex < outcome.productCount; productIndex++)
+            // Create the group
+            if (productCharacters.Count > 0)
             {
-                // Collect characters needed for this specific product unit
-                List<CharacterView> charactersForThisProduct = new List<CharacterView>();
-                Dictionary<string, int> neededForThisProduct = new Dictionary<string, int>(singleProductElementCounts);
+                CharacterGroup newGroup = characterSpawnController.CreateCharacterGroup(
+                    outcome.newGroupName, 
+                    targetPosition,
+                    outcome.outputSlot.transform.parent
+                );
 
-                // Allocate characters for this product
-                List<CharacterView> remainingCharacters = new List<CharacterView>(allAvailableCharacters);
-                foreach (var character in remainingCharacters)
+                if (newGroup != null)
                 {
-                    string elementName = character.GetModel().GetCharacterName();
-                    if (neededForThisProduct.ContainsKey(elementName) && neededForThisProduct[elementName] > 0)
+                    foreach (var character in productCharacters)
                     {
-                        charactersForThisProduct.Add(character);
-                        allAvailableCharacters.Remove(character);
-                        neededForThisProduct[elementName]--;
+                        characterSpawnController.AddCharacterToGroup(newGroup, character);
                     }
+
+                    // Occupy the slot with this product
+                    outcome.outputSlot.Occupy(newGroup);
+                    outcome.outputSlot.SetCoefficient(1);
+
+                    newGroup.SetState(CharacterAnimationState.Falling);
+                    yield return new WaitForSeconds(0.5f);
                 }
-
-                // Create individual product group
-                if (charactersForThisProduct.Count > 0)
-                {
-                    Vector3 productPosition = targetPosition + Vector3.right * productIndex * 1.5f; // Spread products horizontally
-                    
-                    CharacterGroup newGroup = characterSpawnController.CreateCharacterGroup(
-                        outcome.newGroupName, 
-                        productPosition,
-                        outcome.outputSlot.transform.parent
-                    );
-
-                    if (newGroup != null)
-                    {
-                        foreach (var character in charactersForThisProduct)
-                        {
-                            characterSpawnController.AddCharacterToGroup(newGroup, character);
-                        }
-
-                        newGroup.SetState(CharacterAnimationState.Falling);
-                        createdGroups.Add(newGroup);
-                        allCreatedCharacters.AddRange(charactersForThisProduct);
-                    }
-                }
-            }
-
-            // 8. Occupy slot with the first group (representing all products)
-            if (createdGroups.Count > 0)
-            {
-                outcome.outputSlot.Occupy(createdGroups[0]);
-                outcome.outputSlot.SetCoefficient(1); // No coefficient on final products
-                
-                yield return new WaitForSeconds(0.5f);
-                SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.ReactionSuccess, allCreatedCharacters);
             }
         }
 

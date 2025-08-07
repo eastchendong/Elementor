@@ -103,30 +103,27 @@ namespace Elementor
 
             var stage = new ReactionStage
             {
-                reactionName = loreReaction.equation, // Use equation instead of type
+                reactionName = loreReaction.equation,
                 reactionCondition = string.Join(", ", loreReaction.conditions),
                 requirements = new List<SlotRequirement>(),
                 outcomes = new List<ReactionOutcome>()
             };
 
-            // Configure reaction requirements using new simplified structure
+            // Configure reaction requirements using existing input slots
             int inputSlotIndex = 1;
             foreach (var reactant in loreReaction.reactants)
             {
                 CharacterSlot slot = FindSlotInPrefab(currentEnvironmentInstance.transform, $"InputSlot{inputSlotIndex}");
                 if (slot != null)
                 {
-                    string requiredName;
-                    requiredName = reactant.name;
-
                     stage.requirements.Add(new SlotRequirement
                     {
                         slot = slot,
-                        requiredName = requiredName,
+                        requiredName = reactant.name,
                         requiredCount = reactant.count
                     });
 
-                    Debug.Log($"Added requirement: {requiredName} x{reactant.count} to {slot.name}");
+                    Debug.Log($"Added requirement: {reactant.name} x{reactant.count} to {slot.name}");
                 }
                 else
                 {
@@ -135,37 +132,46 @@ namespace Elementor
                 inputSlotIndex++;
             }
 
-            // Configure reaction outcomes
-            int outputSlotIndex = 1;
+            // Create output slots dynamically based on product counts
+            int totalOutputSlots = 0;
             foreach (var product in loreReaction.products)
             {
-                CharacterSlot slot = FindSlotInPrefab(currentEnvironmentInstance.transform, $"OutputSlot{outputSlotIndex}");
-                if (slot != null)
+                totalOutputSlots += product.count;
+            }
+            
+            Debug.Log($"Creating {totalOutputSlots} output slots for products");
+            List<CharacterSlot> createdOutputSlots = CreateOutputSlots(currentEnvironmentInstance.transform, totalOutputSlots);
+
+            // Configure reaction outcomes - one outcome per individual product unit
+            int outputSlotIndex = 0;
+            foreach (var product in loreReaction.products)
+            {
+                var charactersInGroup = new List<string>();
+                foreach (var element in product.elements)
                 {
-                    var charactersInGroup = new List<string>();
-                    foreach (var element in product.elements)
+                    for (int i = 0; i < element.count; i++)
                     {
-                        for (int i = 0; i < element.count; i++)
-                        {
-                            charactersInGroup.Add(element.element);
-                        }
+                        charactersInGroup.Add(element.element);
                     }
-
-                    stage.outcomes.Add(new ReactionOutcome
-                    {
-                        outputSlot = slot,
-                        newGroupName = product.name,
-                        characterNamesInGroup = charactersInGroup,
-                        productCount = product.count
-                    });
-
-                    Debug.Log($"Added outcome: {product.name} x{product.count} to {slot.name}");
                 }
-                else
+
+                // Create one outcome for each product count
+                for (int productIndex = 0; productIndex < product.count; productIndex++)
                 {
-                    Debug.LogWarning($"Could not find OutputSlot{outputSlotIndex} in environment prefab");
+                    if (outputSlotIndex < createdOutputSlots.Count)
+                    {
+                        stage.outcomes.Add(new ReactionOutcome
+                        {
+                            outputSlot = createdOutputSlots[outputSlotIndex],
+                            newGroupName = product.name,
+                            characterNamesInGroup = charactersInGroup,
+                            productCount = 1 // Each outcome represents one unit
+                        });
+
+                        Debug.Log($"Added outcome: {product.name} to OutputSlot{outputSlotIndex + 1}");
+                        outputSlotIndex++;
+                    }
                 }
-                outputSlotIndex++;
             }
 
             // Hook up the reaction completion event
@@ -175,6 +181,55 @@ namespace Elementor
             
             Debug.Log($"Scene generation completed for reaction: {loreReaction.equation}");
             Debug.Log($"Requirements: {stage.requirements.Count}, Outcomes: {stage.outcomes.Count}");
+        }
+
+        private List<CharacterSlot> CreateOutputSlots(Transform environmentParent, int slotCount)
+        {
+            List<CharacterSlot> createdSlots = new List<CharacterSlot>();
+            
+            // Find existing OutputSlot1 to use as template
+            CharacterSlot templateSlot = FindSlotInPrefab(environmentParent, "OutputSlot1");
+            if (templateSlot == null)
+            {
+                Debug.LogError("Cannot find OutputSlot1 template in environment prefab");
+                return createdSlots;
+            }
+
+            // Find or create output slots container
+            Transform outputContainer = environmentParent.Find("OutputSlots");
+            if (outputContainer == null)
+            {
+                outputContainer = templateSlot.transform.parent;
+            }
+
+            // Create required number of output slots
+            for (int i = 1; i <= slotCount; i++)
+            {
+                CharacterSlot slot;
+                
+                if (i == 1)
+                {
+                    // Use existing OutputSlot1
+                    slot = templateSlot;
+                }
+                else
+                {
+                    // Create new slots based on template
+                    GameObject newSlotObj = Instantiate(templateSlot.gameObject, outputContainer);
+                    newSlotObj.name = $"OutputSlot{i}";
+                    
+                    // Position slots horizontally with spacing
+                    Vector3 basePosition = templateSlot.transform.position;
+                    newSlotObj.transform.position = basePosition + Vector3.right * (i - 1) * 2.0f;
+                    
+                    slot = newSlotObj.GetComponent<CharacterSlot>();
+                }
+                
+                createdSlots.Add(slot);
+                Debug.Log($"Created/configured OutputSlot{i} at position {slot.transform.position}");
+            }
+
+            return createdSlots;
         }
 
         /// <summary>
