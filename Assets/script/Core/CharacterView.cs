@@ -94,7 +94,7 @@ namespace Elementor.Core
         // 扩展接口 - 开始跑步
         public void StartRunning()
         {
-            if (characterModel != null && characterModel.CanTransitionTo(CharacterAnimationState.Running))
+            if (characterModel != null)
             {
                 characterModel.SetAnimationState(CharacterAnimationState.Running);
             }
@@ -103,7 +103,7 @@ namespace Elementor.Core
         // 扩展接口 - 停止跑步
         public void StopRunning()
         {
-            if (characterModel != null && characterModel.CanTransitionTo(CharacterAnimationState.Idle))
+            if (characterModel != null)
             {
                 characterModel.SetAnimationState(CharacterAnimationState.Idle);
             }
@@ -112,7 +112,7 @@ namespace Elementor.Core
         // 扩展接口 - 释放技能
         public void CastSkill()
         {
-            if (characterModel != null && characterModel.CanTransitionTo(CharacterAnimationState.CastingSkill))
+            if (characterModel != null)
             {
                 characterModel.SetAnimationState(CharacterAnimationState.CastingSkill);
 

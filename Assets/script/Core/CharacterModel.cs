@@ -83,28 +83,6 @@ namespace Elementor.Core
             }
         }
 
-        public bool CanTransitionTo(CharacterAnimationState targetState)
-        {
-            // 定义状态转换规则
-            switch (currentState)
-            {
-                case CharacterAnimationState.Idle:
-                    return true; // Idle可以转换到任何状态
-                case CharacterAnimationState.Grabbed:
-                    return targetState != CharacterAnimationState.Running; // 被抓住时不能跑步
-                case CharacterAnimationState.Running:
-                    return targetState != CharacterAnimationState.Grabbed; // 跑步时不能被抓住
-                case CharacterAnimationState.CastingSkill:
-                    return targetState == CharacterAnimationState.Idle; // 释放技能后只能回到Idle
-                case CharacterAnimationState.Slotted:
-                    return targetState == CharacterAnimationState.Grabbed; // 在槽里只能被抓取
-                case CharacterAnimationState.Falling:
-                    return targetState == CharacterAnimationState.Idle || targetState == CharacterAnimationState.Grabbed; // 下落时可以被再次抓住或恢复静止
-                default:
-                    return false;
-            }
-        }
-
         public void StartGrab()
         {
             if (characterGroup != null)
@@ -119,10 +97,7 @@ namespace Elementor.Core
                 currentSlot = null;
             }
             
-            if (CanTransitionTo(CharacterAnimationState.Grabbed))
-            {
-                SetAnimationState(CharacterAnimationState.Grabbed);
-            }
+            SetAnimationState(CharacterAnimationState.Grabbed);
         }
 
         public void EndGrab()
@@ -145,10 +120,7 @@ namespace Elementor.Core
             
             transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
 
-            if (CanTransitionTo(CharacterAnimationState.Falling))
-            {
-                StartCoroutine(DelayedSetFallingState());
-            }
+            StartCoroutine(DelayedSetFallingState());
         }
 
         private IEnumerator DelayedSetFallingState()

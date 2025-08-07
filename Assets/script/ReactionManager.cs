@@ -268,7 +268,6 @@ namespace Elementor
                     Vector3 targetPosition = outcome.outputSlot.transform.position;
                     foreach (var character in productCharacters)
                     {
-                        character.GetModel().SetAnimationState(CharacterAnimationState.Running);
                         StartCoroutine(MoveToTarget(character.transform, targetPosition + UnityEngine.Random.insideUnitSphere * 0.5f, 2.0f));
                     }
                     
@@ -288,7 +287,6 @@ namespace Elementor
                 
                 foreach (var character in allAvailableCharacters)
                 {
-                    character.GetModel().SetAnimationState(CharacterAnimationState.Running);
                     Vector3 randomExitPos = exitPosition + UnityEngine.Random.insideUnitSphere * 2.0f;
                     randomExitPos.y = transform.position.y;
                     StartCoroutine(MoveToTarget(character.transform, randomExitPos, 2.0f));
@@ -440,6 +438,7 @@ namespace Elementor
 
         private System.Collections.IEnumerator MoveToTarget(Transform mover, Vector3 target, float duration)
         {
+            mover.GetComponent<CharacterView>().StartRunning();
             Vector3 startPosition = mover.position;
             float elapsed = 0f;
 
@@ -447,15 +446,16 @@ namespace Elementor
             {
                 elapsed += Time.deltaTime;
                 float progress = elapsed / duration;
-                
+
                 // Use smooth curve for natural movement
                 progress = Mathf.SmoothStep(0f, 1f, progress);
-                
+
                 mover.position = Vector3.Lerp(startPosition, target, progress);
                 yield return null;
             }
 
             mover.position = target;
+            mover.GetComponent<CharacterView>().StopRunning();
         }
 
         private List<CharacterView> GetParticipantCharacters(ReactionStage stage)
