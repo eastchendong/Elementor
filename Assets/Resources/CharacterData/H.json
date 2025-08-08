@@ -1,0 +1,10 @@
+{
+    "type": "Nonmetal",
+    "name": "H",
+    "prefabPath": "Characters/H",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "活泼可爱的小精灵",
+        "voiceId": "zh_female_shuangkuaisisi_emo_v2_mars_bigtts"
+    }
+}

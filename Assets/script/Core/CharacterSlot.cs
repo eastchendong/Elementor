@@ -1,18 +1,29 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
-namespace Elementor
+namespace Elementor.Core
 {
     [RequireComponent(typeof(Collider))]
     public class CharacterSlot : MonoBehaviour
     {
         [SerializeField] private Transform slotAnchor; // The point where the character/group will snap to.
-        [SerializeField] private Material shiningMaterial; // Material to use for guidance
-        private Material originalMaterial;
-        private Renderer _renderer;
+        [SerializeField] private GameObject highlightArrow; // Arrow GameObject to show for guidance
+
+        // Coefficient system for stoichiometry
+        [SerializeField] private int coefficient = 1;
+        [SerializeField] private bool showCoefficientUI = false; // Controls whether to show coefficient controls
+        [SerializeField] private GameObject coefficientUI;
+        [SerializeField] private TextMeshProUGUI coefficientText;
+        [SerializeField] private Button increaseButton;
+        [SerializeField] private Button decreaseButton;
+        [SerializeField] private int maxCoefficient = 10;
 
         private object occupant; // Can be CharacterView or CharacterGroup
+        private bool wasOccupiedLastFrame = false; // Track occupancy state
 
         public bool IsOccupied => occupant != null;
+        public int Coefficient => coefficient;
 
         private void Awake()
         {
@@ -21,11 +32,96 @@ namespace Elementor
             {
                 slotAnchor = transform;
             }
-            _renderer = GetComponent<Renderer>();
-            if (_renderer != null)
+            
+            // Initialize highlight arrow as disabled
+            if (highlightArrow != null)
             {
-                originalMaterial = _renderer.material;
+                highlightArrow.SetActive(false);
             }
+
+            SetupCoefficientUI();
+        }
+
+        private void Update()
+        {
+            // Check if occupant has been moved away or destroyed
+            if (IsOccupied && !IsOccupantStillInSlot())
+            {
+                Debug.Log($"Occupant of {name} has left the slot area or been destroyed");
+                ForceRelease();
+            }
+            
+            // Track occupancy state changes
+            bool currentlyOccupied = IsOccupied;
+            if (wasOccupiedLastFrame != currentlyOccupied)
+            {
+                if (!currentlyOccupied)
+                {
+                    OnSlotBecameEmpty();
+                }
+                wasOccupiedLastFrame = currentlyOccupied;
+            }
+        }
+
+        private bool IsOccupantStillInSlot()
+        {
+            if (occupant == null) return false;
+            
+            Transform occupantTransform = null;
+            
+            if (occupant is CharacterView characterView)
+            {
+                if (characterView == null) return false;
+                occupantTransform = characterView.transform;
+            }
+            else if (occupant is CharacterGroup characterGroup)
+            {
+                if (characterGroup == null) return false;
+                occupantTransform = characterGroup.transform;
+            }
+            
+            if (occupantTransform == null) return false;
+            
+            // Check if occupant is still a child of this slot
+            if (occupantTransform.parent != slotAnchor) return false;
+            
+            // Check distance from slot anchor (additional safety check)
+            float distance = Vector3.Distance(occupantTransform.position, slotAnchor.position);
+            return distance < 2f; // Tolerance of 2 units
+        }
+
+        private void OnSlotBecameEmpty()
+        {
+            Debug.Log($"Slot {name} became empty");
+            // This can be used by other systems (like CharacterSpawner) to react to empty slots
+        }
+
+        private void ForceRelease()
+        {
+            Debug.Log($"Force releasing occupant from {name}");
+            occupant = null;
+            HideCoefficientUI();
+            ResetCoefficient();
+        }
+
+        private void SetupCoefficientUI()
+        {
+            if (coefficientUI != null)
+            {
+                coefficientUI.SetActive(false);
+            }
+
+            if (increaseButton != null)
+            {
+                increaseButton.onClick.AddListener(IncreaseCoefficient);
+            }
+
+            if (decreaseButton != null)
+            {
+                decreaseButton.onClick.AddListener(DecreaseCoefficient);
+            }
+
+            UpdateCoefficientDisplay();
         }
 
         public bool Occupy(object newOccupant)
@@ -59,10 +155,11 @@ namespace Elementor
                 {
                     occupantRigidbody.constraints = RigidbodyConstraints.FreezeAll;
                 }
-                StopShining(); // Stop shining when occupied
+                StopShining();
+                ShowCoefficientUI();
             }
             
-            Debug.Log($"{name} is now occupied.");
+            Debug.Log($"{name} is now occupied with coefficient {coefficient}.");
             return true;
         }
 
@@ -71,16 +168,23 @@ namespace Elementor
             if (!IsOccupied) return;
 
             Rigidbody occupantRigidbody = null;
+            Transform occupantTransform = null;
 
             if (occupant is CharacterView characterView)
             {
-                characterView.transform.SetParent(null, true);
+                occupantTransform = characterView.transform;
                 occupantRigidbody = characterView.GetComponent<Rigidbody>();
+                
+                // Remove parent hierarchy - make it independent
+                occupantTransform.SetParent(null, true);
             }
             else if (occupant is CharacterGroup characterGroup)
             {
-                characterGroup.transform.SetParent(null, true);
+                occupantTransform = characterGroup.transform;
                 occupantRigidbody = characterGroup.GetComponent<Rigidbody>();
+                
+                // Remove parent hierarchy - make it independent
+                occupantTransform.SetParent(null, true);
             }
 
             if (occupantRigidbody != null)
@@ -89,7 +193,9 @@ namespace Elementor
                 occupantRigidbody.isKinematic = false;
             }
             
-            Debug.Log($"{name} is now free.");
+            HideCoefficientUI();
+            ResetCoefficient();
+            Debug.Log($"{name} is now free. Occupant parent hierarchy removed.");
             occupant = null;
         }
 
@@ -98,19 +204,109 @@ namespace Elementor
             return occupant;
         }
 
+        public string GetOccupantName()
+        {
+            if (occupant is CharacterView characterView)
+            {
+                return characterView.GetModel().GetCharacterName();
+            }
+            else if (occupant is CharacterGroup characterGroup)
+            {
+                return characterGroup.name;
+            }
+            return null;
+        }
+
+        // Coefficient management
+        public void IncreaseCoefficient()
+        {
+            if (coefficient < maxCoefficient)
+            {
+                coefficient++;
+                UpdateCoefficientDisplay();
+                Debug.Log($"{name} coefficient increased to {coefficient}");
+            }
+        }
+
+        public void DecreaseCoefficient()
+        {
+            if (coefficient > 1)
+            {
+                coefficient--;
+                UpdateCoefficientDisplay();
+                Debug.Log($"{name} coefficient decreased to {coefficient}");
+            }
+        }
+
+        public void SetCoefficient(int value)
+        {
+            coefficient = Mathf.Clamp(value, 1, maxCoefficient);
+            UpdateCoefficientDisplay();
+        }
+
+        private void ResetCoefficient()
+        {
+            coefficient = 1;
+            UpdateCoefficientDisplay();
+        }
+
+        private void UpdateCoefficientDisplay()
+        {
+            if (coefficientText != null)
+            {
+                coefficientText.text = coefficient.ToString();
+            }
+        }
+
+        private void ShowCoefficientUI()
+        {
+            if (coefficientUI != null && showCoefficientUI)
+            {
+                coefficientUI.SetActive(true);
+            }
+        }
+
+        private void HideCoefficientUI()
+        {
+            if (coefficientUI != null && showCoefficientUI)
+            {
+                coefficientUI.SetActive(false);
+            }
+        }
+
         public void StartShining()
         {
-            if (_renderer != null && shiningMaterial != null)
+            if (highlightArrow != null)
             {
-                _renderer.material = shiningMaterial;
+                highlightArrow.SetActive(true);
+                Debug.Log($"Started highlighting arrow for slot {name}");
             }
         }
 
         public void StopShining()
         {
-            if (_renderer != null && originalMaterial != null)
+            if (highlightArrow != null)
             {
-                _renderer.material = originalMaterial;
+                highlightArrow.SetActive(false);
+                Debug.Log($"Stopped highlighting arrow for slot {name}");
+            }
+        }
+
+        // Property to control coefficient UI visibility at runtime
+        public bool ifShowCoefficientUI
+        {
+            get => showCoefficientUI;
+            set
+            {
+                showCoefficientUI = value;
+                if (!showCoefficientUI && coefficientUI != null)
+                {
+                    coefficientUI.SetActive(false);
+                }
+                else if (showCoefficientUI && IsOccupied && coefficientUI != null)
+                {
+                    coefficientUI.SetActive(true);
+                }
             }
         }
     }

@@ -1,0 +1,9 @@
+{
+    "type": "Alkaline Earth Metal",
+    "name": "Ca",
+    "prefabPath": "Characters/Ca",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "zh_male_lengkugege_emo_v2_mars_bigtts"
+    }
+}

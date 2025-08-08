@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Elementor
+namespace Elementor.Core
 {
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(CharacterView))]
@@ -28,12 +28,12 @@ namespace Elementor
 
         private void OnEnable()
         {
-            characterView.OnAnimationStateChanged += HandleAnimationStateChanged;
+            // characterView.OnAnimationStateChanged += HandleAnimationStateChanged;
         }
 
         private void OnDisable()
         {
-            characterView.OnAnimationStateChanged -= HandleAnimationStateChanged;
+            // characterView.OnAnimationStateChanged -= HandleAnimationStateChanged;
             if (movementCoroutine != null)
             {
                 StopCoroutine(movementCoroutine);

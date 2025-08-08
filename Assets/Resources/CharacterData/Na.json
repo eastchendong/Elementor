@@ -1,0 +1,10 @@
+{
+    "type": "Alkali Metal",
+    "name": "Na",
+    "prefabPath": "Characters/Na",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "开朗热情的社交达人",
+        "voiceId": "zh_female_shuangkuaisisi_emo_v2_mars_bigtts"
+    }
+}

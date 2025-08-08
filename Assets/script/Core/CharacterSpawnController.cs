@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-namespace Elementor
+namespace Elementor.Core
 {
     public class CharacterSpawnController : MonoBehaviour
     {
@@ -27,36 +27,44 @@ namespace Elementor
             }
         }
 
-        public void SpawnCharacter(Character character, Vector3? location = null, Transform parent = null)
+        public void SpawnCharacter(string characterName, Vector3? location = null, Transform parent = null)
+        {
+            CharacterData characterData = CharacterDataLoader.LoadCharacterData(characterName);
+            Character character = Character.CreateFromData(characterData);
+            SpawnCharacterInternal(character, location, parent);
+        }
+
+        private void SpawnCharacterInternal(Character character, Vector3? location = null, Transform parent = null)
         {
             Vector3 spawnPosition = location ?? Vector3.zero;
             Transform parentTransform = parent ?? transform;
 
-            // 先生成控制器prefab作为主物体
+            
             GameObject controllerObj = Instantiate(characterControllerPrefab, spawnPosition, Quaternion.identity, parentTransform);
+            
+            // Ensure controller object scale is 1
+            controllerObj.transform.localScale = Vector3.one;
 
             if (controllerObj != null)
             {
-                // 然后在控制器下面生成3D人偶模型
+
                 GameObject modelObj = CreateCharacterModel(character, controllerObj.transform);
 
-                // 获取CharacterView和CharacterModel组件
                 CharacterView characterView = controllerObj.GetComponent<CharacterView>();
                 CharacterModel characterModel = controllerObj.GetComponent<CharacterModel>();
 
                 if (characterView != null && characterModel != null)
                 {
-                    // 设置CharacterView的model引用
                     characterView.SetCharacterModel(characterModel);
 
-                    // 进行初始化
                     characterView.Initialize();
                     characterModel.Initialize(character);
+                    
+                    controllerObj.name = character.name + "_Controller";
+                    
                     spawnedCharacters.Add(characterView);
 
-                    // 订阅角色交互事件
-                    characterView.OnCharacterSelected += OnCharacterSelected;
-                    characterView.OnCharacterMoved += OnCharacterMoved;
+
                 }
                 else
                 {
@@ -119,22 +127,15 @@ namespace Elementor
                 return null;
             }
             
-            // 在控制器下生成3D模型，使用本地坐标(0,0,0)
             GameObject modelObj = Instantiate(modelPrefab, parent);
             modelObj.transform.localPosition = Vector3.zero;
             modelObj.transform.localRotation = Quaternion.identity;
+            modelObj.transform.localScale = Vector3.one; // Ensure model scale is 1
             
+            modelObj.name = $"{character.name}_Model";
+            Debug.Log($"Model object name set to: '{modelObj.name}'");
+
             return modelObj;
-        }
-        
-        private void OnCharacterSelected(CharacterView character)
-        {
-            Debug.Log($"角色被选中: {character.GetModel().GetCharacterName()}");
-        }
-        
-        private void OnCharacterMoved(CharacterView character, Vector3 newPosition)
-        {
-            Debug.Log($"角色移动: {character.GetModel().GetCharacterName()} 到 {newPosition}");
         }
         
         public List<CharacterView> GetSpawnedCharacters()

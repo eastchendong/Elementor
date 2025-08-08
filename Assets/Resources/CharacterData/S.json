@@ -1,0 +1,10 @@
+{
+    "type": "Nonmetal",
+    "name": "S",
+    "prefabPath": "Characters/S",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "神秘独特的炼金术师",
+        "voiceId": "zh_female_shuangkuaisisi_emo_v2_mars_bigtts"
+    }
+}

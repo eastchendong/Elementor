@@ -1,0 +1,10 @@
+{
+    "type": "Nonmetal",
+    "name": "O",
+    "prefabPath": "Characters/O",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "生机勃勃的生命源泉",
+        "voiceId": "zh_female_shuangkuaisisi_emo_v2_mars_bigtts"
+    }
+}

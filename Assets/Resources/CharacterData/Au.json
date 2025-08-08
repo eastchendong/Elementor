@@ -1,0 +1,10 @@
+{
+    "type": "Noble Metal",
+    "name": "Au",
+    "prefabPath": "Characters/Au",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "高贵优雅的贵族",
+        "voiceId": "zh_male_guangzhoudege_emo_mars_bigtts"
+    }
+}

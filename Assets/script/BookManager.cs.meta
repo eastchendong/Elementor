@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/script/BookManager.cs.meta
+guid: e0455536722b9534c8381b8f4c9ec618
+========
+guid: b34877d42a5136240be9c43242bd89ea
+>>>>>>>> SJS:Assets/Off Axis Studios/Polyworks/Effects/Scripts/FloatingSway.cs.meta
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

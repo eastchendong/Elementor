@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using Elementor.Lore;
+using Elementor.Core;
 using System.Linq;
 using Meta.XR.MRUtilityKit;
 
-namespace Elementor
+namespace Elementor.Lore
 {
     public class LoreSceneGenerator : MonoBehaviour
     {
@@ -15,25 +15,35 @@ namespace Elementor
 
         private LoreController loreController;
         private CharacterSpawnController characterSpawnController;
-        private LoreJsonReader loreJsonReader;
         private SceneAnchorManager sceneAnchorManager;
+        private LoreSpawnerHighlighter spawnerHighlighter;
         private GameObject currentEnvironmentInstance;
 
         void Start()
         {
             loreController = LoreController.Instance;
             characterSpawnController = CharacterSpawnController.Instance;
-            loreJsonReader = FindObjectOfType<LoreJsonReader>();
             sceneAnchorManager = SceneAnchorManager.Instance;
+            spawnerHighlighter = FindObjectOfType<LoreSpawnerHighlighter>();
 
-            if (loreController == null || characterSpawnController == null || loreJsonReader == null || sceneAnchorManager == null)
+            Debug.Log($"🎬 LoreSceneGenerator Start - Controllers found: LoreController={loreController != null}, CharacterSpawn={characterSpawnController != null}, SceneAnchorManager={sceneAnchorManager != null}, SpawnerHighlighter={spawnerHighlighter != null}");
+
+            if (loreController == null || characterSpawnController == null)
             {
-                Debug.LogError("A required controller (Lore, CharacterSpawn, LoreJsonReader, or SceneAnchorManager) is missing.");
+                Debug.LogError("A required controller (Lore, CharacterSpawn");
                 return;
             }
 
             // Subscribe to the lore loading event
             loreController.OnLoreLoaded += HandleLoreLoaded;
+            Debug.Log("🔗 LoreSceneGenerator subscribed to OnLoreLoaded event");
+            
+            // Check if lore is already loaded
+            if (loreController.CurrentLore != null)
+            {
+                Debug.Log("🎯 Lore already loaded on startup, generating scene immediately");
+                HandleLoreLoaded();
+            }
         }
 
         private void OnDestroy()
@@ -49,20 +59,30 @@ namespace Elementor
         /// </summary>
         private void HandleLoreLoaded()
         {
-            if (loreController.CurrentLore == null) return;
+            Debug.Log("🎭 HandleLoreLoaded called in LoreSceneGenerator!");
+            
+            if (loreController.CurrentLore == null)
+            {
+                Debug.LogWarning("🚫 HandleLoreLoaded called but CurrentLore is null");
+                return;
+            }
 
-            Debug.Log("New lore detected. Generating reaction environment...");
+            Debug.Log($"✅ New lore detected: '{loreController.CurrentLore.story?.title}'. Generating reaction environment...");
             GenerateSceneFromLore();
         }
 
         private void GenerateSceneFromLore()
         {
+            Debug.Log("🏗️ Starting scene generation from lore...");
+            
             Transform environmentSpawnPoint = sceneAnchorManager.GetRandomAnchorTransform();
             if (environmentPrefab == null || environmentSpawnPoint == null)
             {
-                Debug.LogError("Environment Prefab is not set or no spawn point available from SceneAnchorManager.");
+                Debug.LogError($"❌ Environment Prefab is not set ({environmentPrefab == null}) or no spawn point available from SceneAnchorManager ({environmentSpawnPoint == null}).");
                 return;
             }
+
+            Debug.Log($"🎯 Spawning environment at position: {environmentSpawnPoint.position}");
 
             // Instantiate the environment with identity rotation
             currentEnvironmentInstance = Instantiate(environmentPrefab, environmentSpawnPoint.position, Quaternion.identity);
@@ -85,13 +105,13 @@ namespace Elementor
 
             var stage = new ReactionStage
             {
-                reactionName = loreReaction.type,
+                reactionName = loreReaction.equation,
                 reactionCondition = string.Join(", ", loreReaction.conditions),
                 requirements = new List<SlotRequirement>(),
                 outcomes = new List<ReactionOutcome>()
             };
 
-            // Configure reaction requirements by finding slots within the new prefab
+            // Configure reaction requirements using existing input slots
             int inputSlotIndex = 1;
             foreach (var reactant in loreReaction.reactants)
             {
@@ -101,35 +121,117 @@ namespace Elementor
                     stage.requirements.Add(new SlotRequirement
                     {
                         slot = slot,
-                        requiredGroupName = reactant.name,
-                        requiredCharacterName = ""
+                        requiredName = reactant.name,
+                        requiredCount = reactant.count
                     });
+
+                    Debug.Log($"Added requirement: {reactant.name} x{reactant.count} to {slot.name}");
+                }
+                else
+                {
+                    Debug.LogWarning($"Could not find InputSlot{inputSlotIndex} in environment prefab");
                 }
                 inputSlotIndex++;
             }
 
-            // Configure reaction outcomes
-            int outputSlotIndex = 1;
+            // Create output slots dynamically based on product counts
+            int totalOutputSlots = 0;
             foreach (var product in loreReaction.products)
             {
-                CharacterSlot slot = FindSlotInPrefab(currentEnvironmentInstance.transform, $"OutputSlot{outputSlotIndex}");
-                if (slot != null)
+                totalOutputSlots += product.count;
+            }
+            
+            Debug.Log($"Creating {totalOutputSlots} output slots for products");
+            List<CharacterSlot> createdOutputSlots = CreateOutputSlots(currentEnvironmentInstance.transform, totalOutputSlots);
+
+            // Configure reaction outcomes - one outcome per individual product unit
+            int outputSlotIndex = 0;
+            foreach (var product in loreReaction.products)
+            {
+                var charactersInGroup = new List<string>();
+                foreach (var element in product.elements)
                 {
-                    var charactersInGroup = product.elements.SelectMany(e => Enumerable.Repeat(e.element, e.count)).ToList();
-                    stage.outcomes.Add(new ReactionOutcome
+                    for (int i = 0; i < element.count; i++)
                     {
-                        outputSlot = slot,
-                        newGroupName = product.name,
-                        characterNamesInGroup = charactersInGroup
-                    });
+                        charactersInGroup.Add(element.element);
+                    }
                 }
-                outputSlotIndex++;
+
+                // Create one outcome for each product count
+                for (int productIndex = 0; productIndex < product.count; productIndex++)
+                {
+                    if (outputSlotIndex < createdOutputSlots.Count)
+                    {
+                        stage.outcomes.Add(new ReactionOutcome
+                        {
+                            outputSlot = createdOutputSlots[outputSlotIndex],
+                            newGroupName = product.name,
+                            characterNamesInGroup = charactersInGroup,
+                            productCount = 1 // Each outcome represents one unit
+                        });
+
+                        Debug.Log($"Added outcome: {product.name} to OutputSlot{outputSlotIndex + 1}");
+                        outputSlotIndex++;
+                    }
+                }
             }
 
             // Hook up the reaction completion event
             stage.onReactionPhenomenon.AddListener(OnReactionCompleted);
 
             reactionManager.SetupStages(new List<ReactionStage> { stage });
+            
+            Debug.Log($"Scene generation completed for reaction: {loreReaction.equation}");
+            Debug.Log($"Requirements: {stage.requirements.Count}, Outcomes: {stage.outcomes.Count}");
+        }
+
+        private List<CharacterSlot> CreateOutputSlots(Transform environmentParent, int slotCount)
+        {
+            List<CharacterSlot> createdSlots = new List<CharacterSlot>();
+            
+            // Find existing OutputSlot1 to use as template
+            CharacterSlot templateSlot = FindSlotInPrefab(environmentParent, "OutputSlot1");
+            if (templateSlot == null)
+            {
+                Debug.LogError("Cannot find OutputSlot1 template in environment prefab");
+                return createdSlots;
+            }
+
+            // Find or create output slots container
+            Transform outputContainer = environmentParent.Find("OutputSlots");
+            if (outputContainer == null)
+            {
+                outputContainer = templateSlot.transform.parent;
+            }
+
+            // Create required number of output slots
+            for (int i = 1; i <= slotCount; i++)
+            {
+                CharacterSlot slot;
+                
+                if (i == 1)
+                {
+                    // Use existing OutputSlot1
+                    slot = templateSlot;
+                }
+                else
+                {
+                    // Create new slots based on template
+                    GameObject newSlotObj = Instantiate(templateSlot.gameObject, outputContainer);
+                    newSlotObj.name = $"OutputSlot{i}";
+                    
+                    // Position slots horizontally with spacing
+                    Vector3 basePosition = templateSlot.transform.position;
+                    newSlotObj.transform.position = basePosition + Vector3.right * (i - 1) * 2.0f;
+                    
+                    slot = newSlotObj.GetComponent<CharacterSlot>();
+                }
+                
+                createdSlots.Add(slot);
+                Debug.Log($"Created/configured OutputSlot{i} at position {slot.transform.position}");
+            }
+
+            return createdSlots;
         }
 
         /// <summary>
@@ -141,13 +243,18 @@ namespace Elementor
 
             // 1. Clear the lore data from the controller. The environment prefab remains as a memento.
             loreController.ClearCurrentLore();
+            
+            // 2. Clear spawner highlights when lore is unloaded
+            if (spawnerHighlighter != null)
+            {
+                spawnerHighlighter.RefreshHighlighting();
+                Debug.Log("🔄 Cleared spawner highlights after reaction completion");
+            }
+            
             currentEnvironmentInstance = null;
 
-            // 2. Trigger the next lore reading (placeholder for future logic).
-            // For now, this could reload the same file for testing or be adapted to load "scene_002.json", etc.
+            // 3. Trigger the next lore reading (placeholder for future logic).
             Debug.Log("Triggering next lore read... (Interface for next step)");
-            // Example: loreJsonReader.loreFilePath = "next_lore_file.json";
-            // loreJsonReader.LoadLoreFromJson();
         }
 
         private CharacterSlot FindSlotInPrefab(Transform parent, string slotName)

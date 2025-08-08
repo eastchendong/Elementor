@@ -1,0 +1,121 @@
+{
+  "scene_id": "scene_001",
+  "story": {
+    "title": "锌与硫酸的契约",
+    "plot": [
+      "锌族躁动不安",
+      "硫酸商队携能量球",
+      "电离河中交易",
+      "氢气升空，契约达成"
+    ]
+  },
+  "reaction": {
+    "equation": "Zn + H2SO4 -> ZnSO4 + H2↑",
+    "type": "置换反应",
+    "conditions": ["常温"],
+    "reactants": [
+      {
+        "name": "Zn",
+        "type": "单质",
+        "count": 1,
+        "elements": [
+          {
+            "element": "Zn",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "name": "H2SO4",
+        "type": "离子团",
+        "count": 1,
+        "elements": [
+          {
+            "element": "H",
+            "count": 2
+          },
+          {
+            "element": "S",
+            "count": 1
+          },
+          {
+            "element": "O",
+            "count": 4
+          }
+        ]
+      }
+    ],
+    "products": [
+      {
+        "name": "ZnSO4",
+        "type": "离子团",
+        "count": 1,
+        "elements": [
+          {
+            "element": "Zn",
+            "count": 1
+          },
+          {
+            "element": "S",
+            "count": 1
+          },
+          {
+            "element": "O",
+            "count": 4
+          }
+        ]
+      },
+      {
+        "name": "H2",
+        "type": "单质",
+        "count": 1,
+        "elements": [
+          {
+            "element": "H",
+            "count": 2
+          }
+        ]
+      }
+    ]
+  },
+  "electron_transfer": {
+    "from": "Zn",
+    "to": "H2SO4",
+    "electron_count": 2,
+    "description": "锌失去电子，硫酸得电子"
+  },
+  "gameplay_trigger": {
+    "required_ions": [
+      {
+        "name": "Zn^2+",
+        "from": "ZnSO4",
+        "elements": [
+          {
+            "element": "Zn",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "name": "SO4^2-",
+        "from": "ZnSO4",
+        "elements": [
+          {
+            "element": "S",
+            "count": 1
+          },
+          {
+            "element": "O",
+            "count": 4
+          }
+        ]
+      }
+    ],
+    "reaction_area": "电离领域",
+    "success_effects": {
+      "animation": "气泡升腾",
+      "new_items": ["氢气瓶"],
+      "story_continuation": true
+    }
+  }
+}

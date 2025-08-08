@@ -1,0 +1,9 @@
+{
+    "type": "Nonmetal",
+    "name": "C",
+    "prefabPath": "Characters/C",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "zh_male_junlangnanyou_emo_v2_mars_bigtts"
+    }
+}

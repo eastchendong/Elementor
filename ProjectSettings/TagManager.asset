@@ -17,6 +17,7 @@ TagManager:
   - QDSUIBackplateGradient
   - QDSUISection
   - CharacterSlot
+  - SamplesInfoPanel
   layers:
   - Default
   - TransparentFX
@@ -24,7 +25,7 @@ TagManager:
   - Overlay UI
   - Water
   - UI
-  - 
+  - PostProcessing
   - 
   - 
   - 

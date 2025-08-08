@@ -72,3 +72,9 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+/Assets/StreamingAssets/Generated_JSONs
+/Assets/PassthroughCameraApiSamples
+/Assets/Prefab/Test
+Assets/Resources/APIConfig.json.meta
+Assets/Resources/APIConfig.json
+/Assets/StreamingAssets/Generated_JSONs

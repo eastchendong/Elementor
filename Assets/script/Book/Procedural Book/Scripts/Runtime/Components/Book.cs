@@ -9,7 +9,7 @@ using Random = UnityEngine.Random;
 namespace ScriptBoy.ProceduralBook
 {
     [AddComponentMenu(" Script Boy/Procedural Book/ Book")]
-    [ExecuteInEditMode]
+    // [ExecuteInEditMode]
     [DefaultExecutionOrder(-1000)]
     public sealed class Book : MonoBehaviour
     {

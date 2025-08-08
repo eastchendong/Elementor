@@ -1,0 +1,10 @@
+﻿{
+    "type": "Metal",
+    "name": "Cu",
+    "prefabPath": "Characters/Cu",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "说话很少的寡言骑士",
+        "voiceId": "zh_male_shaonianzixin_moon_bigtts"
+    }
+}

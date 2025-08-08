@@ -1,0 +1,10 @@
+{
+    "type": "Alkaline Earth Metal",
+    "name": "Ba",
+    "prefabPath": "Characters/Ba",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "zh_male_yourougongzi_emo_v2_mars_bigtts",
+        "voiceId": "2"
+    }
+}

@@ -1,30 +1,9 @@
 ﻿{
-    "characters": [
-        {
-            "type": "Metal",
-            "name": "Fe",
-            "prefabPath": "Characters/Fe"
-        },
-        {
-            "type": "Metal", 
-            "name": "Cu",
-            "prefabPath": "Characters/Cu"
-        },
-        {
-            "type": "Halogen",
-            "name": "Cl",
-            "prefabPath": "Characters/Cl"
-        },
-        {
-            "type": "Halogen",
-            "name": "Cl",
-            "prefabPath": "Characters/Cl"
-        },
-        {
-            "type": "Halogen",
-            "name": "Cl",
-            "prefabPath": "Characters/Cl"
-        }
-
+    "characterNames": [
+        "Fe",
+        "Cu", 
+        "Cl",
+        "Cl",
+        "Cl"
     ]
 }

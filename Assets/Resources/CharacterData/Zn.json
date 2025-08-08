@@ -1,0 +1,10 @@
+{
+    "type": "Transition Metal",
+    "name": "Zn",
+    "prefabPath": "Characters/Zn",
+    "groupId": "",
+    "personality": {
+        "speakingTrait": "勤劳朴实的保护者",
+        "voiceId": "zh_female_shuangkuaisisi_emo_v2_mars_bigtts"
+    }
+}
