@@ -2,20 +2,27 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Magic Water Example 1
   m_Shader: {fileID: 4800000, guid: c8110ef7c96474f73b2ee5f90e026b10, type: 3}
-  m_ShaderKeywords: FANCY_SHADOWS SAMPLE_SHADOWS SHADOWS
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - FANCY_SHADOWS
+  - SAMPLE_SHADOWS
+  - SHADOWS
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -43,6 +50,7 @@ Material:
         m_Texture: {fileID: 2800000, guid: 54d915b11332ec04392208ed9dac59ba, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    m_Ints: []
     m_Floats:
     - _CausticsNoiseScale: 0.01
     - _CausticsPower: 1
@@ -64,7 +72,7 @@ Material:
     - _MaxSampleDistance: 49
     - _MaxShadowDistance: 50
     - _ReflectionContribution: 0
-    - _ReflectionPower: 0.308
+    - _ReflectionPower: 0.527
     - _RefractionStrength: 0
     - _SparkleExponent: 1
     - _SparkleScale: 1
@@ -72,7 +80,7 @@ Material:
     - _SunSpecularExponent: 1
     - _SunSpecularPower: 30
     - _VertexNormalDelta: 0.01
-    - _WaterDepth: 0.383
+    - _WaterDepth: 0.037
     - _Wave1Amplitude: 0.1
     - _Wave1Amps: 0.1
     - _Wave1Dir: 0.65
