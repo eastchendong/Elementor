@@ -8,9 +8,7 @@ namespace Elementor.Core
     public class CharacterSlot : MonoBehaviour
     {
         [SerializeField] private Transform slotAnchor; // The point where the character/group will snap to.
-        [SerializeField] private Material shiningMaterial; // Material to use for guidance
-        private Material originalMaterial;
-        private Renderer _renderer;
+        [SerializeField] private GameObject highlightArrow; // Arrow GameObject to show for guidance
 
         // Coefficient system for stoichiometry
         [SerializeField] private int coefficient = 1;
@@ -34,10 +32,11 @@ namespace Elementor.Core
             {
                 slotAnchor = transform;
             }
-            _renderer = GetComponent<Renderer>();
-            if (_renderer != null)
+            
+            // Initialize highlight arrow as disabled
+            if (highlightArrow != null)
             {
-                originalMaterial = _renderer.material;
+                highlightArrow.SetActive(false);
             }
 
             SetupCoefficientUI();
@@ -277,17 +276,19 @@ namespace Elementor.Core
 
         public void StartShining()
         {
-            if (_renderer != null && shiningMaterial != null)
+            if (highlightArrow != null)
             {
-                _renderer.material = shiningMaterial;
+                highlightArrow.SetActive(true);
+                Debug.Log($"Started highlighting arrow for slot {name}");
             }
         }
 
         public void StopShining()
         {
-            if (_renderer != null && originalMaterial != null)
+            if (highlightArrow != null)
             {
-                _renderer.material = originalMaterial;
+                highlightArrow.SetActive(false);
+                Debug.Log($"Stopped highlighting arrow for slot {name}");
             }
         }
 

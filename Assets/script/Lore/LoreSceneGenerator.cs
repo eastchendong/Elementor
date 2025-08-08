@@ -4,7 +4,7 @@ using Elementor.Core;
 using System.Linq;
 using Meta.XR.MRUtilityKit;
 
-namespace Elementor
+namespace Elementor.Lore
 {
     public class LoreSceneGenerator : MonoBehaviour
     {
@@ -16,6 +16,7 @@ namespace Elementor
         private LoreController loreController;
         private CharacterSpawnController characterSpawnController;
         private SceneAnchorManager sceneAnchorManager;
+        private LoreSpawnerHighlighter spawnerHighlighter;
         private GameObject currentEnvironmentInstance;
 
         void Start()
@@ -23,8 +24,9 @@ namespace Elementor
             loreController = LoreController.Instance;
             characterSpawnController = CharacterSpawnController.Instance;
             sceneAnchorManager = SceneAnchorManager.Instance;
+            spawnerHighlighter = FindObjectOfType<LoreSpawnerHighlighter>();
 
-            Debug.Log($"🎬 LoreSceneGenerator Start - Controllers found: LoreController={loreController != null}, CharacterSpawn={characterSpawnController != null}, SceneAnchorManager={sceneAnchorManager != null}");
+            Debug.Log($"🎬 LoreSceneGenerator Start - Controllers found: LoreController={loreController != null}, CharacterSpawn={characterSpawnController != null}, SceneAnchorManager={sceneAnchorManager != null}, SpawnerHighlighter={spawnerHighlighter != null}");
 
             if (loreController == null || characterSpawnController == null)
             {
@@ -241,9 +243,17 @@ namespace Elementor
 
             // 1. Clear the lore data from the controller. The environment prefab remains as a memento.
             loreController.ClearCurrentLore();
+            
+            // 2. Clear spawner highlights when lore is unloaded
+            if (spawnerHighlighter != null)
+            {
+                spawnerHighlighter.RefreshHighlighting();
+                Debug.Log("🔄 Cleared spawner highlights after reaction completion");
+            }
+            
             currentEnvironmentInstance = null;
 
-            // 2. Trigger the next lore reading (placeholder for future logic).
+            // 3. Trigger the next lore reading (placeholder for future logic).
             Debug.Log("Triggering next lore read... (Interface for next step)");
         }
 
