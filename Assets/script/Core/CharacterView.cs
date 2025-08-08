@@ -10,6 +10,7 @@ namespace Elementor.Core
     {
         [SerializeField] private CharacterModel characterModel;
         [SerializeField] private Animator animator;
+        
         public event Action<CharacterView> OnCharacterSelected;
         public event Action<CharacterView, Vector3> OnCharacterMoved;
         public event Action<CharacterView, CharacterAnimationState, CharacterAnimationState> OnAnimationStateChanged;
@@ -81,7 +82,6 @@ namespace Elementor.Core
             }
 
             GetComponent<Rigidbody>();
-
             UpdateVisual();
         }
 
@@ -267,4 +267,3 @@ namespace Elementor.Core
         }
     }
 }
-

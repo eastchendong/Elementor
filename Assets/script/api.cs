@@ -17,6 +17,7 @@ namespace Elementor
         public bool IsAnalyzing => HttpRequestManager.Instance?.IsRequesting ?? false;
 
         private bool isDialogueRequesting = false; // Add separate flag for dialogue requests
+        private bool isSelfIntroRequesting = false; // Add flag for self-introduction requests
 
         void Awake()
         {
@@ -355,6 +356,267 @@ namespace Elementor
             });
         }
 
+        public void GenerateSelfIntroduction(CharacterModel characterModel, System.Action<string> onComplete)
+        {
+            if (isSelfIntroRequesting)
+            {
+                Debug.LogWarning("Self-introduction generation is already in progress.");
+                onComplete?.Invoke("");
+                return;
+            }
+
+            if (HttpRequestManager.Instance?.IsRequesting == true)
+            {
+                Debug.LogWarning("Another API request is in progress, queuing self-introduction request...");
+                StartCoroutine(RetrySelfIntroduction(characterModel, onComplete, 1f));
+                return;
+            }
+
+            isSelfIntroRequesting = true;
+
+            string characterInfo = BuildCharacterInfoPrompt(characterModel);
+            string loreContext = BuildLoreContextPrompt(characterModel);
+
+            string systemPrompt = @"你是一个化学教育游戏的角色自我介绍生成器。根据给定的角色信息和当前剧情背景，生成符合角色特点的自我介绍。
+
+要求：
+1. 自我介绍要体现角色的元素特性（如金属性、非金属性、化学性质等）
+2. 如果角色参与当前反应，要体现角色在反应中的作用和态度
+3. 如果角色不参与当前反应，要明确表达不参与的态度
+4. 语言要符合游戏世界观（元素山、金属堡、非金属谷、电离领域等设定）
+5. 自我介绍控制在30字以内
+6. 语调要符合角色性格
+
+请严格按照以下JSON格式返回：
+{
+    ""introduction"": ""自我介绍内容""
+}";
+
+            string userPrompt = $"{characterInfo}\n\n{loreContext}\n\n请为这个角色生成一句自我介绍。";
+
+            string sanitizedSystemPrompt = HttpRequestManager.SanitizeJsonString(systemPrompt);
+            string sanitizedUserPrompt = HttpRequestManager.SanitizeJsonString(userPrompt);
+
+            string jsonBody = @"{
+        ""model"": ""gpt-4o"",
+        ""messages"": [
+        {
+            ""role"": ""system"",
+            ""content"": """ + sanitizedSystemPrompt + @"""
+        },
+        {
+            ""role"": ""user"",
+            ""content"": """ + sanitizedUserPrompt + @"""
+        }
+        ],
+        ""max_tokens"": 200,
+        ""temperature"": 0.8
+        }";
+
+            Debug.Log("Generating self-introduction for: " + characterModel.GetCharacterName());
+
+            HttpRequestManager.Instance?.SendRequest(
+                jsonBody,
+                (response) => OnSelfIntroductionSuccess(response, onComplete),
+                (error) => OnSelfIntroductionError(error, onComplete)
+            );
+        }
+
+        private string BuildCharacterInfoPrompt(CharacterModel characterModel)
+        {
+            var characterData = characterModel.GetCharacterData();
+            var personality = characterModel.GetPersonality();
+
+            string info = $"角色信息：\n";
+            info += $"- 名称：{characterModel.GetCharacterName()}\n";
+            info += $"- 类型：{characterModel.GetCharacterType()}\n";
+            
+            if (!string.IsNullOrEmpty(personality.speakingTrait))
+            {
+                info += $"- 性格特征：{personality.speakingTrait}\n";
+            }
+            
+            if (characterData != null)
+            {
+                info += $"- 元素符号：{characterData.name}\n";
+            }
+
+            return info;
+        }
+
+        private string BuildLoreContextPrompt(CharacterModel characterModel)
+        {
+            var loreController = LoreController.Instance;
+            if (loreController?.CurrentLore == null)
+            {
+                return "当前背景：没有特定的化学反应进行中，角色处于日常状态。";
+            }
+
+            var currentLore = loreController.CurrentLore;
+            string context = $"当前剧情背景：\n";
+            context += $"- 反应标题：{currentLore.story.title}\n";
+            context += $"- 反应方程式：{currentLore.reaction.equation}\n";
+            
+            // Check if character participates in current reaction
+            bool participatesInReaction = CheckCharacterParticipation(characterModel, currentLore);
+            
+            if (participatesInReaction)
+            {
+                context += $"- 角色状态：{characterModel.GetCharacterName()}参与这次反应\n";
+                
+                // Find character's role in the reaction
+                string role = FindCharacterRoleInReaction(characterModel, currentLore);
+                if (!string.IsNullOrEmpty(role))
+                {
+                    context += $"- 角色作用：{role}\n";
+                }
+            }
+            else
+            {
+                context += $"- 角色状态：{characterModel.GetCharacterName()}不参与这次反应\n";
+            }
+
+            return context;
+        }
+
+        private bool CheckCharacterParticipation(CharacterModel characterModel, Elementor.Lore.LoreData lore)
+        {
+            string characterName = characterModel.GetCharacterName();
+            
+            // Check in reactants
+            foreach (var reactant in lore.reaction.reactants)
+            {
+                foreach (var element in reactant.elements)
+                {
+                    if (element.element == characterName)
+                        return true;
+                }
+            }
+            
+            // Check in products
+            foreach (var product in lore.reaction.products)
+            {
+                foreach (var element in product.elements)
+                {
+                    if (element.element == characterName)
+                        return true;
+                }
+            }
+            
+            return false;
+        }
+
+        private string FindCharacterRoleInReaction(CharacterModel characterModel, Elementor.Lore.LoreData lore)
+        {
+            string characterName = characterModel.GetCharacterName();
+            
+            // Check if involved in electron transfer
+            if (lore.electron_transfer != null)
+            {
+                if (lore.electron_transfer.from.Contains(characterName))
+                {
+                    return "失去电子";
+                }
+                if (lore.electron_transfer.to.Contains(characterName))
+                {
+                    return "获得电子";
+                }
+            }
+            
+            // Check reaction type context
+            bool inReactants = false;
+            bool inProducts = false;
+            
+            foreach (var reactant in lore.reaction.reactants)
+            {
+                foreach (var element in reactant.elements)
+                {
+                    if (element.element == characterName)
+                    {
+                        inReactants = true;
+                        break;
+                    }
+                }
+            }
+            
+            foreach (var product in lore.reaction.products)
+            {
+                foreach (var element in product.elements)
+                {
+                    if (element.element == characterName)
+                    {
+                        inProducts = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (inReactants && inProducts)
+                return "参与反应转化";
+            else if (inReactants)
+                return "作为反应物";
+            else if (inProducts)
+                return "作为生成物";
+                
+            return "";
+        }
+
+        private IEnumerator RetrySelfIntroduction(CharacterModel characterModel, System.Action<string> onComplete, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            
+            if (!HttpRequestManager.Instance?.IsRequesting == true)
+            {
+                GenerateSelfIntroduction(characterModel, onComplete);
+            }
+            else
+            {
+                Debug.LogWarning("API still busy, failing self-introduction generation");
+                onComplete?.Invoke("");
+            }
+        }
+
+        void OnSelfIntroductionSuccess(string responseText, System.Action<string> onComplete)
+        {
+            isSelfIntroRequesting = false;
+            
+            try
+            {
+                string cleanedJson = HttpRequestManager.ExtractJsonFromResponse(responseText);
+                Debug.Log("Self-introduction response: " + cleanedJson);
+                
+                var introResponse = JsonUtility.FromJson<SelfIntroductionResponse>(cleanedJson);
+                if (introResponse?.introduction != null)
+                {
+                    onComplete?.Invoke(introResponse.introduction);
+                    return;
+                }
+                
+                // Fallback to direct content extraction
+                var apiResponse = JsonUtility.FromJson<HttpRequestManager.ApiResponse>(cleanedJson);
+                if (apiResponse?.choices != null && apiResponse.choices.Length > 0)
+                {
+                    string content = apiResponse.choices[0].message.content;
+                    onComplete?.Invoke(content.Trim().Trim('"'));
+                    return;
+                }
+                
+                onComplete?.Invoke("");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to extract self-introduction content: {ex.Message}");
+                onComplete?.Invoke("");
+            }
+        }
+
+        void OnSelfIntroductionError(string error, System.Action<string> onComplete)
+        {
+            isSelfIntroRequesting = false;
+            Debug.LogError("Self-introduction generation failed: " + error);
+            onComplete?.Invoke("");
+        }
+
     }
 
     [System.Serializable]
@@ -374,5 +636,11 @@ namespace Elementor
     public class RawDialogueResponse
     {
         public string raw_dialogue;
+    }
+
+    [System.Serializable]
+    public class SelfIntroductionResponse
+    {
+        public string introduction;
     }
 }
