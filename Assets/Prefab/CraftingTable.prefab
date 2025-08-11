@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5184690184996958817}
   - component: {fileID: 6193727261761781373}
   - component: {fileID: 2458165619355432707}
+  - component: {fileID: 4525878971408441313}
   m_Layer: 0
   m_Name: Prop_Handrail_Stone_05 (44)
   m_TagString: Untagged
@@ -84,6 +85,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &4525878971408441313
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 474863653869326818}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.8752952, y: 1.407528, z: 0.3331648}
+  m_Center: {x: 0.00000029802322, y: 0.70375997, z: 0.00000009685755}
 --- !u!1 &1227677486810354190
 GameObject:
   m_ObjectHideFlags: 0
@@ -139,6 +161,7 @@ GameObject:
   - component: {fileID: 6768736254991836716}
   - component: {fileID: 5840772965839552071}
   - component: {fileID: 3771110092095636934}
+  - component: {fileID: 7408873049286543330}
   m_Layer: 0
   m_Name: Prop_Handrail_Stone_05 (48)
   m_TagString: Untagged
@@ -212,6 +235,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &7408873049286543330
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1767125200496968596}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.8752952, y: 1.407528, z: 0.3331648}
+  m_Center: {x: 0.0000005364418, y: 0.70375997, z: 0.00000009685755}
 --- !u!1 &2141010405273382365
 GameObject:
   m_ObjectHideFlags: 0
@@ -391,6 +435,7 @@ GameObject:
   - component: {fileID: 7924764185244178727}
   - component: {fileID: 5450575724355983333}
   - component: {fileID: 1263131220721256081}
+  - component: {fileID: 7087870103399312691}
   m_Layer: 0
   m_Name: Prop_Handrail_Stone_05 (47)
   m_TagString: Untagged
@@ -464,6 +509,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &7087870103399312691
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2597516251334633535}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.8752952, y: 1.407528, z: 0.3331648}
+  m_Center: {x: 0.0000004172325, y: 0.70375997, z: 0.00000009685755}
 --- !u!1 &2905473548916900335
 GameObject:
   m_ObjectHideFlags: 0
@@ -559,6 +625,7 @@ GameObject:
   - component: {fileID: 3156144661072683149}
   - component: {fileID: 8928853523253711288}
   - component: {fileID: 2670254565135914373}
+  - component: {fileID: 4100455241300250236}
   m_Layer: 0
   m_Name: Prop_Handrail_Stone_05 (45)
   m_TagString: Untagged
@@ -632,6 +699,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &4100455241300250236
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3248805283985507768}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.8752952, y: 1.407528, z: 0.3331648}
+  m_Center: {x: 0.0000005364418, y: 0.70375997, z: 0.00000009685755}
 --- !u!1 &3254865370339141931
 GameObject:
   m_ObjectHideFlags: 0
@@ -643,6 +731,7 @@ GameObject:
   - component: {fileID: 3990541975735848343}
   - component: {fileID: 5478986400279919617}
   - component: {fileID: 1746023868172439568}
+  - component: {fileID: 6594676019335594768}
   m_Layer: 0
   m_Name: Prop_Handrail_Stone_05 (49)
   m_TagString: Untagged
@@ -716,6 +805,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &6594676019335594768
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3254865370339141931}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.8752952, y: 1.407528, z: 0.3331648}
+  m_Center: {x: 0.0000005364418, y: 0.70375997, z: 0.00000009685755}
 --- !u!1 &3345501849170612017
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,6 +873,7 @@ GameObject:
   - component: {fileID: 6575680327732818590}
   - component: {fileID: 4786727674924312159}
   - component: {fileID: 6584473086057855890}
+  - component: {fileID: 2937835145723892679}
   m_Layer: 0
   m_Name: Prop_Tile_Terrain_Dungeon_Gothic_Cobble_01 (115)
   m_TagString: Untagged
@@ -836,6 +947,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &2937835145723892679
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5720940622940514240}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.0000007, y: 0.2205463, z: 3.0000007}
+  m_Center: {x: 0, y: 0.11027315, z: 0}
 --- !u!1 &5909560614633560073
 GameObject:
   m_ObjectHideFlags: 0
@@ -1065,6 +1197,7 @@ GameObject:
   - component: {fileID: 6491688256375264478}
   - component: {fileID: 5769875748008769196}
   - component: {fileID: 6062201328965274051}
+  - component: {fileID: 479066975014905510}
   m_Layer: 0
   m_Name: Prop_Handrail_Stone_05 (46)
   m_TagString: Untagged
@@ -1138,6 +1271,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &479066975014905510
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6775074780767622041}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.8752952, y: 1.407528, z: 0.3331648}
+  m_Center: {x: 0.0000004172325, y: 0.70375997, z: 0.00000009685755}
 --- !u!1 &7355263550068171847
 GameObject:
   m_ObjectHideFlags: 0
