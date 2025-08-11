@@ -3500,7 +3500,10 @@ PrefabInstance:
       value: slot
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 6156900900643512894, guid: 029089aab9464854fbe7c77db9a35a34, type: 3}
+    - {fileID: 8774149277008901129, guid: 029089aab9464854fbe7c77db9a35a34, type: 3}
+    - {fileID: 3478363107076123593, guid: 029089aab9464854fbe7c77db9a35a34, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 029089aab9464854fbe7c77db9a35a34, type: 3}

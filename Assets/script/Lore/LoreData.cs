@@ -44,7 +44,7 @@ namespace Elementor.Lore
         public int electron_count;
         public string description;
     }
-    
+
     [Serializable]
     public class LoreRequiredIon
     {
