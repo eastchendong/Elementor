@@ -32,6 +32,7 @@ namespace Elementor.Lore
         public string equation;
         public string type;
         public List<string> conditions;
+        public List<string> phenomena; // Added phenomena field
         public List<LoreCompound> reactants;
         public List<LoreCompound> products;
     }

@@ -298,22 +298,26 @@ namespace Elementor.Lore
         /// </summary>
         private string GetPhenomenonEffectName(LoreReaction reaction)
         {
+            // First check if reaction has phenomena field (new format)
+            if (reaction.phenomena != null && reaction.phenomena.Count > 0)
+            {
+                return reaction.phenomena[0]; // Use first phenomenon
+            }
+
             // Use success_effects.animation from gameplay_trigger if available
             var currentLore = loreController.CurrentLore;
-            if (currentLore?.gameplay_trigger?.success_effects != null && 
+            if (currentLore?.gameplay_trigger?.success_effects != null &&
                 !string.IsNullOrEmpty(currentLore.gameplay_trigger.success_effects.animation))
             {
                 return currentLore.gameplay_trigger.success_effects.animation;
             }
-            
-            // Fallback to reaction type
-            if (!string.IsNullOrEmpty(reaction.type))
+
+            else
             {
-                return reaction.type + "_Phenomenon";
+                Debug.LogError(" No phenomena or success effects animation found in lore reaction");
+                return !string.IsNullOrEmpty(reaction.type) ? reaction.type + "_Phenomenon" : reaction.equation + "_Phenomenon";
             }
-            
-            // Final fallback to equation
-            return reaction.equation + "_Phenomenon";
+
         }
 
         private List<CharacterSlot> CreateOutputSlots(Transform environmentParent, int slotCount)

@@ -3499,6 +3499,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: slot
       objectReference: {fileID: 0}
+    - target: {fileID: 6706777381930938873, guid: 029089aab9464854fbe7c77db9a35a34, type: 3}
+      propertyPath: conditionEffectsParent
+      value: 
+      objectReference: {fileID: 3439062760404226468}
+    - target: {fileID: 6706777381930938873, guid: 029089aab9464854fbe7c77db9a35a34, type: 3}
+      propertyPath: phenomenonEffectsParent
+      value: 
+      objectReference: {fileID: 8599327898057763808}
+    - target: {fileID: 6861864742675134726, guid: 029089aab9464854fbe7c77db9a35a34, type: 3}
+      propertyPath: showCoefficientUI
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 6156900900643512894, guid: 029089aab9464854fbe7c77db9a35a34, type: 3}
