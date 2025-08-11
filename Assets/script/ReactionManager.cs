@@ -14,16 +14,27 @@ namespace Elementor
         [SerializeField] private int currentReactionIndex = 0;
         [SerializeField] private CharacterSpawnController characterSpawnController;
 
+        [Header("Reaction Effects")]
+        [SerializeField] private Transform conditionEffectsParent;
+        [SerializeField] private Transform phenomenonEffectsParent;
+
         [Header("Events")]
         public UnityEvent OnAllReactionsCompleted = new UnityEvent();
 
         // Static event for global subscription
         public static event Action OnGlobalReactionsCompleted;
 
+        // Track active condition effects
+        private List<GameObject> activeConditionEffects = new List<GameObject>();
+
         public void SetupStages(List<ReactionStage> stages)
         {
             reactionStages = stages;
             currentReactionIndex = 0;
+            
+            // Activate condition effects for the first stage
+            ActivateReactionCondition();
+            
             Debug.Log($"ReactionManager setup with {stages.Count} stages.");
         }
 
@@ -53,12 +64,24 @@ namespace Elementor
             {
                 Debug.Log($"Reaction '{currentReaction.reactionName}' completed!");
 
+                // Deactivate condition effects
+                DeactivateConditionEffects();
+
+                // Activate phenomenon effects
+                ActivateReactionPhenomenon(currentReaction);
+
                 currentReaction.onReactionPhenomenon?.Invoke();
 
                 // Process reaction first - speech will be triggered after new groups are created
                 ProcessReaction(currentReaction);
 
                 currentReactionIndex++;
+
+                // Activate next stage's condition effects if available
+                if (currentReactionIndex < reactionStages.Count)
+                {
+                    ActivateReactionCondition();
+                }
 
                 // Check if all reactions are completed
                 if (currentReactionIndex >= reactionStages.Count)
@@ -75,6 +98,118 @@ namespace Elementor
                 // Trigger speech for reaction failure with current participants
                 var participantCharacters = GetParticipantCharacters(currentReaction);
                 SpeechController.Instance?.TriggerSpeech(SpeechTriggerType.ReactionFailure, participantCharacters);
+            }
+        }
+
+        /// <summary>
+        /// Activates reaction condition effects for the current stage
+        /// </summary>
+        private void ActivateReactionCondition()
+        {
+            if (currentReactionIndex >= reactionStages.Count || conditionEffectsParent == null)
+                return;
+
+            ReactionStage currentStage = reactionStages[currentReactionIndex];
+            
+            // Find and activate condition effect GameObject
+            if (!string.IsNullOrEmpty(currentStage.conditionEffectName))
+            {
+                GameObject conditionEffect = FindEffectByName(conditionEffectsParent, currentStage.conditionEffectName);
+                if (conditionEffect != null)
+                {
+                    conditionEffect.SetActive(true);
+                    activeConditionEffects.Add(conditionEffect);
+                    Debug.Log($"Activated condition effect: {currentStage.conditionEffectName}");
+                }
+                else
+                {
+                    Debug.LogWarning($"Condition effect '{currentStage.conditionEffectName}' not found!");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Activates reaction phenomenon effects for the completed reaction
+        /// </summary>
+        private void ActivateReactionPhenomenon(ReactionStage completedStage)
+        {
+            if (phenomenonEffectsParent == null)
+                return;
+
+            // Find and activate phenomenon effect GameObject
+            if (!string.IsNullOrEmpty(completedStage.phenomenonEffectName))
+            {
+                GameObject phenomenonEffect = FindEffectByName(phenomenonEffectsParent, completedStage.phenomenonEffectName);
+                if (phenomenonEffect != null)
+                {
+                    phenomenonEffect.SetActive(true);
+                    Debug.Log($"Activated phenomenon effect: {completedStage.phenomenonEffectName}");
+                    
+                    // Optionally deactivate after some time
+                    StartCoroutine(DeactivateEffectAfterDelay(phenomenonEffect, 5.0f));
+                }
+                else
+                {
+                    Debug.LogWarning($"Phenomenon effect '{completedStage.phenomenonEffectName}' not found!");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Deactivates all active condition effects
+        /// </summary>
+        private void DeactivateConditionEffects()
+        {
+            foreach (var effect in activeConditionEffects)
+            {
+                if (effect != null)
+                {
+                    effect.SetActive(false);
+                    Debug.Log($"Deactivated condition effect: {effect.name}");
+                }
+            }
+            activeConditionEffects.Clear();
+        }
+
+        /// <summary>
+        /// Finds an effect GameObject by name within a parent transform
+        /// </summary>
+        private GameObject FindEffectByName(Transform parent, string effectName)
+        {
+            if (parent == null || string.IsNullOrEmpty(effectName))
+                return null;
+
+            // Search direct children first
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform child = parent.GetChild(i);
+                if (child.name.Equals(effectName, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return child.gameObject;
+                }
+            }
+
+            // Search recursively in children
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                GameObject found = FindEffectByName(parent.GetChild(i), effectName);
+                if (found != null)
+                    return found;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Deactivates an effect after a specified delay
+        /// </summary>
+        private System.Collections.IEnumerator DeactivateEffectAfterDelay(GameObject effect, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            if (effect != null)
+            {
+                effect.SetActive(false);
+                Debug.Log($"Auto-deactivated effect: {effect.name}");
             }
         }
 
@@ -99,6 +234,11 @@ namespace Elementor
             var stages = new List<ReactionStage>();
             var stage = new ReactionStage();
             stage.reactionName = loreData.reaction.equation;
+            
+            // Set effect names based on reaction name or type
+            stage.conditionEffectName = GetConditionEffectName(loreData.reaction);
+            stage.phenomenonEffectName = GetPhenomenonEffectName(loreData.reaction);
+            
             stage.requirements = new List<SlotRequirement>();
             stage.outcomes = new List<ReactionOutcome>();
 
@@ -132,6 +272,38 @@ namespace Elementor
 
             stages.Add(stage);
             return stages;
+        }
+
+        /// <summary>
+        /// Determines condition effect name based on reaction data
+        /// Override this method to customize effect naming logic
+        /// </summary>
+        protected virtual string GetConditionEffectName(ReactionData reactionData)
+        {
+            // Example: use reaction equation or customize based on your naming convention
+            if (reactionData.equation.Contains("燃烧") || reactionData.equation.Contains("burn"))
+                return "BurningCondition";
+            else if (reactionData.equation.Contains("发光") || reactionData.equation.Contains("glow"))
+                return "GlowingCondition";
+            
+            // Default naming
+            return reactionData.equation + "_Condition";
+        }
+
+        /// <summary>
+        /// Determines phenomenon effect name based on reaction data
+        /// Override this method to customize effect naming logic
+        /// </summary>
+        protected virtual string GetPhenomenonEffectName(ReactionData reactionData)
+        {
+            // Example: use reaction equation or customize based on your naming convention
+            if (reactionData.equation.Contains("燃烧") || reactionData.equation.Contains("burn"))
+                return "BurningPhenomenon";
+            else if (reactionData.equation.Contains("发光") || reactionData.equation.Contains("glow"))
+                return "GlowingPhenomenon";
+            
+            // Default naming
+            return reactionData.equation + "_Phenomenon";
         }
 
         private bool IsReactionComplete(ReactionStage stage)
@@ -519,5 +691,18 @@ namespace Elementor
             public string element;
             public int count;
         }
+    }
+
+    [System.Serializable]
+    public class ReactionStage
+    {
+        public string reactionName;
+        public List<SlotRequirement> requirements;
+        public List<ReactionOutcome> outcomes;
+        public UnityEvent onReactionPhenomenon;
+        
+        [Header("Effect Names")]
+        public string conditionEffectName;  // Name of condition effect GameObject
+        public string phenomenonEffectName; // Name of phenomenon effect GameObject
     }
 }

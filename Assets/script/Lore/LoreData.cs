@@ -32,6 +32,7 @@ namespace Elementor.Lore
         public string equation;
         public string type;
         public List<string> conditions;
+        public List<string> phenomena; // Added phenomena field
         public List<LoreCompound> reactants;
         public List<LoreCompound> products;
     }
@@ -44,7 +45,7 @@ namespace Elementor.Lore
         public int electron_count;
         public string description;
     }
-    
+
     [Serializable]
     public class LoreRequiredIon
     {

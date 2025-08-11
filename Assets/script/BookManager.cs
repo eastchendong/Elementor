@@ -44,15 +44,17 @@ namespace Elementor
         void Start()
         {
             LoadPageContentData();
-            
+
             // Subscribe to lore loading events
             if (LoreController.Instance != null)
             {
                 LoreController.Instance.OnLoreLoaded += OnLoreLoaded;
             }
-            
+
             // Subscribe directly to reaction completion static event
             ReactionManager.OnGlobalReactionsCompleted += OnReactionCompleted;
+
+            CloseBookAndDisableInteractions();
         }
 
         private void OnDestroy()
@@ -76,25 +78,18 @@ namespace Elementor
         public void OnReactionCompleted()
         {
             Debug.Log("BookManager: All reactions completed, restoring book interactions");
-            RestoreBookInteractions();
+            SetBookInteractionEnabled(true);
         }
 
         private void CloseBookAndDisableInteractions()
         {
             if (book != null && book.isBuilt)
             {
-                // Close the book (set to initial state)
                 book.SetOpenProgress(0f);
             }
             
             // Disable book interaction buttons
             SetBookInteractionEnabled(false);
-        }
-
-        private void RestoreBookInteractions()
-        {
-            // Re-enable book interaction buttons
-            SetBookInteractionEnabled(true);
         }
 
         private void SetBookInteractionEnabled(bool enabled)
