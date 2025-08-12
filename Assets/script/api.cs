@@ -163,17 +163,18 @@ namespace Elementor
 {
     ""dialogues"": [
         {
-            ""character"": ""角色名"",
+            ""character"": ""元素名"",
             ""line"": ""对话内容（不超过20字）""
         }
     ]
 }
 
 要求：
-1. 每个角色都要有至少一句对话
-2. 对话要符合角色的元素特性
+1. 为每种不同的元素生成对话（相同元素只需一句代表性对话）
+2. 对话要符合元素特性和当前情境
 3. 每句对话不超过20个字
-4. 严格按照JSON格式返回，不要添加任何其他内容";
+4. 对话要构成完整的剧情片段，体现化学反应的过程或结果
+5. 严格按照JSON格式返回，不要添加任何其他内容";
 
             string sanitizedPrompt = HttpRequestManager.SanitizeJsonString(prompt);
             string sanitizedSystemPrompt = HttpRequestManager.SanitizeJsonString(systemPrompt);
@@ -432,7 +433,7 @@ namespace Elementor
             string characterInfo = BuildCharacterInfoPrompt(characterModel);
             string loreContext = BuildLoreContextPrompt(characterModel);
 
-            string systemPrompt = @"你是一个化学教育游戏的角色自我介绍生成器。根据给定的角色信息和当前剧情背景，生成符合角色特点的自我介绍。
+            string systemPrompt = @"你是一个化学教育游戏的角色自我介绍生成器。根据给定的元素信息和当前剧情背景，生成符合元素特点的自我介绍。
 
 要求：
 1. 自我介绍要体现角色的元素特性（如金属性、非金属性、化学性质等）
@@ -561,24 +562,11 @@ namespace Elementor
             return false;
         }
 
-        private string FindCharacterRoleInReaction(CharacterModel characterModel, Elementor.Lore.LoreData lore)
+        private string FindCharacterRoleInReaction(CharacterModel characterModel, Lore.LoreData lore)
         {
             string characterName = characterModel.GetCharacterName();
             
-            // Check if involved in electron transfer
-            if (lore.electron_transfer != null)
-            {
-                if (lore.electron_transfer.from.Contains(characterName))
-                {
-                    return "失去电子";
-                }
-                if (lore.electron_transfer.to.Contains(characterName))
-                {
-                    return "获得电子";
-                }
-            }
             
-            // Check reaction type context
             bool inReactants = false;
             bool inProducts = false;
             
