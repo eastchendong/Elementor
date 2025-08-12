@@ -2,6 +2,7 @@
 using UnityEngine;
 using Oculus.Interaction;
 using System.Collections;
+using System.Linq;
 
 namespace Elementor.Core
 {
@@ -12,6 +13,24 @@ namespace Elementor.Core
         [Header("Group Settings")]
         [SerializeField] [Range(0.1f, 2.0f)] private float colliderSizePercentage = 0.75f;
         [SerializeField] [Range(0.1f, 2.0f)] private float characterSpacing = 0.1f;
+        
+        [Header("UI Settings")]
+        [SerializeField] private GameObject groupUIPanel;
+        [SerializeField] private TMPro.TextMeshProUGUI groupUIText;
+        [SerializeField] private string groupDisplayName = "";
+        
+        [Header("Effects Settings")]
+        [SerializeField] private GameObject[] effectPrefabs = new GameObject[7]; // For the 7 special types
+        private GameObject currentEffectInstance;
+        
+        // Effect prefab indices
+        private const int METAL_INDEX = 0;
+        private const int NONMETAL_INDEX = 1;
+        private const int METAL_OXIDE_INDEX = 2;
+        private const int NONMETAL_OXIDE_INDEX = 3;
+        private const int ACID_INDEX = 4;
+        private const int BASE_INDEX = 5;
+        private const int SALT_INDEX = 6;
         
         private List<CharacterView> characters = new List<CharacterView>();
         public List<CharacterView> Characters => characters;
@@ -37,7 +56,10 @@ namespace Elementor.Core
                 grabbable.WhenPointerEventRaised += OnGrabStateChanged;
             }
             
-            UpdateColliderSize();
+                ArrangeCharacters();
+                UpdateColliderSize();
+                UpdateGroupEffects();
+                UpdateGroupNameUI();
         }
 
         private void OnDestroy()
@@ -71,8 +93,13 @@ namespace Elementor.Core
                 character.GetModel().SetGroup(this);
                 character.GetModel().DisableIndividualPhysics();
                 
+                // Hide individual character name UI
+                character.SetNameUIVisible(false);
+                
                 ArrangeCharacters();
                 UpdateColliderSize();
+                UpdateGroupEffects();
+                UpdateGroupNameUI();
             }
         }
 
@@ -86,7 +113,12 @@ namespace Elementor.Core
                 character.GetModel().ClearGroup();
                 character.GetModel().EnableIndividualPhysics();
                 
+                // Show individual character name UI again
+                character.SetNameUIVisible(true);
+                
                 UpdateColliderSize();
+                UpdateGroupEffects();
+                UpdateGroupNameUI();
             }
         }
 
@@ -305,5 +337,118 @@ namespace Elementor.Core
                 UpdateColliderSize();
             }
         }
+        
+        private void UpdateGroupNameUI()
+        {
+            if (groupUIPanel != null)
+            {
+                bool shouldShow = characters.Count > 1; // Only show group name when there are multiple characters
+                groupUIPanel.SetActive(shouldShow);
+                
+                if (shouldShow && groupUIText != null)
+                {
+                    // Update group display name based on character types or custom name
+                    if (string.IsNullOrEmpty(groupDisplayName))
+                    {
+                        groupDisplayName = gameObject.name;
+                    }
+                    
+                    groupUIText.text = groupDisplayName;
+                }
+            }
+        }
+        
+
+        
+        private string GetFallbackChemicalName(List<string> elementNames)
+        {
+            // Simple fallback chemical naming based on common patterns
+            if (elementNames.Count == 2)
+            {
+                string first = elementNames[0];
+                string second = elementNames[1];
+                
+                
+                // Generic naming pattern
+                return $"{first}{second}";
+            }
+            else if (elementNames.Count == 3)
+            {
+                return string.Join("", elementNames);
+            }
+            
+            // Default fallback
+            return $"化合物({characters.Count})";
+        }
+        
+        // Method to update name from API response
+        public void UpdateNameFromSynthesis(SynthesisResponse response)
+        {
+            if (response != null && response.can_synthesize)
+            {
+                groupDisplayName = response.compound_formula;
+                UpdateGroupNameUI();
+            }
+        }
+
+        private void UpdateGroupEffects()
+        {
+            // Remove current effect
+            if (currentEffectInstance != null)
+            {
+                Destroy(currentEffectInstance);
+                currentEffectInstance = null;
+            }
+            
+            // Only activate effects for groups with multiple characters
+            if (characters.Count <= 1) return;
+            
+            // Determine dominant type
+            string dominantType = GetDominantType();
+            if (string.IsNullOrEmpty(dominantType)) return;
+            
+            // Activate appropriate effect
+            GameObject effectPrefab = GetEffectPrefabForType(dominantType);
+            if (effectPrefab != null)
+            {
+                currentEffectInstance = Instantiate(effectPrefab, transform);
+                currentEffectInstance.transform.localPosition = Vector3.zero;
+            }
+        }
+        
+        private string GetDominantType()
+        {
+            var typeCounts = new Dictionary<string, int>();
+            
+            foreach (var character in characters)
+            {
+                string type = character.GetModel().GetCharacterType();
+                if (System.Array.Exists(CharacterData.ValidEffectTypes, t => t == type))
+                {
+                    typeCounts[type] = typeCounts.GetValueOrDefault(type, 0) + 1;
+                }
+            }
+            
+            if (typeCounts.Count == 0) return null;
+            
+            return typeCounts.OrderByDescending(kvp => kvp.Value).First().Key;
+        }
+        
+        private GameObject GetEffectPrefabForType(string type)
+        {
+            return type switch
+            {
+                "金属" => effectPrefabs[METAL_INDEX],
+                "非金属" => effectPrefabs[NONMETAL_INDEX],
+                "金属氧化物" => effectPrefabs[METAL_OXIDE_INDEX],
+                "非金属氧化物" => effectPrefabs[NONMETAL_OXIDE_INDEX],
+                "酸" => effectPrefabs[ACID_INDEX],
+                "碱" => effectPrefabs[BASE_INDEX],
+                "盐" => effectPrefabs[SALT_INDEX],
+                _ => null
+            };
+        }
+    
     }
 }
+

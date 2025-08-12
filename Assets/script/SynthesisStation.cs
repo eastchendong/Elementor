@@ -23,7 +23,7 @@ namespace Elementor
         private void Awake()
         {
             GetComponent<Collider>().isTrigger = true;
-            
+
             // Subscribe to API synthesis response
             if (API.Instance != null)
             {
@@ -105,7 +105,7 @@ namespace Elementor
             {
                 Debug.Log($"Synthesis successful: {response.compound_formula} ({response.compound_name})");
                 Debug.Log($"Explanation: {response.explanation}");
-                
+
                 // Store the current characters before clearing them
                 List<CharacterView> successfulCharacters = new List<CharacterView>(charactersOnStation);
                 SynthesizeWithAPIResult(response);
@@ -129,16 +129,16 @@ namespace Elementor
 
             // Use the compound formula as the group name
             string resultingGroupName = response.compound_formula;
-            
+
             List<CharacterView> members = new List<CharacterView>(charactersOnStation);
             charactersOnStation.Clear();
 
             CharacterGroup group = CharacterSpawnController.Instance.CreateCharacterGroup(
-                resultingGroupName, 
-                transform.position, 
+                resultingGroupName,
+                transform.position,
                 transform.parent
             );
-            
+
             if (group == null) return;
 
             foreach (var member in members)
@@ -146,6 +146,8 @@ namespace Elementor
                 CharacterSpawnController.Instance.AddCharacterToGroup(group, member);
             }
 
+            // Update the group name with the synthesis result
+            group.UpdateNameFromSynthesis(response);
             group.SetState(CharacterAnimationState.Falling);
         }
 

@@ -10,6 +10,8 @@ namespace Elementor.Core
     {
         [SerializeField] private CharacterModel characterModel;
         [SerializeField] private Animator animator;
+        [SerializeField] private GameObject nameUIPanel;
+        [SerializeField] private TMPro.TextMeshProUGUI nameUIText;
         
         public event Action<CharacterView> OnCharacterSelected;
         public event Action<CharacterView, Vector3> OnCharacterMoved;
@@ -83,12 +85,39 @@ namespace Elementor.Core
 
             GetComponent<Rigidbody>();
             UpdateVisual();
+            
+        }
+
+        private void Start()
+        {
+            UpdateVisual();
         }
 
         private void UpdateVisual()
         {
-            // 根据角色类型和名称更新可视化表现
             gameObject.name = $"{characterModel.GetCharacterType()}_{characterModel.GetCharacterName()}";
+            UpdateNameUI();
+        }
+        
+        private void UpdateNameUI()
+        {
+            if (nameUIText != null && characterModel != null)
+            {
+                nameUIText.text = characterModel.GetCharacterName();
+            }
+        }
+        
+        public void SetNameUIVisible(bool visible)
+        {
+            if (nameUIPanel != null)
+            {
+                nameUIPanel.SetActive(visible);
+            }
+        }
+        
+        public bool IsNameUIVisible()
+        {
+            return nameUIPanel != null && nameUIPanel.activeInHierarchy;
         }
 
         // 扩展接口 - 开始跑步
@@ -246,6 +275,9 @@ namespace Elementor.Core
         {
             // Remove from parent hierarchy when grabbed
             transform.SetParent(null, true);
+            
+            // Show name UI when grabbed individually
+            SetNameUIVisible(true);
             
             if (characterModel != null)
             {

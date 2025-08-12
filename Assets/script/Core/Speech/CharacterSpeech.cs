@@ -11,9 +11,8 @@ namespace Elementor.Core.Speech
         [SerializeField] public Animator characterAnimator;
         [SerializeField] private DoubaoTTSAPI doubaoTTSAPI;
 
-        [Header("Unified Character UI")]
-        [SerializeField] private GameObject characterUIPanel; // Single UI panel for all character interactions
-        [SerializeField] private TextMeshProUGUI characterNameText; // Text component that always shows character name
+        [Header("Speech UI")]
+        [SerializeField] private GameObject speechUIPanel; // Panel for speech UI
         [SerializeField] private TextMeshProUGUI speechText; // Text component for speech content
         [SerializeField] private Button greetingButton; // Button for greeting
 
@@ -28,8 +27,6 @@ namespace Elementor.Core.Speech
         private void Awake()
         {
             if (audioSource == null) audioSource = GetComponent<AudioSource>();
-
-            if (characterUIPanel != null) characterUIPanel.SetActive(false);
             
             characterView = GetComponent<CharacterView>();
             
@@ -57,62 +54,23 @@ namespace Elementor.Core.Speech
 
         private void SetupCharacterUI()
         {
-            // If UI components are not assigned, try to find them in children
-            if (characterUIPanel == null)
+            // Setup button listener if available
+            if (greetingButton != null)
             {
-                characterUIPanel = transform.Find("CharacterUIPanel")?.gameObject;
+                greetingButton.onClick.RemoveAllListeners();
+                greetingButton.onClick.AddListener(SelfIntroduction);
             }
             
-            if (characterUIPanel != null)
+            // Clear speech text initially
+            if (speechText != null)
             {
-                if (characterNameText == null)
-                {
-                    // Try to find by name first, then by order
-                    Transform nameTransform = characterUIPanel.transform.Find("CharacterNameText");
-                    if (nameTransform != null)
-                        characterNameText = nameTransform.GetComponent<TextMeshProUGUI>();
-                    else
-                    {
-                        var textComponents = characterUIPanel.GetComponentsInChildren<TextMeshProUGUI>();
-                        if (textComponents.Length > 0)
-                            characterNameText = textComponents[0]; // First text is for name
-                    }
-                }
-                
-                if (speechText == null)
-                {
-                    // Try to find by name first, then by order
-                    Transform speechTransform = characterUIPanel.transform.Find("SpeechText");
-                    if (speechTransform != null)
-                        speechText = speechTransform.GetComponent<TextMeshProUGUI>();
-                    else
-                    {
-                        var textComponents = characterUIPanel.GetComponentsInChildren<TextMeshProUGUI>();
-                        if (textComponents.Length > 1)
-                            speechText = textComponents[1]; // Second text is for speech
-                    }
-                }
-                
-                if (greetingButton == null)
-                {
-                    greetingButton = characterUIPanel.GetComponentInChildren<Button>();
-                }
-                
-                // Setup button listener
-                if (greetingButton != null)
-                {
-                    greetingButton.onClick.RemoveAllListeners();
-                    greetingButton.onClick.AddListener(SelfIntroduction);
-                }
-                
-                // Initially hide the panel
-                characterUIPanel.SetActive(false);
-                
-                // Clear speech text initially
-                if (speechText != null)
-                {
-                    speechText.text = "";
-                }
+                speechText.text = "";
+            }
+            
+            // Initially hide speech UI panel
+            if (speechUIPanel != null)
+            {
+                speechUIPanel.SetActive(false);
             }
         }
 
@@ -123,36 +81,24 @@ namespace Elementor.Core.Speech
 
         private void UpdateCharacterUI(CharacterAnimationState state)
         {
-            if (characterUIPanel == null || characterView?.GetModel() == null) return;
+            bool shouldShowSpeechUI = state == CharacterAnimationState.Slotted;
             
-            bool shouldShowUI = state == CharacterAnimationState.Slotted;
-            
-            if (shouldShowUI)
+            // Show/hide speech UI panel based on state
+            if (speechUIPanel != null)
             {
-                // Always show character name when UI is activated
-                if (characterNameText != null)
-                {
-                    characterNameText.text = characterView.GetModel().GetCharacterName();
-                }
-                
-                // Clear speech text when first showing UI (unless currently speaking)
-                if (speechText != null && !isSpeaking)
-                {
-                    speechText.text = "";
-                }
-                
-                // Show greeting button when slotted and not speaking
-                if (greetingButton != null)
-                {
-                    greetingButton.gameObject.SetActive(!isSpeaking);
-                }
-                
-                characterUIPanel.SetActive(true);
+                speechUIPanel.SetActive(shouldShowSpeechUI);
             }
-            else if (!isSpeaking)
+            
+            // Show greeting button when slotted and not speaking
+            if (greetingButton != null)
             {
-                // Hide UI when not slotted and not speaking
-                characterUIPanel.SetActive(false);
+                greetingButton.gameObject.SetActive(shouldShowSpeechUI && !isSpeaking);
+            }
+            
+            // Clear speech text when first showing UI (unless currently speaking)
+            if (speechText != null && !isSpeaking && shouldShowSpeechUI)
+            {
+                speechText.text = "";
             }
         }
 
@@ -187,27 +133,22 @@ namespace Elementor.Core.Speech
 
         private void ShowSpeechUI(string text)
         {
-            if (characterUIPanel != null)
+            // Show speech UI panel
+            if (speechUIPanel != null)
             {
-                // Always ensure character name is shown
-                if (characterNameText != null && characterView?.GetModel() != null)
-                {
-                    characterNameText.text = characterView.GetModel().GetCharacterName();
-                }
-                
-                // Show speech content in speech text
-                if (speechText != null)
-                {
-                    speechText.text = text;
-                }
-                
-                // Hide greeting button during speech
-                if (greetingButton != null)
-                {
-                    greetingButton.gameObject.SetActive(false);
-                }
-                
-                characterUIPanel.SetActive(true);
+                speechUIPanel.SetActive(true);
+            }
+            
+            // Show speech content in speech text
+            if (speechText != null)
+            {
+                speechText.text = text;
+            }
+            
+            // Hide greeting button during speech
+            if (greetingButton != null)
+            {
+                greetingButton.gameObject.SetActive(false);
             }
         }
 
@@ -325,4 +266,3 @@ namespace Elementor.Core.Speech
         }
     }
 }
-

@@ -19,11 +19,15 @@ namespace Elementor.Core
         [SerializeField] private Button decreaseButton;
         [SerializeField] private int maxCoefficient = 10;
 
+        // Slot type identification
+        [SerializeField] private bool isPredefinedOutputSlot = false;
+
         private object occupant; // Can be CharacterView or CharacterGroup
         private bool wasOccupiedLastFrame = false; // Track occupancy state
 
         public bool IsOccupied => occupant != null;
         public int Coefficient => coefficient;
+        public bool IsPredefinedOutputSlot => isPredefinedOutputSlot;
 
         private void Awake()
         {
