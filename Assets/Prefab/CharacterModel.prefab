@@ -752,6 +752,8 @@ MonoBehaviour:
     personality:
       speakingTrait: 
       voiceId: 21m00Tcm4TlvDq8ikWAM
+    showNameUI: 0
+    displayName: 
   HandGrabbableController: {fileID: 759374506886638983}
 --- !u!114 &2423755591418637661
 MonoBehaviour:
@@ -767,6 +769,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterModel: {fileID: 2344515134017176236}
   animator: {fileID: 0}
+  nameUIPanel: {fileID: 3376507725524218597}
+  nameUIText: {fileID: 1739336675487637941}
 --- !u!114 &8361306681625712971
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -840,8 +844,7 @@ MonoBehaviour:
   audioSource: {fileID: 7472241166912018206}
   characterAnimator: {fileID: 0}
   doubaoTTSAPI: {fileID: -5694208067029445543}
-  characterUIPanel: {fileID: 3376507725524218597}
-  characterNameText: {fileID: 1739336675487637941}
+  speechUIPanel: {fileID: 7160201029437471601}
   speechText: {fileID: 8068661352336814386}
   greetingButton: {fileID: 7526083067866001629}
   characterVoiceType: zh_male_M392_conversation_wvae_bigtts
@@ -1048,7 +1051,9 @@ PrefabInstance:
       value: 69.9
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 8599484639390949400, guid: 6b196de96e7d16b4297c1980179ae439, type: 3}
+    - {fileID: 6557706223105272004, guid: 6b196de96e7d16b4297c1980179ae439, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 2933306022506314827, guid: 6b196de96e7d16b4297c1980179ae439, type: 3}
       insertIndex: -1

@@ -17,6 +17,7 @@ namespace Elementor.Lore
         private CharacterSpawnController characterSpawnController;
         private SceneAnchorManager sceneAnchorManager;
         private LoreSpawnerHighlighter spawnerHighlighter;
+        private PalmLoreController palmLoreController;
         private GameObject currentEnvironmentInstance;
 
         void Start()
@@ -25,8 +26,9 @@ namespace Elementor.Lore
             characterSpawnController = CharacterSpawnController.Instance;
             sceneAnchorManager = SceneAnchorManager.Instance;
             spawnerHighlighter = FindObjectOfType<LoreSpawnerHighlighter>();
+            palmLoreController = PalmLoreController.Instance;
 
-            Debug.Log($"🎬 LoreSceneGenerator Start - Controllers found: LoreController={loreController != null}, CharacterSpawn={characterSpawnController != null}, SceneAnchorManager={sceneAnchorManager != null}, SpawnerHighlighter={spawnerHighlighter != null}");
+            Debug.Log($"🎬 LoreSceneGenerator Start - Controllers found: LoreController={loreController != null}, CharacterSpawn={characterSpawnController != null}, SceneAnchorManager={sceneAnchorManager != null}, SpawnerHighlighter={spawnerHighlighter != null}, PalmLore={palmLoreController != null}");
 
             if (loreController == null || characterSpawnController == null)
             {
@@ -354,7 +356,14 @@ namespace Elementor.Lore
             // 1. Clear the lore data from the controller. The environment prefab remains as a memento.
             loreController.ClearCurrentLore();
             
-            // 2. Clear spawner highlights when lore is unloaded
+            // 2. Update palm display to reflect completion
+            if (palmLoreController != null)
+            {
+                palmLoreController.SetCustomObjective("Reaction completed! Find next lore.");
+                Debug.Log("🤚 Updated palm display for reaction completion");
+            }
+            
+            // 3. Clear spawner highlights when lore is unloaded
             if (spawnerHighlighter != null)
             {
                 spawnerHighlighter.RefreshHighlighting();
@@ -363,7 +372,7 @@ namespace Elementor.Lore
             
             currentEnvironmentInstance = null;
 
-            // 3. Trigger the next lore reading (placeholder for future logic).
+            // 4. Trigger the next lore reading (placeholder for future logic).
             Debug.Log("Triggering next lore read... (Interface for next step)");
         }
 
