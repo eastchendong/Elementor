@@ -86,13 +86,15 @@ namespace Elementor.Core
             GetComponent<Rigidbody>();
             UpdateVisual();
             
-            // Initialize name UI
-            UpdateNameUI();
+        }
+
+        private void Start()
+        {
+            UpdateVisual();
         }
 
         private void UpdateVisual()
         {
-            // 根据角色类型和名称更新可视化表现
             gameObject.name = $"{characterModel.GetCharacterType()}_{characterModel.GetCharacterName()}";
             UpdateNameUI();
         }

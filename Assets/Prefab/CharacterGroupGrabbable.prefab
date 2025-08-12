@@ -210,15 +210,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 24
+  m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -394,11 +394,11 @@ MonoBehaviour:
   colliderSizePercentage: 0.75
   characterSpacing: 0.15
   groupUIPanel: {fileID: 8805055226624935653}
-  groupUIText: {fileID: 0}
+  groupUIText: {fileID: 4428693356169635671}
   groupDisplayName: 
   effectPrefabs:
-  - {fileID: 183362, guid: 3f97cdb2dde8d7f44a37ce3a93c2bf69, type: 3}
-  - {fileID: 121774, guid: 49e0b1fb7c2ae8b48b5583eebacb92d6, type: 3}
+  - {fileID: 1922285782511704, guid: 089318d9298176c4c80710e6381667e9, type: 3}
+  - {fileID: 1922285782511704, guid: 089318d9298176c4c80710e6381667e9, type: 3}
   - {fileID: 183362, guid: 3f97cdb2dde8d7f44a37ce3a93c2bf69, type: 3}
   - {fileID: 173060, guid: d02101df497c74a43a80cd5097338022, type: 3}
   - {fileID: 107530, guid: 8a3c4f34d8a7fb64fb91533cb37df75e, type: 3}
@@ -476,7 +476,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 897537686178030139, guid: 6b196de96e7d16b4297c1980179ae439, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.377
+      value: 0.6711
       objectReference: {fileID: 0}
     - target: {fileID: 897537686178030139, guid: 6b196de96e7d16b4297c1980179ae439, type: 3}
       propertyPath: m_LocalPosition.z

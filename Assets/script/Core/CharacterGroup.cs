@@ -56,7 +56,10 @@ namespace Elementor.Core
                 grabbable.WhenPointerEventRaised += OnGrabStateChanged;
             }
             
-            UpdateColliderSize();
+                ArrangeCharacters();
+                UpdateColliderSize();
+                UpdateGroupEffects();
+                UpdateGroupNameUI();
         }
 
         private void OnDestroy()
@@ -347,7 +350,7 @@ namespace Elementor.Core
                     // Update group display name based on character types or custom name
                     if (string.IsNullOrEmpty(groupDisplayName))
                     {
-                        groupDisplayName = GenerateGroupName();
+                        groupDisplayName = gameObject.name;
                     }
                     
                     groupUIText.text = groupDisplayName;
@@ -355,28 +358,39 @@ namespace Elementor.Core
             }
         }
         
-        private string GenerateGroupName()
+
+        
+        private string GetFallbackChemicalName(List<string> elementNames)
         {
-            if (characters.Count == 0) return "空组合";
-            if (characters.Count == 1) return characters[0].GetModel().GetCharacterName();
-            
-            // Generate name based on character types
-            var types = new HashSet<string>();
-            foreach (var character in characters)
+            // Simple fallback chemical naming based on common patterns
+            if (elementNames.Count == 2)
             {
-                types.Add(character.GetModel().GetCharacterType());
+                string first = elementNames[0];
+                string second = elementNames[1];
+                
+                
+                // Generic naming pattern
+                return $"{first}{second}";
+            }
+            else if (elementNames.Count == 3)
+            {
+                return string.Join("", elementNames);
             }
             
-            if (types.Count == 1)
-            {
-                return $"{types.First()}组合";
-            }
-            else
-            {
-                return $"混合组合({characters.Count})";
-            }
+            // Default fallback
+            return $"化合物({characters.Count})";
         }
         
+        // Method to update name from API response
+        public void UpdateNameFromSynthesis(SynthesisResponse response)
+        {
+            if (response != null && response.can_synthesize)
+            {
+                groupDisplayName = response.compound_formula;
+                UpdateGroupNameUI();
+            }
+        }
+
         private void UpdateGroupEffects()
         {
             // Remove current effect
@@ -434,17 +448,7 @@ namespace Elementor.Core
                 _ => null
             };
         }
-        
-        public void SetGroupDisplayName(string name)
-        {
-            groupDisplayName = name;
-            UpdateGroupNameUI();
-        }
-        
-        public string GetGroupDisplayName()
-        {
-            return string.IsNullOrEmpty(groupDisplayName) ? GenerateGroupName() : groupDisplayName;
-        }
+    
     }
 }
 

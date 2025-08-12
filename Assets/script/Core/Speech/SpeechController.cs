@@ -54,11 +54,6 @@ namespace Elementor.Core.Speech
             }
         }
 
-        private void Start()
-        {
-
-        }
-
         [ContextMenu("Test Speech System")]
         public void TestSpeechSystem()
         {
