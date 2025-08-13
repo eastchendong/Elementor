@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine.UI;
+using System.Collections;
 
 namespace Elementor
 {
@@ -110,24 +111,159 @@ namespace Elementor
 
         void LoadPageContentData()
         {
-            string filePath = Path.Combine(Application.streamingAssetsPath, pageContentFile);
-            if (File.Exists(filePath))
+            StartCoroutine(LoadPageContentDataCoroutine());
+        }
+
+        private IEnumerator LoadPageContentDataCoroutine()
+        {
+            // First try to load from persistent data path (for runtime generated files)
+            string persistentPath = Path.Combine(Application.persistentDataPath, pageContentFile);
+            bool foundInPersistent = false;
+            string jsonContent = "";
+
+            if (File.Exists(persistentPath))
             {
                 try
                 {
-                    string jsonContent = File.ReadAllText(filePath);
-                    pageContentData = JsonUtility.FromJson<PageContentData>(jsonContent);
-                    Debug.Log($"BookManager loaded page content data with {pageContentData.pages.Length} pages");
+                    jsonContent = File.ReadAllText(persistentPath);
+                    foundInPersistent = true;
+                    Debug.Log($"📖 BookManager loaded from persistent path: {persistentPath}");
                 }
                 catch (System.Exception ex)
                 {
-                    Debug.LogError($"Failed to load page content data: {ex.Message}");
+                    Debug.LogError($"❌ Failed to read from persistent path: {ex.Message}");
                 }
             }
-            else
+
+            // If not found in persistent, try StreamingAssets (Android-compatible way)
+            if (!foundInPersistent)
             {
-                Debug.LogError($"Page content file not found: {filePath}");
+                string streamingPath = Path.Combine(Application.streamingAssetsPath, pageContentFile);
+                Debug.Log($"🔍 Attempting to load page content from StreamingAssets: {streamingPath}");
+
+                // Convert to proper URI format for all platforms
+                string uri = streamingPath;
+                if (!uri.StartsWith("file://") && !uri.StartsWith("jar:") && !uri.StartsWith("http"))
+                {
+                    if (Application.platform == RuntimePlatform.Android)
+                    {
+                        // Android already provides the correct URI format
+                        uri = streamingPath;
+                    }
+                    else
+                    {
+                        // For other platforms, ensure proper file:// prefix
+                        uri = "file://" + streamingPath.Replace("\\", "/");
+                    }
+                }
+
+                using (UnityEngine.Networking.UnityWebRequest request = UnityEngine.Networking.UnityWebRequest.Get(uri))
+                {
+                    yield return request.SendWebRequest();
+
+                    if (request.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+                    {
+                        jsonContent = request.downloadHandler.text;
+                        Debug.Log($"📖 BookManager loaded from StreamingAssets: {streamingPath}");
+                    }
+                    else
+                    {
+                        Debug.LogError($"❌ BookManager failed to load page content file: {pageContentFile}");
+                        Debug.LogError($"💡 Error: {request.error}");
+                        Debug.LogError($"💡 Response code: {request.responseCode}");
+                        Debug.LogError($"💡 File path: {streamingPath}");
+                        Debug.LogError($"💡 URI: {uri}");
+                        
+                        // Check if file exists (for non-Android platforms)
+                        if (Application.platform != RuntimePlatform.Android)
+                        {
+                            Debug.LogError($"💡 File exists: {File.Exists(streamingPath)}");
+                        }
+                        yield break;
+                    }
+                }
             }
+
+            // Process the loaded JSON content
+            try
+            {
+                // Clean JSON content (remove BOM and other potential issues)
+                jsonContent = CleanJsonContent(jsonContent);
+                
+                // Debug: Log first 200 characters of JSON content
+                Debug.Log($"📄 JSON content preview (first 200 chars): {jsonContent.Substring(0, Mathf.Min(200, jsonContent.Length))}...");
+                
+                // Validate JSON content is not empty
+                if (string.IsNullOrEmpty(jsonContent.Trim()))
+                {
+                    Debug.LogError("❌ JSON content is empty or contains only whitespace");
+                    yield break;
+                }
+
+                // Check if JSON starts with expected structure
+                if (!jsonContent.Trim().StartsWith("{"))
+                {
+                    Debug.LogError("❌ JSON does not start with valid object notation");
+                    Debug.LogError($"💡 Content starts with: '{jsonContent.Substring(0, Mathf.Min(50, jsonContent.Length))}'");
+                    yield break;
+                }
+
+                pageContentData = JsonUtility.FromJson<PageContentData>(jsonContent);
+                
+                if (pageContentData != null && pageContentData.pages != null)
+                {
+                    Debug.Log($"BookManager loaded page content data with {pageContentData.pages.Length} pages");
+                }
+                else
+                {
+                    Debug.LogError("❌ Page content data is invalid or empty");
+                    if (pageContentData == null)
+                    {
+                        Debug.LogError("💡 JsonUtility.FromJson returned null - check JSON format");
+                        // Try alternative parsing approach
+                        Debug.LogError("💡 Attempting basic JSON validation...");
+                        if (jsonContent.Contains("\"pages\"") && jsonContent.Contains("\"page_index\""))
+                        {
+                            Debug.LogError("💡 JSON contains expected fields but JsonUtility failed to parse");
+                            Debug.LogError("💡 This might be due to JsonUtility limitations with complex JSON");
+                        }
+                    }
+                    else if (pageContentData.pages == null)
+                        Debug.LogError("💡 Pages array is null");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to parse page content data: {ex.Message}");
+                Debug.LogError($"💡 Stack trace: {ex.StackTrace}");
+                Debug.LogError($"💡 Raw JSON content length: {jsonContent?.Length ?? 0}");
+            }
+        }
+
+        // Helper method to clean JSON content from BOM and other encoding issues
+        private string CleanJsonContent(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return content;
+
+            // Remove UTF-8 BOM if present
+            if (content.StartsWith("\uFEFF"))
+            {
+                content = content.Substring(1);
+                Debug.Log("💡 Removed UTF-8 BOM from JSON content");
+            }
+
+            // Remove any leading/trailing whitespace
+            content = content.Trim();
+
+            // Log first few bytes for debugging
+            if (content.Length > 0)
+            {
+                var bytes = System.Text.Encoding.UTF8.GetBytes(content.Substring(0, Mathf.Min(10, content.Length)));
+                Debug.Log($"💡 First bytes: {string.Join(", ", System.Array.ConvertAll(bytes, b => b.ToString()))}");
+            }
+
+            return content;
         }
 
         void Update()

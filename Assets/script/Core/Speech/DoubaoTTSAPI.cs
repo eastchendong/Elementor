@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
+using System.IO;
 
 namespace Elementor.Core.Speech
 {
@@ -138,7 +139,14 @@ namespace Elementor.Core.Speech
 
         private IEnumerator CreateAudioClipFromMP3(byte[] audioData, string clipName)
         {
-            string tempPath = System.IO.Path.Combine(Application.temporaryCachePath, clipName + ".mp3");
+            // Use persistentDataPath for APK compatibility
+            string tempDir = Path.Combine(Application.persistentDataPath, "TempAudio");
+            if (!Directory.Exists(tempDir))
+            {
+                Directory.CreateDirectory(tempDir);
+            }
+            
+            string tempPath = Path.Combine(tempDir, clipName + ".mp3");
             bool writeSuccess = false;
             
             try
@@ -187,7 +195,14 @@ namespace Elementor.Core.Speech
                 }
             }
 
-            // Clean up temporary file
+            // Clean up temporary file with delay to ensure audio is fully loaded
+            StartCoroutine(CleanupTempFileDelayed(filePath, 5f));
+        }
+
+        private IEnumerator CleanupTempFileDelayed(string filePath, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            
             try
             {
                 if (System.IO.File.Exists(filePath))

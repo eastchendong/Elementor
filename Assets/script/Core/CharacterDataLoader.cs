@@ -15,7 +15,17 @@ namespace Elementor.Core
             }
             
             string jsonPath = $"CharacterData/{characterName}";
-            TextAsset jsonFile = Resources.Load<TextAsset>(jsonPath);
+            TextAsset jsonFile = null;
+            
+            try 
+            {
+                jsonFile = Resources.Load<TextAsset>(jsonPath);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to load character data from Resources: {ex.Message}");
+                Debug.LogWarning($"💡 For Android APK builds, ensure character data file exists at Resources/{jsonPath}.json");
+            }
             
             if (jsonFile != null)
             {
@@ -29,11 +39,13 @@ namespace Elementor.Core
                 catch (System.Exception e)
                 {
                     Debug.LogError($"Failed to parse JSON for character {characterName}: {e.Message}");
+                    Debug.LogWarning("💡 For Android APK builds, ensure JSON format is valid and matches CharacterData structure");
                 }
             }
             else
             {
                 Debug.LogWarning($"Character data file not found: {jsonPath}");
+                Debug.LogWarning("💡 For Android APK builds, ensure character JSON files are placed in Resources/CharacterData/ folder");
             }
             
             // Return default character data if loading fails

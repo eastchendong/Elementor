@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.IO;
+using UnityEngine.Networking;
 
 namespace Elementor
 {
@@ -33,7 +34,7 @@ namespace Elementor
         [SerializeField] private Button nextButton;
 
         [Header("Tutorial Settings")]
-        [SerializeField] private string tutorialJsonPath = "Generated_JSONs/tutorial_instructions.json";
+        [SerializeField] private string tutorialJsonPath = "tutorial_instructions.json"; // Fixed path - file is directly in StreamingAssets
         [SerializeField] private bool autoStartTutorial = true;
 
         private TutorialData currentTutorial;
@@ -77,41 +78,110 @@ namespace Elementor
         public void StartTutorial()
         {
             Debug.Log("🎓 Starting tutorial system...");
-            LoadTutorialData();
+            StartCoroutine(LoadTutorialDataCoroutine());
         }
 
-        private void LoadTutorialData()
+        private IEnumerator LoadTutorialDataCoroutine()
         {
             string fullPath = Path.Combine(Application.streamingAssetsPath, tutorialJsonPath);
             Debug.Log($"📖 Loading tutorial from: {fullPath}");
 
-            if (File.Exists(fullPath))
+            // Convert to proper URI format for all platforms
+            string uri = fullPath;
+            if (!uri.StartsWith("file://") && !uri.StartsWith("jar:") && !uri.StartsWith("http"))
             {
-                try
+                if (Application.platform == RuntimePlatform.Android)
                 {
-                    string jsonContent = File.ReadAllText(fullPath);
-                    currentTutorial = JsonUtility.FromJson<TutorialData>(jsonContent);
-
-                    if (currentTutorial != null && currentTutorial.steps != null && currentTutorial.steps.Length > 0)
-                    {
-                        Debug.Log($"✅ Tutorial loaded: {currentTutorial.title} with {currentTutorial.steps.Length} steps");
-                        currentStepIndex = 0;
-                        ShowTutorialPanel();
-                        DisplayCurrentStep();
-                    }
-                    else
-                    {
-                        Debug.LogError("❌ Tutorial data is invalid or empty");
-                    }
+                    // Android already provides the correct URI format
+                    uri = fullPath;
                 }
-                catch (System.Exception ex)
+                else
                 {
-                    Debug.LogError($"❌ Failed to load tutorial: {ex.Message}");
+                    // For other platforms, ensure proper file:// prefix
+                    uri = "file://" + fullPath.Replace("\\", "/");
                 }
             }
-            else
+
+            using (UnityWebRequest request = UnityWebRequest.Get(uri))
             {
-                Debug.LogError($"❌ Tutorial file not found: {fullPath}");
+                yield return request.SendWebRequest();
+
+                if (request.result == UnityWebRequest.Result.Success)
+                {
+                    try
+                    {
+                        string jsonContent = request.downloadHandler.text;
+                        
+                        // Clean JSON content (remove BOM and other potential issues)
+                        jsonContent = CleanJsonContent(jsonContent);
+                        
+                        // Debug: Log first 200 characters of JSON content
+                        Debug.Log($"📄 JSON content preview (first 200 chars): {jsonContent.Substring(0, Mathf.Min(200, jsonContent.Length))}...");
+                        
+                        // Validate JSON content is not empty
+                        if (string.IsNullOrEmpty(jsonContent.Trim()))
+                        {
+                            Debug.LogError("❌ JSON content is empty or contains only whitespace");
+                            yield break;
+                        }
+
+                        // Check if JSON starts with expected structure
+                        if (!jsonContent.Trim().StartsWith("{"))
+                        {
+                            Debug.LogError("❌ JSON does not start with valid object notation");
+                            Debug.LogError($"💡 Content starts with: '{jsonContent.Substring(0, Mathf.Min(50, jsonContent.Length))}'");
+                            yield break;
+                        }
+
+                        currentTutorial = JsonUtility.FromJson<TutorialData>(jsonContent);
+
+                        if (currentTutorial != null && currentTutorial.steps != null && currentTutorial.steps.Length > 0)
+                        {
+                            Debug.Log($"✅ Tutorial loaded: {currentTutorial.title} with {currentTutorial.steps.Length} steps");
+                            currentStepIndex = 0;
+                            ShowTutorialPanel();
+                            DisplayCurrentStep();
+                        }
+                        else
+                        {
+                            Debug.LogError("❌ Tutorial data is invalid or empty");
+                            if (currentTutorial == null)
+                            {
+                                Debug.LogError("💡 JsonUtility.FromJson returned null - check JSON format");
+                                // Try alternative parsing approach
+                                Debug.LogError("💡 Attempting basic JSON validation...");
+                                if (jsonContent.Contains("\"tutorial_id\"") && jsonContent.Contains("\"steps\""))
+                                {
+                                    Debug.LogError("💡 JSON contains expected fields but JsonUtility failed to parse");
+                                    Debug.LogError("💡 This might be due to JsonUtility limitations with complex JSON");
+                                }
+                            }
+                            else if (currentTutorial.steps == null)
+                                Debug.LogError("💡 Tutorial steps array is null");
+                            else
+                                Debug.LogError("💡 Tutorial steps array is empty");
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"❌ Failed to parse tutorial JSON: {ex.Message}");
+                        Debug.LogError($"💡 Stack trace: {ex.StackTrace}");
+                        Debug.LogError($"💡 Raw JSON content length: {request.downloadHandler.text?.Length ?? 0}");
+                    }
+                }
+                else
+                {
+                    Debug.LogError($"❌ Failed to load tutorial file: {request.error}");
+                    Debug.LogError($"💡 Response code: {request.responseCode}");
+                    Debug.LogError($"💡 File path: {fullPath}");
+                    Debug.LogError($"💡 URI: {uri}");
+                    
+                    // Check if file exists (for non-Android platforms)
+                    if (Application.platform != RuntimePlatform.Android)
+                    {
+                        Debug.LogError($"💡 File exists: {File.Exists(fullPath)}");
+                    }
+                }
             }
         }
 
@@ -219,6 +289,32 @@ namespace Elementor
             // Reset tutorial state
             currentTutorial = null;
             currentStepIndex = 0;
+        }
+
+        // Helper method to clean JSON content from BOM and other encoding issues
+        private string CleanJsonContent(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return content;
+
+            // Remove UTF-8 BOM if present
+            if (content.StartsWith("\uFEFF"))
+            {
+                content = content.Substring(1);
+                Debug.Log("💡 Removed UTF-8 BOM from JSON content");
+            }
+
+            // Remove any leading/trailing whitespace
+            content = content.Trim();
+
+            // Log first few bytes for debugging
+            if (content.Length > 0)
+            {
+                var bytes = System.Text.Encoding.UTF8.GetBytes(content.Substring(0, Mathf.Min(10, content.Length)));
+                Debug.Log($"💡 First bytes: {string.Join(", ", System.Array.ConvertAll(bytes, b => b.ToString()))}");
+            }
+
+            return content;
         }
 
         // Public method to restart tutorial

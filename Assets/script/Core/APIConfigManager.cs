@@ -55,16 +55,26 @@ namespace Elementor.Core
                 else
                 {
                     // Fallback to Resources file
-                    TextAsset configFile = Resources.Load<TextAsset>("APIConfig");
-                    if (configFile != null)
+                    try 
                     {
-                        _config = JsonUtility.FromJson<APIConfiguration>(configFile.text);
-                        Debug.Log("API Configuration loaded from Resources/APIConfig.json");
+                        TextAsset configFile = Resources.Load<TextAsset>("APIConfig");
+                        if (configFile != null)
+                        {
+                            _config = JsonUtility.FromJson<APIConfiguration>(configFile.text);
+                            Debug.Log("API Configuration loaded from Resources/APIConfig.json");
+                        }
+                        else
+                        {
+                            Debug.LogError("APIConfig.json not found in Resources folder and no environment variables set");
+                            Debug.LogWarning("💡 For Android APK builds, ensure APIConfig.json is placed in Resources folder or use environment variables");
+                            _config = new APIConfiguration(); // Create empty config
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Debug.LogError("APIConfig.json not found in Resources folder and no environment variables set");
-                        _config = new APIConfiguration(); // Create empty config
+                        Debug.LogError($"Failed to load APIConfig from Resources: {ex.Message}");
+                        Debug.LogWarning("💡 For Android APK builds, ensure APIConfig.json is properly formatted and placed in Resources folder");
+                        _config = new APIConfiguration(); // Create empty config as fallback
                     }
                 }
             }

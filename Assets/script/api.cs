@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Elementor.Core;
+using System.IO;
 
 namespace Elementor
 {
@@ -129,6 +130,10 @@ namespace Elementor
         {
             Debug.Log("Chemical analysis response received");
             string cleanedJson = HttpRequestManager.ExtractJsonFromResponse(responseText);
+            
+            // Save generated lore data to persistent storage for APK builds
+            SaveGeneratedLoreData(cleanedJson);
+            
             OnAnalysisComplete?.Invoke(cleanedJson);
         }
 
@@ -658,6 +663,46 @@ namespace Elementor
             isSelfIntroRequesting = false;
             Debug.LogError("Self-introduction generation failed: " + error);
             onComplete?.Invoke("");
+        }
+
+        /// <summary>
+        /// Save generated lore data to persistent data path for APK builds
+        /// </summary>
+        private void SaveGeneratedLoreData(string jsonContent)
+        {
+            try
+            {
+                // Parse to get scene_id for filename
+                var tempLore = JsonUtility.FromJson<Elementor.Lore.LoreData>(jsonContent);
+                if (tempLore != null && !string.IsNullOrEmpty(tempLore.scene_id))
+                {
+                    string fileName = $"{tempLore.scene_id}.json";
+                    
+                    // Use LoreJsonReader to save the data
+                    var loreReader = LoreJsonReader.Instance ?? FindObjectOfType<LoreJsonReader>();
+                    if (loreReader != null)
+                    {
+                        loreReader.SaveLoreDataToPersistent(fileName, jsonContent);
+                    }
+                    else
+                    {
+                        // Fallback: save directly
+                        string persistentDir = Path.Combine(Application.persistentDataPath, "Generated_JSONs");
+                        if (!Directory.Exists(persistentDir))
+                        {
+                            Directory.CreateDirectory(persistentDir);
+                        }
+                        
+                        string filePath = Path.Combine(persistentDir, fileName);
+                        System.IO.File.WriteAllText(filePath, jsonContent);
+                        Debug.Log($"💾 Saved generated lore data: {filePath}");
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"⚠️ Failed to save generated lore data: {ex.Message}");
+            }
         }
 
     }

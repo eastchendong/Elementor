@@ -2,6 +2,7 @@
 using UnityEngine;
 using Elementor.Core.Speech;
 using Elementor.Core;
+using System.IO;
 
 namespace Elementor
 {
@@ -11,7 +12,23 @@ namespace Elementor
         {
             try
             {
-                string jsonText = System.IO.File.ReadAllText(jsonPath);
+                string jsonText = "";
+                
+                // Try to load from persistent data path first (for runtime generated files)
+                string persistentPath = Path.Combine(UnityEngine.Application.persistentDataPath, jsonPath);
+                if (System.IO.File.Exists(persistentPath))
+                {
+                    jsonText = System.IO.File.ReadAllText(persistentPath);
+                    Debug.Log($"📖 ReactionDataParser loaded from persistent path: {persistentPath}");
+                }
+                else
+                {
+                    // For StreamingAssets files in Android APK, we need to use UnityWebRequest
+                    Debug.LogWarning($"⚠️ ReactionDataParser: File not found in persistent storage: {jsonPath}");
+                    Debug.LogWarning("💡 For Android APK builds, ensure JSON files are pre-loaded to persistent storage or use LoreJsonReader for StreamingAssets access");
+                    return new List<ReactionStage>();
+                }
+                
                 var loreData = JsonUtility.FromJson<LoreData>(jsonText);
                 return ParseReactionFromLore(loreData);
             }

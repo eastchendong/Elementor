@@ -107,11 +107,20 @@ namespace Elementor.Core
             // 尝试从Resources文件夹加载指定的prefab
             if (!string.IsNullOrEmpty(character.prefabPath))
             {
-                modelPrefab = Resources.Load<GameObject>(character.prefabPath);
-                
-                if (modelPrefab == null)
+                try 
                 {
-                    Debug.LogWarning($"找不到prefab: {character.prefabPath}，使用备用prefab");
+                    modelPrefab = Resources.Load<GameObject>(character.prefabPath);
+                    
+                    if (modelPrefab == null)
+                    {
+                        Debug.LogWarning($"找不到prefab: {character.prefabPath}，使用备用prefab");
+                        Debug.LogWarning($"💡 For Android APK builds, ensure prefab exists at Resources/{character.prefabPath}.prefab");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"Failed to load character prefab from Resources: {ex.Message}");
+                    Debug.LogWarning($"💡 For Android APK builds, ensure prefab is properly placed in Resources folder: {character.prefabPath}");
                 }
             }
             
@@ -119,12 +128,12 @@ namespace Elementor.Core
             if (modelPrefab == null)
             {
                 modelPrefab = fallbackPrefab;
-            }
-            
-            if (modelPrefab == null)
-            {
-                Debug.LogError("没有可用的prefab来生成角色模型");
-                return null;
+                if (modelPrefab == null)
+                {
+                    Debug.LogError("没有可用的prefab来生成角色模型");
+                    Debug.LogError("💡 Please ensure fallbackPrefab is assigned in CharacterSpawnController");
+                    return null;
+                }
             }
             
             GameObject modelObj = Instantiate(modelPrefab, parent);

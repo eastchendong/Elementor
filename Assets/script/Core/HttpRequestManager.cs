@@ -36,6 +36,14 @@ namespace Elementor.Core
                 return;
             }
 
+            // Check network connectivity (Android-friendly)
+            if (Application.internetReachability == NetworkReachability.NotReachable)
+            {
+                Debug.LogError("No internet connection available");
+                onError?.Invoke("No internet connection");
+                return;
+            }
+
             StartCoroutine(SendRequestCoroutine(requestBody, onSuccess, onError));
         }
 
@@ -45,15 +53,32 @@ namespace Elementor.Core
 
             UnityWebRequest request = new UnityWebRequest(apiUrl, "POST");
             request.redirectLimit = 10;
-            request.timeout = 60;
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(requestBody);
+            request.timeout = 90; // Increased timeout for mobile networks
+            
+            byte[] bodyRaw = null;
+            try
+            {
+                bodyRaw = Encoding.UTF8.GetBytes(requestBody);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to encode request body: {ex.Message}");
+                IsRequesting = false;
+                onError?.Invoke("Failed to encode request");
+                yield break;
+            }
+
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
             request.SetRequestHeader("Authorization", "Bearer " + apiKey);
             request.SetRequestHeader("Accept", "application/json");
+            
+            // Android-friendly: Add User-Agent header
+            request.SetRequestHeader("User-Agent", $"Unity/{Application.unityVersion} (Android)");
 
             Debug.Log("Sending request to: " + apiUrl);
+            Debug.Log($"Network reachability: {Application.internetReachability}");
 
             yield return request.SendWebRequest();
 
@@ -63,18 +88,47 @@ namespace Elementor.Core
             {
                 string responseText = request.downloadHandler.text;
                 Debug.Log("Request successful");
-                onSuccess?.Invoke(responseText);
+                
+                // Validate response is not empty
+                if (string.IsNullOrEmpty(responseText))
+                {
+                    Debug.LogWarning("Received empty response from server");
+                    onError?.Invoke("Empty response from server");
+                }
+                else
+                {
+                    onSuccess?.Invoke(responseText);
+                }
             }
             else
             {
                 string errorMessage = $"Error: {request.error}, Code: {request.responseCode}";
                 Debug.LogError(errorMessage);
-                if (request.downloadHandler != null)
+                
+                // More detailed error information for Android debugging
+                switch (request.result)
+                {
+                    case UnityWebRequest.Result.ConnectionError:
+                        errorMessage += " (Connection Error - Check network connectivity)";
+                        break;
+                    case UnityWebRequest.Result.ProtocolError:
+                        errorMessage += " (Protocol Error - Server responded with error)";
+                        break;
+                    case UnityWebRequest.Result.DataProcessingError:
+                        errorMessage += " (Data Processing Error - Invalid response data)";
+                        break;
+                }
+                
+                if (request.downloadHandler != null && !string.IsNullOrEmpty(request.downloadHandler.text))
                 {
                     Debug.LogError("Error Response Body: " + request.downloadHandler.text);
                 }
+                
                 onError?.Invoke(errorMessage);
             }
+
+            // Ensure proper cleanup
+            request.Dispose();
         }
 
         // Helper method to sanitize strings for JSON
@@ -118,6 +172,13 @@ namespace Elementor.Core
         {
             if (string.IsNullOrEmpty(content))
                 return "{}";
+            
+            // Remove UTF-8 BOM if present
+            if (content.StartsWith("\uFEFF"))
+            {
+                content = content.Substring(1);
+                Debug.Log("💡 Removed UTF-8 BOM from API response content");
+            }
                 
             content = content.Trim();
             
