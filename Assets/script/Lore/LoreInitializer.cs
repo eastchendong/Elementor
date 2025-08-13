@@ -77,14 +77,14 @@ namespace Elementor
 
         public void StartTutorial()
         {
-            Debug.Log("🎓 Starting tutorial system...");
+            Debug.Log("Starting tutorial system...");
             StartCoroutine(LoadTutorialDataCoroutine());
         }
 
         private IEnumerator LoadTutorialDataCoroutine()
         {
             string fullPath = Path.Combine(Application.streamingAssetsPath, tutorialJsonPath);
-            Debug.Log($"📖 Loading tutorial from: {fullPath}");
+            Debug.Log($"Loading tutorial from: {fullPath}");
 
             // Convert to proper URI format for all platforms
             string uri = fullPath;
@@ -116,20 +116,20 @@ namespace Elementor
                         jsonContent = CleanJsonContent(jsonContent);
                         
                         // Debug: Log first 200 characters of JSON content
-                        Debug.Log($"📄 JSON content preview (first 200 chars): {jsonContent.Substring(0, Mathf.Min(200, jsonContent.Length))}...");
+                        Debug.Log($"JSON content preview (first 200 chars): {jsonContent.Substring(0, Mathf.Min(200, jsonContent.Length))}...");
                         
                         // Validate JSON content is not empty
                         if (string.IsNullOrEmpty(jsonContent.Trim()))
                         {
-                            Debug.LogError("❌ JSON content is empty or contains only whitespace");
+                            Debug.LogError("JSON content is empty or contains only whitespace");
                             yield break;
                         }
 
                         // Check if JSON starts with expected structure
                         if (!jsonContent.Trim().StartsWith("{"))
                         {
-                            Debug.LogError("❌ JSON does not start with valid object notation");
-                            Debug.LogError($"💡 Content starts with: '{jsonContent.Substring(0, Mathf.Min(50, jsonContent.Length))}'");
+                            Debug.LogError("JSON does not start with valid object notation");
+                            Debug.LogError($"Content starts with: '{jsonContent.Substring(0, Mathf.Min(50, jsonContent.Length))}'");
                             yield break;
                         }
 
@@ -137,49 +137,49 @@ namespace Elementor
 
                         if (currentTutorial != null && currentTutorial.steps != null && currentTutorial.steps.Length > 0)
                         {
-                            Debug.Log($"✅ Tutorial loaded: {currentTutorial.title} with {currentTutorial.steps.Length} steps");
+                            Debug.Log($"Tutorial loaded: {currentTutorial.title} with {currentTutorial.steps.Length} steps");
                             currentStepIndex = 0;
                             ShowTutorialPanel();
                             DisplayCurrentStep();
                         }
                         else
                         {
-                            Debug.LogError("❌ Tutorial data is invalid or empty");
+                            Debug.LogError("Tutorial data is invalid or empty");
                             if (currentTutorial == null)
                             {
-                                Debug.LogError("💡 JsonUtility.FromJson returned null - check JSON format");
+                                Debug.LogError("JsonUtility.FromJson returned null - check JSON format");
                                 // Try alternative parsing approach
-                                Debug.LogError("💡 Attempting basic JSON validation...");
+                                Debug.LogError("Attempting basic JSON validation...");
                                 if (jsonContent.Contains("\"tutorial_id\"") && jsonContent.Contains("\"steps\""))
                                 {
-                                    Debug.LogError("💡 JSON contains expected fields but JsonUtility failed to parse");
-                                    Debug.LogError("💡 This might be due to JsonUtility limitations with complex JSON");
+                                    Debug.LogError("JSON contains expected fields but JsonUtility failed to parse");
+                                    Debug.LogError("This might be due to JsonUtility limitations with complex JSON");
                                 }
                             }
                             else if (currentTutorial.steps == null)
-                                Debug.LogError("💡 Tutorial steps array is null");
+                                Debug.LogError("Tutorial steps array is null");
                             else
-                                Debug.LogError("💡 Tutorial steps array is empty");
+                                Debug.LogError("Tutorial steps array is empty");
                         }
                     }
                     catch (System.Exception ex)
                     {
-                        Debug.LogError($"❌ Failed to parse tutorial JSON: {ex.Message}");
-                        Debug.LogError($"💡 Stack trace: {ex.StackTrace}");
-                        Debug.LogError($"💡 Raw JSON content length: {request.downloadHandler.text?.Length ?? 0}");
+                        Debug.LogError($"Failed to parse tutorial JSON: {ex.Message}");
+                        Debug.LogError($"Stack trace: {ex.StackTrace}");
+                        Debug.LogError($"Raw JSON content length: {request.downloadHandler.text?.Length ?? 0}");
                     }
                 }
                 else
                 {
-                    Debug.LogError($"❌ Failed to load tutorial file: {request.error}");
-                    Debug.LogError($"💡 Response code: {request.responseCode}");
-                    Debug.LogError($"💡 File path: {fullPath}");
-                    Debug.LogError($"💡 URI: {uri}");
+                    Debug.LogError($"Failed to load tutorial file: {request.error}");
+                    Debug.LogError($"Response code: {request.responseCode}");
+                    Debug.LogError($"File path: {fullPath}");
+                    Debug.LogError($"URI: {uri}");
                     
                     // Check if file exists (for non-Android platforms)
                     if (Application.platform != RuntimePlatform.Android)
                     {
-                        Debug.LogError($"💡 File exists: {File.Exists(fullPath)}");
+                        Debug.LogError($"File exists: {File.Exists(fullPath)}");
                     }
                 }
             }
@@ -190,7 +190,7 @@ namespace Elementor
             if (tutorialPanel != null)
             {
                 tutorialPanel.SetActive(true);
-                Debug.Log("📋 Tutorial panel shown");
+                Debug.Log("Tutorial panel shown");
             }
         }
 
@@ -199,7 +199,7 @@ namespace Elementor
             if (tutorialPanel != null)
             {
                 tutorialPanel.SetActive(false);
-                Debug.Log("📋 Tutorial panel hidden");
+                Debug.Log("Tutorial panel hidden");
             }
         }
 
@@ -207,7 +207,7 @@ namespace Elementor
         {
             if (currentTutorial == null || currentStepIndex >= currentTutorial.steps.Length)
             {
-                Debug.LogError("❌ Cannot display step: invalid tutorial or step index");
+                Debug.LogError("Cannot display step: invalid tutorial or step index");
                 return;
             }
 
@@ -241,7 +241,7 @@ namespace Elementor
                 }
             }
 
-            Debug.Log($"📝 Displaying step {currentStepIndex + 1}/{currentTutorial.steps.Length}: {currentStep.title}");
+            Debug.Log($"Displaying step {currentStepIndex + 1}/{currentTutorial.steps.Length}: {currentStep.title}");
         }
 
         private void OnNextButtonClicked()

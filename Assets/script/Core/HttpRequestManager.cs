@@ -177,7 +177,7 @@ namespace Elementor.Core
             if (content.StartsWith("\uFEFF"))
             {
                 content = content.Substring(1);
-                Debug.Log("💡 Removed UTF-8 BOM from API response content");
+                Debug.Log("Removed UTF-8 BOM from API response content");
             }
                 
             content = content.Trim();

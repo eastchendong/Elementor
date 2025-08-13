@@ -48,11 +48,11 @@ namespace Elementor
                 {
                     jsonContent = File.ReadAllText(persistentPath);
                     foundInPersistent = true;
-                    Debug.Log($"📖 Loaded from persistent path: {persistentPath}");
+                    Debug.Log($"Loaded from persistent path: {persistentPath}");
                 }
                 catch (System.Exception ex)
                 {
-                    Debug.LogError($"❌ Failed to read from persistent path: {ex.Message}");
+                    Debug.LogError($"Failed to read from persistent path: {ex.Message}");
                 }
             }
 
@@ -60,7 +60,7 @@ namespace Elementor
             if (!foundInPersistent)
             {
                 string streamingPath = Path.Combine(Application.streamingAssetsPath, loreFilePath);
-                Debug.Log($"🔍 Attempting to load lore from StreamingAssets: {streamingPath}");
+                Debug.Log($"Attempting to load lore from StreamingAssets: {streamingPath}");
 
                 using (UnityWebRequest request = UnityWebRequest.Get(streamingPath))
                 {
@@ -69,11 +69,11 @@ namespace Elementor
                     if (request.result == UnityWebRequest.Result.Success)
                     {
                         jsonContent = request.downloadHandler.text;
-                        Debug.Log($"📖 Loaded from StreamingAssets: {streamingPath}");
+                        Debug.Log($"Loaded from StreamingAssets: {streamingPath}");
                     }
                     else
                     {
-                        Debug.LogError($"❌ Failed to load from both persistent and StreamingAssets paths");
+                        Debug.LogError($"Failed to load from both persistent and StreamingAssets paths");
                         LogAvailableFiles();
                         yield break;
                     }
@@ -88,7 +88,7 @@ namespace Elementor
         {
             try
             {
-                Debug.Log($"📖 Processing JSON content (first 200 chars): {jsonContent.Substring(0, Mathf.Min(200, jsonContent.Length))}...");
+                Debug.Log($"Processing JSON content (first 200 chars): {jsonContent.Substring(0, Mathf.Min(200, jsonContent.Length))}...");
                 
                 // Clean JSON content (remove BOM and other potential issues)
                 jsonContent = CleanJsonContent(jsonContent);
@@ -96,14 +96,14 @@ namespace Elementor
                 // Validate JSON before parsing
                 if (string.IsNullOrEmpty(jsonContent.Trim()))
                 {
-                    Debug.LogError("❌ JSON content is empty or contains only whitespace");
+                    Debug.LogError("JSON content is empty or contains only whitespace");
                     yield break;
                 }
 
                 // Check if JSON starts with expected structure
                 if (!jsonContent.Trim().StartsWith("{"))
                 {
-                    Debug.LogError("❌ JSON does not start with valid object notation");
+                    Debug.LogError("JSON does not start with valid object notation");
                     yield break;
                 }
 
@@ -114,25 +114,25 @@ namespace Elementor
                     // Validate essential fields
                     if (ValidateLoreData(loreData))
                     {
-                        Debug.Log($"✅ Successfully parsed lore data. Scene ID: {loreData.scene_id}");
-                        Debug.Log($"📚 Story Title: {loreData.story?.title}");
-                        Debug.Log($"⚗️ Reaction: {loreData.reaction?.equation}");
+                        Debug.Log($"Successfully parsed lore data. Scene ID: {loreData.scene_id}");
+                        Debug.Log($"Story Title: {loreData.story?.title}");
+                        Debug.Log($"Reaction: {loreData.reaction?.equation}");
                         LoreController.Instance.LoadLore(loreData);
                     }
                     else
                     {
-                        Debug.LogError("❌ Lore data validation failed - missing essential fields");
+                        Debug.LogError("Lore data validation failed - missing essential fields");
                     }
                 }
                 else
                 {
-                    Debug.LogError("❌ Failed to parse lore JSON - JsonUtility.FromJson returned null");
+                    Debug.LogError("Failed to parse lore JSON - JsonUtility.FromJson returned null");
                     Debug.LogError($"JSON content preview: {jsonContent.Substring(0, Mathf.Min(500, jsonContent.Length))}");
                 }
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"❌ Exception while processing lore JSON: {ex.Message}");
+                Debug.LogError($"Exception while processing lore JSON: {ex.Message}");
                 Debug.LogError($"Stack trace: {ex.StackTrace}");
             }
         }
@@ -144,47 +144,47 @@ namespace Elementor
         {
             if (string.IsNullOrEmpty(loreData.scene_id))
             {
-                Debug.LogError("🚫 Missing scene_id in lore data");
+                Debug.LogError("Missing scene_id in lore data");
                 return false;
             }
 
             if (loreData.story == null)
             {
-                Debug.LogError("🚫 Missing story data");
+                Debug.LogError("Missing story data");
                 return false;
             }
 
             if (string.IsNullOrEmpty(loreData.story.title))
             {
-                Debug.LogError("🚫 Missing story title");
+                Debug.LogError("Missing story title");
                 return false;
             }
 
             if (loreData.reaction == null)
             {
-                Debug.LogError("🚫 Missing reaction data");
+                Debug.LogError("Missing reaction data");
                 return false;
             }
 
             if (string.IsNullOrEmpty(loreData.reaction.equation))
             {
-                Debug.LogError("🚫 Missing reaction equation");
+                Debug.LogError("Missing reaction equation");
                 return false;
             }
 
             if (loreData.reaction.reactants == null || loreData.reaction.reactants.Count == 0)
             {
-                Debug.LogError("🚫 Missing or empty reactants");
+                Debug.LogError("Missing or empty reactants");
                 return false;
             }
 
             if (loreData.reaction.products == null || loreData.reaction.products.Count == 0)
             {
-                Debug.LogError("🚫 Missing or empty products");
+                Debug.LogError("Missing or empty products");
                 return false;
             }
 
-            Debug.Log("✅ Lore data validation passed");
+            Debug.Log("Lore data validation passed");
             return true;
         }
 
@@ -196,17 +196,17 @@ namespace Elementor
             string streamingAssetsPath = Application.streamingAssetsPath;
             if (Directory.Exists(streamingAssetsPath))
             {
-                Debug.Log("📁 Searching for available JSON files...");
+                Debug.Log("Searching for available JSON files...");
                 
                 string[] jsonFiles = Directory.GetFiles(streamingAssetsPath, "*.json", SearchOption.AllDirectories);
-                Debug.Log($"📄 Available JSON files in StreamingAssets (recursive): {string.Join(", ", jsonFiles)}");
+                Debug.Log($"Available JSON files in StreamingAssets (recursive): {string.Join(", ", jsonFiles)}");
                 
                 // Check Generated_JSONs specifically
                 string generatedJsonsPath = Path.Combine(streamingAssetsPath, "Generated_JSONs");
                 if (Directory.Exists(generatedJsonsPath))
                 {
                     string[] generatedFiles = Directory.GetFiles(generatedJsonsPath, "*.json");
-                    Debug.Log($"📄 JSON files in Generated_JSONs: {string.Join(", ", generatedFiles)}");
+                    Debug.Log($"JSON files in Generated_JSONs: {string.Join(", ", generatedFiles)}");
                     
                     // Show relative paths for easier usage
                     for (int i = 0; i < generatedFiles.Length; i++)
@@ -217,12 +217,12 @@ namespace Elementor
                 }
                 else
                 {
-                    Debug.LogWarning("📁 Generated_JSONs folder not found in StreamingAssets");
+                    Debug.LogWarning("Generated_JSONs folder not found in StreamingAssets");
                 }
             }
             else
             {
-                Debug.LogError("📁 StreamingAssets folder not found");
+                Debug.LogError("StreamingAssets folder not found");
             }
         }
         
@@ -233,7 +233,7 @@ namespace Elementor
         {
             // Ensure the path includes Generated_JSONs folder if not already specified
             loreFilePath = fileName.Contains("Generated_JSONs") ? fileName : Path.Combine("Generated_JSONs", fileName);
-            Debug.Log($"🎯 Loading specific lore file: {loreFilePath}");
+            Debug.Log($"Loading specific lore file: {loreFilePath}");
             StartCoroutine(LoadLoreFromJsonCoroutine());
         }
 
@@ -244,13 +244,13 @@ namespace Elementor
         {
             if (LoreController.Instance == null)
             {
-                Debug.LogError("❌ LoreController instance not found.");
+                Debug.LogError("LoreController instance not found.");
                 return;
             }
 
             try
             {
-                Debug.Log("📝 Loading lore from direct JSON content");
+                Debug.Log("Loading lore from direct JSON content");
                 
                 // Clean JSON content (remove BOM and other potential issues)
                 jsonContent = CleanJsonContent(jsonContent);
@@ -259,17 +259,17 @@ namespace Elementor
 
                 if (loreData != null && ValidateLoreData(loreData))
                 {
-                    Debug.Log($"✅ Successfully loaded lore from content. Scene ID: {loreData.scene_id}");
+                    Debug.Log($"Successfully loaded lore from content. Scene ID: {loreData.scene_id}");
                     LoreController.Instance.LoadLore(loreData);
                 }
                 else
                 {
-                    Debug.LogError("❌ Failed to parse or validate lore from JSON content");
+                    Debug.LogError("Failed to parse or validate lore from JSON content");
                 }
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"❌ Exception while loading lore from content: {ex.Message}");
+                Debug.LogError($"Exception while loading lore from content: {ex.Message}");
             }
         }
 
@@ -285,7 +285,7 @@ namespace Elementor
             if (content.StartsWith("\uFEFF"))
             {
                 content = content.Substring(1);
-                Debug.Log("💡 Removed UTF-8 BOM from JSON content");
+                Debug.Log("Removed UTF-8 BOM from JSON content");
             }
 
             // Remove any leading/trailing whitespace
@@ -295,7 +295,7 @@ namespace Elementor
             if (content.Length > 0)
             {
                 var bytes = System.Text.Encoding.UTF8.GetBytes(content.Substring(0, Mathf.Min(10, content.Length)));
-                Debug.Log($"💡 First bytes after cleaning: {string.Join(", ", System.Array.ConvertAll(bytes, b => b.ToString()))}");
+                Debug.Log($"First bytes after cleaning: {string.Join(", ", System.Array.ConvertAll(bytes, b => b.ToString()))}");
             }
 
             return content;
@@ -316,11 +316,11 @@ namespace Elementor
 
                 string filePath = Path.Combine(persistentDir, fileName);
                 File.WriteAllText(filePath, jsonContent);
-                Debug.Log($"💾 Saved lore data to persistent storage: {filePath}");
+                Debug.Log($"Saved lore data to persistent storage: {filePath}");
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"❌ Failed to save lore data: {ex.Message}");
+                Debug.LogError($"Failed to save lore data: {ex.Message}");
             }
         }
     }
