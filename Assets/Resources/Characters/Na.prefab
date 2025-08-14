@@ -2823,12 +2823,12 @@ MonoBehaviour:
   m_stiffnessForce: 0.7692307
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.05
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 5250277148428506133}
   - {fileID: 158184220232244956}
-  m_hitRadius: 0.00014042946
+  m_hitRadius: 0.02
   ColliderGroups: []
   m_updateType: 0
 --- !u!114 &5173737878060734158
@@ -2848,7 +2848,7 @@ MonoBehaviour:
   m_stiffnessForce: 0.5217392
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.05
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 305276300913503519}
@@ -2857,7 +2857,7 @@ MonoBehaviour:
   - {fileID: 9046625227943711776}
   - {fileID: 7198019726634510246}
   - {fileID: 3475091486048065214}
-  m_hitRadius: 0.00016476907
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 7172301000885658967}
   - {fileID: 649109208061582896}
@@ -2879,14 +2879,14 @@ MonoBehaviour:
   m_stiffnessForce: 0.5217392
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.05
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 3893323456265691389}
   - {fileID: 7111123430959299635}
   - {fileID: 4117976142489217126}
   - {fileID: 6236166951836059750}
-  m_hitRadius: 0.00014837485
+  m_hitRadius: 0.02
   ColliderGroups: []
   m_updateType: 0
 --- !u!114 &7697380071732514966
@@ -2906,11 +2906,11 @@ MonoBehaviour:
   m_stiffnessForce: 0.2519737
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 6109099367491966592}
-  m_hitRadius: 0.001006576
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 9213104478016763500}
   - {fileID: 6978347230577331621}
@@ -2940,11 +2940,11 @@ MonoBehaviour:
   m_stiffnessForce: 0.2519737
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 817213744049962761}
-  m_hitRadius: 0.0009719239
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 9213104478016763500}
   - {fileID: 6978347230577331621}
@@ -2974,11 +2974,11 @@ MonoBehaviour:
   m_stiffnessForce: 0.2519737
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 7416487763305403467}
-  m_hitRadius: 0.0015850632
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 9213104478016763500}
   - {fileID: 6978347230577331621}
@@ -3008,11 +3008,11 @@ MonoBehaviour:
   m_stiffnessForce: 0.4
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 4523651049772415739}
-  m_hitRadius: 0.00036024672
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 9213104478016763500}
   - {fileID: 6978347230577331621}
@@ -3042,11 +3042,11 @@ MonoBehaviour:
   m_stiffnessForce: 0.4
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 4657447468226419108}
-  m_hitRadius: 0.00036024692
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 9213104478016763500}
   - {fileID: 6978347230577331621}
@@ -3076,11 +3076,11 @@ MonoBehaviour:
   m_stiffnessForce: 0.6990132
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 3639400859967419180}
-  m_hitRadius: 0.00072049367
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 9213104478016763500}
   - {fileID: 6978347230577331621}
@@ -3110,11 +3110,11 @@ MonoBehaviour:
   m_stiffnessForce: 0.75
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 1846807993784005760}
-  m_hitRadius: 0.00054035406
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 9213104478016763500}
   - {fileID: 6978347230577331621}
@@ -3144,11 +3144,11 @@ MonoBehaviour:
   m_stiffnessForce: 0.74835527
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 3936801334442187835}
-  m_hitRadius: 0.0005403634
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 9213104478016763500}
   - {fileID: 6978347230577331621}
@@ -3178,11 +3178,11 @@ MonoBehaviour:
   m_stiffnessForce: 0.8375
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 2162683628250228108}
-  m_hitRadius: 0.00036008493
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 9213104478016763500}
   - {fileID: 6978347230577331621}
@@ -3212,11 +3212,11 @@ MonoBehaviour:
   m_stiffnessForce: 0.8333333
   m_gravityPower: 0
   m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
+  m_dragForce: 1
   m_center: {fileID: 3698495202602286270}
   RootBones:
   - {fileID: 4880903412578384033}
-  m_hitRadius: 0.000360209
+  m_hitRadius: 0.02
   ColliderGroups:
   - {fileID: 9213104478016763500}
   - {fileID: 6978347230577331621}

@@ -78,3 +78,4 @@ crashlytics-build.properties
 Assets/Resources/APIConfig.json.meta
 Assets/Resources/APIConfig.json
 /Assets/StreamingAssets/Generated_JSONs
+/Assets/script/Private
