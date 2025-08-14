@@ -18,6 +18,7 @@ TagManager:
   - QDSUISection
   - CharacterSlot
   - SamplesInfoPanel
+  - Mount
   layers:
   - Default
   - TransparentFX

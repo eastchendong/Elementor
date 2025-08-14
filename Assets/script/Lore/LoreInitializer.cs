@@ -40,6 +40,7 @@ namespace Elementor
         [Header("Element Spawning")]
         [SerializeField] private GameObject elementSpawnPoint; // 元素生成点GameObject
         [SerializeField] private ParticleSystem spawnEffect; // 召唤特效
+        [SerializeField] private string elementSpawnPointTag = "ElementSpawnPoint"; // 元素生成点的Tag
         [SerializeField] private int elementSpawnStepIndex = 2; // 在第几步召唤元素生成点（从0开始）
         [SerializeField] private float effectDuration = 2f; // 特效持续时间
 
@@ -52,6 +53,7 @@ namespace Elementor
         private TutorialData currentTutorial;
         private int currentStepIndex = 0;
         private LoreJsonReader loreJsonReader;
+        private bool hasFoundElementSpawnPoint = false; // 标记是否已找到元素生成点
 
         // Start is called before the first frame update
         void Start()
@@ -73,6 +75,60 @@ namespace Elementor
             if (autoStartTutorial)
             {
                 StartTutorial();
+            }
+        }
+
+        // Update is called once per frame
+        void Update()
+        {
+            // 持续搜索元素生成点，直到找到为止
+            if (!hasFoundElementSpawnPoint)
+            {
+                SearchForElementSpawnPoint();
+            }
+        }
+
+        /// <summary>
+        /// 搜索带有指定Tag的元素生成点
+        /// </summary>
+        private void SearchForElementSpawnPoint()
+        {
+            if (string.IsNullOrEmpty(elementSpawnPointTag))
+            {
+                Debug.LogWarning("⚠️ Element spawn point tag is not set!");
+                return;
+            }
+
+            // 通过Tag查找元素生成点
+            GameObject foundSpawnPoint = GameObject.FindGameObjectWithTag(elementSpawnPointTag);
+            
+            if (foundSpawnPoint != null)
+            {
+                elementSpawnPoint = foundSpawnPoint;
+                Debug.Log($"🔮 Found element spawn point with tag: {elementSpawnPointTag}");
+
+                // 在子物体中查找ParticleSystem
+                ParticleSystem foundEffect = elementSpawnPoint.GetComponentInChildren<ParticleSystem>();
+                if (foundEffect != null)
+                {
+                    spawnEffect = foundEffect;
+                    Debug.Log("✨ Found spawn effect in child objects");
+
+                    // 禁用特效
+                    spawnEffect.gameObject.SetActive(false);
+                    Debug.Log("✨ Spawn effect disabled initially");
+                }
+                else
+                {
+                    Debug.LogWarning("⚠️ No ParticleSystem found in element spawn point children!");
+                }
+
+                // 禁用元素生成点
+                elementSpawnPoint.SetActive(false);
+                Debug.Log("🔮 Element spawn point disabled initially");
+
+                // 标记已找到
+                hasFoundElementSpawnPoint = true;
             }
         }
 
@@ -389,6 +445,8 @@ namespace Elementor
                 // 播放召唤特效
                 if (spawnEffect != null)
                 {
+                    // 确保特效GameObject也被激活
+                    spawnEffect.gameObject.SetActive(true);
                     spawnEffect.Play();
                     Debug.Log("✨ Spawn effect started!");
                     
@@ -536,6 +594,30 @@ namespace Elementor
         {
             targetPageIndex = pageIndex;
             Debug.Log($"📖 Target page set to: {targetPageIndex}");
+        }
+
+        /// <summary>
+        /// 重置元素生成点搜索状态，允许重新搜索
+        /// </summary>
+        public void ResetElementSpawnPointSearch()
+        {
+            hasFoundElementSpawnPoint = false;
+            elementSpawnPoint = null;
+            spawnEffect = null;
+            Debug.Log("🔄 Element spawn point search reset");
+        }
+
+        /// <summary>
+        /// 手动设置元素生成点Tag
+        /// </summary>
+        /// <param name="tag">新的Tag</param>
+        public void SetElementSpawnPointTag(string tag)
+        {
+            elementSpawnPointTag = tag;
+            Debug.Log($"🏷️ Element spawn point tag set to: {tag}");
+            
+            // 重置搜索状态以使用新Tag
+            ResetElementSpawnPointSearch();
         }
     }
 }

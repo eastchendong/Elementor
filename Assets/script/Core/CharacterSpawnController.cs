@@ -12,7 +12,8 @@ namespace Elementor.Core
         [SerializeField] private GameObject fallbackPrefab; // 备用prefab，当找不到指定模型时使用
         [SerializeField] private GameObject characterControllerPrefab; // 包含所有组件和脚本的控制器prefab
         [SerializeField] private GameObject characterGroupPrefab; // 用于组合角色的Prefab
-        
+        private float modelScale = 0.8f;
+
         private List<CharacterView> spawnedCharacters = new List<CharacterView>();
 
         private void Awake()
@@ -136,15 +137,23 @@ namespace Elementor.Core
                 }
             }
             
-            GameObject modelObj = Instantiate(modelPrefab, parent);
+            // 创建一个容器GameObject来包装模型
+            GameObject modelContainer = new GameObject($"{character.name}_ModelContainer");
+            modelContainer.transform.SetParent(parent);
+            modelContainer.transform.localPosition = Vector3.zero;
+            modelContainer.transform.localRotation = Quaternion.identity;
+            modelContainer.transform.localScale = new Vector3(modelScale, modelScale, modelScale); // 设置容器缩放为0.5
+
+            // 在容器内实例化模型
+            GameObject modelObj = Instantiate(modelPrefab, modelContainer.transform);
             modelObj.transform.localPosition = Vector3.zero;
             modelObj.transform.localRotation = Quaternion.identity;
-            modelObj.transform.localScale = Vector3.one; // Ensure model scale is 1
+            modelObj.transform.localScale = Vector3.one; // 模型本身保持1的缩放
             
             modelObj.name = $"{character.name}_Model";
-            Debug.Log($"Model object name set to: '{modelObj.name}'");
+            Debug.Log($"Model object name set to: '{modelObj.name}' in container with scale 0.5");
 
-            return modelObj;
+            return modelContainer; // 返回容器GameObject
         }
         
         public List<CharacterView> GetSpawnedCharacters()
