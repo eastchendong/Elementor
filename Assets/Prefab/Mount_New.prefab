@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6204110692275956267}
   m_Layer: 0
   m_Name: Mount_New
-  m_TagString: Untagged
+  m_TagString: Mount
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

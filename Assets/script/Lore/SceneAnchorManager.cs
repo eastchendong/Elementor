@@ -14,6 +14,8 @@ namespace Elementor
         public static SceneAnchorManager Instance { get; private set; }
 
         private readonly Dictionary<string, Transform> _volumeAnchorTransforms = new Dictionary<string, Transform>();
+        private readonly List<string> _usedAnchorNames = new List<string>();
+        private string _lastUsedAnchorName;
 
         private void Awake()
         {
@@ -66,9 +68,9 @@ namespace Elementor
         }
 
         /// <summary>
-        /// Gets the transform of a random volume anchor.
+        /// Gets the transform of a random volume anchor, avoiding the previously used one.
         /// </summary>
-        /// <returns>A random anchor's transform, or null if no volume anchors are available.</returns>
+        /// <returns>A random anchor's transform that wasn't used last time, or null if no volume anchors are available.</returns>
         public Transform GetRandomAnchorTransform()
         {
             if (_volumeAnchorTransforms.Count == 0)
@@ -76,7 +78,69 @@ namespace Elementor
                 Debug.LogWarning("No volume anchors available to choose from.");
                 return null;
             }
-            return _volumeAnchorTransforms.Values.ElementAt(Random.Range(0, _volumeAnchorTransforms.Count));
+
+            // Get available anchors (excluding the last used one)
+            var availableAnchors = _volumeAnchorTransforms
+                .Where(kvp => kvp.Key != _lastUsedAnchorName)
+                .ToList();
+
+            // If no available anchors (only 1 anchor total), reset and use any
+            if (availableAnchors.Count == 0)
+            {
+                Debug.LogWarning("Only one anchor available, reusing the same anchor.");
+                availableAnchors = _volumeAnchorTransforms.ToList();
+            }
+
+            // Select random anchor from available ones
+            var selectedAnchor = availableAnchors[Random.Range(0, availableAnchors.Count)];
+            _lastUsedAnchorName = selectedAnchor.Key;
+            
+            Debug.Log($"Selected anchor: {selectedAnchor.Key} (avoiding previous: {(_lastUsedAnchorName == selectedAnchor.Key ? "none" : _lastUsedAnchorName)})");
+            
+            return selectedAnchor.Value;
+        }
+
+        /// <summary>
+        /// Marks an anchor as used and tracks it in the usage history.
+        /// </summary>
+        /// <param name="anchorName">The name of the anchor that was used.</param>
+        public void MarkAnchorAsUsed(string anchorName)
+        {
+            _lastUsedAnchorName = anchorName;
+            
+            if (!_usedAnchorNames.Contains(anchorName))
+            {
+                _usedAnchorNames.Add(anchorName);
+            }
+            
+            Debug.Log($"Marked anchor as used: {anchorName}. Total used anchors: {_usedAnchorNames.Count}");
+        }
+
+        /// <summary>
+        /// Resets the usage tracking, allowing all anchors to be used again.
+        /// </summary>
+        public void ResetAnchorUsage()
+        {
+            _usedAnchorNames.Clear();
+            _lastUsedAnchorName = null;
+            Debug.Log("Reset anchor usage tracking.");
+        }
+
+        /// <summary>
+        /// Gets the name of the anchor from its transform.
+        /// </summary>
+        /// <param name="anchorTransform">The transform to find the name for.</param>
+        /// <returns>The name of the anchor, or null if not found.</returns>
+        public string GetAnchorName(Transform anchorTransform)
+        {
+            foreach (var kvp in _volumeAnchorTransforms)
+            {
+                if (kvp.Value == anchorTransform)
+                {
+                    return kvp.Key;
+                }
+            }
+            return null;
         }
 
         private void OnDrawGizmos()

@@ -84,7 +84,17 @@ namespace Elementor.Lore
                 return;
             }
 
-            Debug.Log($"🎯 Spawning environment at position: {environmentSpawnPoint.position}");
+            // Mark the selected anchor as used
+            string selectedAnchorName = sceneAnchorManager.GetAnchorName(environmentSpawnPoint);
+            if (!string.IsNullOrEmpty(selectedAnchorName))
+            {
+                sceneAnchorManager.MarkAnchorAsUsed(selectedAnchorName);
+                Debug.Log($"🎯 Spawning environment on table: {selectedAnchorName} at position: {environmentSpawnPoint.position}");
+            }
+            else
+            {
+                Debug.Log($"🎯 Spawning environment at position: {environmentSpawnPoint.position}");
+            }
 
             // Instantiate the environment with identity rotation
             currentEnvironmentInstance = Instantiate(environmentPrefab, environmentSpawnPoint.position, Quaternion.identity);
