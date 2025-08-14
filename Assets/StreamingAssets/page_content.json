@@ -8,32 +8,25 @@
       "chemical_equation": "2Zn + O2 → 2ZnO"
     },
     {
-      "page_index": 1,
-      "content_type": "text",
-      "title": "铁的燃烧",
-      "description": "铁在氧气中燃烧产生四氧化三铁",
-      "chemical_equation": "3Fe + 2O2 → Fe3O4"
-    },
-    {
-      "page_index": 2,
-      "content_type": "text",
-      "title": "氢气与氯气反应",
-      "description": "氢气与氯气化合生成氯化氢",
-      "chemical_equation": "H2 + Cl2 → 2HCl"
-    },
-    {
       "page_index": 3,
       "content_type": "text",
-      "title": "钠与氯气反应",
-      "description": "金属钠与氯气剧烈反应生成氯化钠",
-      "chemical_equation": "2Na + Cl2 → 2NaCl"
+      "title": "碳的氧化",
+      "description": "碳在氧气中燃烧产生二氧化碳",
+      "chemical_equation": "C + O2 → CO2"
     },
     {
-      "page_index": 4,
+      "page_index": 5,
       "content_type": "text",
-      "title": "水的电解",
-      "description": "电解水产生氢气和氧气",
-      "chemical_equation": "2H2O → 2H2 + O2"
+      "title": "锌与盐酸反应",
+      "description": "锌与盐酸反应生成氢气和氯化锌",
+      "chemical_equation": "Zn + 2HCl → ZnCl2 + H2"
+    },
+    {
+      "page_index": 7,
+      "content_type": "text",
+      "title": "铁与硫酸铜的置换反应",
+      "description": "铁与硫酸铜反应生成硫酸亚铁和铜",
+      "chemical_equation": "Fe + CuSO4 → FeSO4 + Cu"
     }
   ]
 }
