@@ -82,7 +82,7 @@ namespace Elementor
                   {
                     ""name"": ""化学式"",
                     ""type"": ""仅在以下几种中选出：金属/非金属/金属氧化物/非金属氧化物/酸/碱/盐"",
-                    ""reactant_count"": ""系数"",
+                    ""count"": ""系数"",
                     ""elements"": [{""element"": ""元素符号"", ""count"": 原子数}]
                   }
                 ],
@@ -90,7 +90,7 @@ namespace Elementor
                   {
                     ""name"": ""化学式"",
                     ""type"": ""仅在以下几种中选出：金属/非金属/金属氧化物/非金属氧化物/酸/碱/盐"",
-                    ""product_count"": ""系数"",
+                    ""count"": ""系数"",
                     ""elements"": [{""element"": ""元素符号"", ""count"": 原子数}]
                   }
                 ]
