@@ -37,6 +37,18 @@ namespace Elementor
         [SerializeField] private string tutorialJsonPath = "tutorial_instructions.json"; // Fixed path - file is directly in StreamingAssets
         [SerializeField] private bool autoStartTutorial = true;
 
+        [Header("Element Spawning")]
+        [SerializeField] private GameObject elementSpawnPoint; // 元素生成点GameObject
+        [SerializeField] private ParticleSystem spawnEffect; // 召唤特效
+        [SerializeField] private int elementSpawnStepIndex = 2; // 在第几步召唤元素生成点（从0开始）
+        [SerializeField] private float effectDuration = 2f; // 特效持续时间
+
+        [Header("Book Control")]
+        [SerializeField] private BookManager bookManager; // 书本管理器的引用
+        [SerializeField] private ScriptBoy.ProceduralBook.AutoTurningDemo autoTurningDemo; // 自动翻页控制器
+        [SerializeField] private int bookOpenStepIndex = 3; // 在第几步打开书本（从0开始）
+        [SerializeField] private int targetPageIndex = 0; // 目标页面索引（翻到第几页）
+
         private TutorialData currentTutorial;
         private int currentStepIndex = 0;
         private LoreJsonReader loreJsonReader;
@@ -51,6 +63,9 @@ namespace Elementor
                 loreJsonReader = FindObjectOfType<LoreJsonReader>();
             }
 
+            // Initialize element spawn point (disable it initially)
+            InitializeElementSpawnPoint();
+
             // Setup UI
             SetupTutorialUI();
 
@@ -58,6 +73,20 @@ namespace Elementor
             if (autoStartTutorial)
             {
                 StartTutorial();
+            }
+        }
+
+        private void InitializeElementSpawnPoint()
+        {
+            // Disable the element spawn point at the beginning
+            if (elementSpawnPoint != null)
+            {
+                elementSpawnPoint.SetActive(false);
+                Debug.Log("🔮 Element spawn point disabled initially");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ Element spawn point GameObject not assigned!");
             }
         }
 
@@ -241,6 +270,18 @@ namespace Elementor
                 }
             }
 
+            // Check if we need to spawn element spawn point
+            if (currentStepIndex == elementSpawnStepIndex)
+            {
+                StartCoroutine(SpawnElementPointWithEffect());
+            }
+
+            // Check if we need to open the book
+            if (currentStepIndex == bookOpenStepIndex)
+            {
+                StartCoroutine(OpenBookWithoutInteraction());
+            }
+
             Debug.Log($"Displaying step {currentStepIndex + 1}/{currentTutorial.steps.Length}: {currentStep.title}");
         }
 
@@ -330,6 +371,171 @@ namespace Elementor
             {
                 StartTutorial();
             }
+        }
+
+        /// <summary>
+        /// 协程：召唤元素生成点并播放特效
+        /// </summary>
+        private IEnumerator SpawnElementPointWithEffect()
+        {
+            Debug.Log("🌟 Starting element spawn point summoning...");
+
+            // 启用元素生成点
+            if (elementSpawnPoint != null)
+            {
+                elementSpawnPoint.SetActive(true);
+                Debug.Log("🔮 Element spawn point activated!");
+
+                // 播放召唤特效
+                if (spawnEffect != null)
+                {
+                    spawnEffect.Play();
+                    Debug.Log("✨ Spawn effect started!");
+                    
+                    // 等待特效播放完成
+                    yield return new WaitForSeconds(effectDuration);
+                    
+                    // 停止特效（如果需要的话）
+                    if (spawnEffect.isPlaying)
+                    {
+                        spawnEffect.Stop();
+                        Debug.Log("✨ Spawn effect stopped");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("⚠️ Spawn effect not assigned, skipping effect");
+                    // 即使没有特效也等待一小段时间让玩家看到生成点出现
+                    yield return new WaitForSeconds(1f);
+                }
+            }
+            else
+            {
+                Debug.LogError("❌ Element spawn point GameObject not assigned!");
+            }
+
+            Debug.Log("🌟 Element spawn point summoning completed!");
+        }
+
+        /// <summary>
+        /// 协程：打开书本但不允许交互，并翻到指定页面
+        /// </summary>
+        private IEnumerator OpenBookWithoutInteraction()
+        {
+            Debug.Log("📖 Opening book without interaction...");
+
+            if (bookManager != null)
+            {
+                // 确保书本交互被禁用
+                bookManager.SetBookInteractionEnabled(false);
+                
+                // 等待一小段时间确保设置生效
+                yield return new WaitForSeconds(0.1f);
+
+                // 打开书本
+                if (bookManager.book != null )
+                {
+                    if (autoTurningDemo != null && targetPageIndex > 0)
+                    {
+                        Debug.Log($"📖 Turning to page {targetPageIndex}...");
+                        
+                        // 先翻到第一页
+                        autoTurningDemo.AutoTurnFirst();
+                        
+                        // 等待翻到第一页完成
+                        yield return new WaitForSeconds(1f);
+                        
+                        // 然后翻到目标页面
+                        if (targetPageIndex > 0)
+                        {
+                            // 使用MultiAutoTurn翻到目标页面
+                            autoTurningDemo.MultiAutoTurn(ScriptBoy.ProceduralBook.AutoTurnDirection.Next, targetPageIndex);
+                            
+                            // 等待翻页完成 (每页大约1秒，加上一些缓冲时间)
+                            yield return new WaitForSeconds(targetPageIndex * 1.2f + 0.5f);
+                        }
+                        
+                        Debug.Log($"📖 Successfully turned to page {targetPageIndex}");
+                    }
+                    else if (autoTurningDemo == null)
+                    {
+                        Debug.LogWarning("⚠️ AutoTurningDemo not assigned, cannot turn to specific page");
+                    }
+                    else
+                    {
+                        Debug.Log("📖 Target page is 0, staying at current page");
+                    }
+                }
+                else
+                {
+                    Debug.LogError("❌ Book is not built or not assigned!");
+                }
+            }
+            else
+            {
+                Debug.LogError("❌ BookManager not assigned!");
+            }
+
+            Debug.Log("📖 Book opening sequence completed!");
+        }
+
+        /// <summary>
+        /// 公共方法：手动翻到指定页面（用于测试或外部调用）
+        /// </summary>
+        /// <param name="pageIndex">目标页面索引</param>
+        public void TurnToPage(int pageIndex)
+        {
+            if (autoTurningDemo != null)
+            {
+                StartCoroutine(TurnToPageCoroutine(pageIndex));
+            }
+            else
+            {
+                Debug.LogError("❌ AutoTurningDemo not assigned!");
+            }
+        }
+
+        /// <summary>
+        /// 协程：翻到指定页面
+        /// </summary>
+        private IEnumerator TurnToPageCoroutine(int pageIndex)
+        {
+            if (pageIndex < 0)
+            {
+                Debug.LogWarning("⚠️ Page index cannot be negative");
+                yield break;
+            }
+
+            Debug.Log($"📖 Turning to page {pageIndex}...");
+            
+            if (pageIndex == 0)
+            {
+                // 翻到第一页
+                autoTurningDemo.AutoTurnFirst();
+            }
+            else
+            {
+                // 先翻到第一页，然后翻到目标页面
+                autoTurningDemo.AutoTurnFirst();
+                yield return new WaitForSeconds(1f);
+                
+                // 翻到目标页面
+                autoTurningDemo.MultiAutoTurn(ScriptBoy.ProceduralBook.AutoTurnDirection.Next, pageIndex);
+            }
+            
+            // 等待翻页完成
+            yield return new WaitForSeconds(pageIndex * 1.2f + 1f);
+            Debug.Log($"📖 Finished turning to page {pageIndex}");
+        }
+
+        /// <summary>
+        /// 设置目标页面索引
+        /// </summary>
+        /// <param name="pageIndex">页面索引</param>
+        public void SetTargetPage(int pageIndex)
+        {
+            targetPageIndex = pageIndex;
+            Debug.Log($"📖 Target page set to: {targetPageIndex}");
         }
     }
 }

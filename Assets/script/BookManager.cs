@@ -93,7 +93,7 @@ namespace Elementor
             SetBookInteractionEnabled(false);
         }
 
-        private void SetBookInteractionEnabled(bool enabled)
+        public void SetBookInteractionEnabled(bool enabled)
         {
             bookInteractionEnabled = enabled;
             
