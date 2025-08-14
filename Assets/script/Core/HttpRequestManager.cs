@@ -163,6 +163,13 @@ namespace Elementor.Core
             catch (System.Exception ex)
             {
                 Debug.LogError($"Failed to parse API response: {ex.Message}");
+                // If parsing as API response fails, the responseText might already be clean JSON
+                // Try to validate it directly
+                string cleanedDirect = CleanJsonContent(responseText);
+                if (!string.IsNullOrEmpty(cleanedDirect) && cleanedDirect != "{}")
+                {
+                    return cleanedDirect;
+                }
             }
             
             return CleanJsonContent(responseText);
@@ -199,33 +206,159 @@ namespace Elementor.Core
             
             content = content.Trim();
             
-            // Handle cases where response might contain extra text before/after JSON
-            if (!content.StartsWith("{") || !content.EndsWith("}"))
+            // If content already looks like valid JSON, try to validate it first
+            if ((content.StartsWith("{") && content.EndsWith("}")) || 
+                (content.StartsWith("[") && content.EndsWith("]")))
             {
-                Debug.LogWarning("Content doesn't appear to be valid JSON format");
-                int startIndex = content.IndexOf('{');
-                int endIndex = content.LastIndexOf('}');
-                
-                if (startIndex >= 0 && endIndex > startIndex)
+                try
                 {
-                    content = content.Substring(startIndex, endIndex - startIndex + 1);
-                }
-                else
-                {
-                    // If no JSON found, try to wrap plain text as dialogue content
-                    if (!string.IsNullOrEmpty(content) && content.Contains("[") && content.Contains("]:"))
+                    // Try to parse it as a generic JSON structure to validate
+                    // Since Unity's JsonUtility doesn't support object type, 
+                    // we'll just check if it has proper bracket matching
+                    if (IsValidJsonStructure(content))
                     {
-                        // Format dialogue-like content into JSON
-                        Debug.Log("Attempting to format dialogue text as JSON");
-                        return $"{{\"raw_dialogue\": \"{SanitizeJsonString(content)}\"}}";
+                        Debug.Log("Content appears to be valid JSON, returning as-is");
+                        return content;
                     }
-                    
-                    Debug.LogError("Could not extract valid JSON from response");
-                    return "{}";
+                }
+                catch
+                {
+                    Debug.Log("Content looks like JSON but failed validation, proceeding with cleanup");
                 }
             }
             
-            return content;
+            // Handle cases where response might contain extra text before/after JSON
+            if (!content.StartsWith("{") && !content.StartsWith("["))
+            {
+                Debug.LogWarning("Content doesn't appear to start with valid JSON format");
+                int startIndex = content.IndexOf('{');
+                int arrayStartIndex = content.IndexOf('[');
+                
+                // Choose the earlier valid start
+                int jsonStart = -1;
+                if (startIndex >= 0 && arrayStartIndex >= 0)
+                {
+                    jsonStart = Mathf.Min(startIndex, arrayStartIndex);
+                }
+                else if (startIndex >= 0)
+                {
+                    jsonStart = startIndex;
+                }
+                else if (arrayStartIndex >= 0)
+                {
+                    jsonStart = arrayStartIndex;
+                }
+                
+                if (jsonStart >= 0)
+                {
+                    content = content.Substring(jsonStart);
+                }
+            }
+            
+            // Find the end of JSON
+            if (!content.EndsWith("}") && !content.EndsWith("]"))
+            {
+                Debug.LogWarning("Content doesn't appear to end with valid JSON format");
+                int endIndex = content.LastIndexOf('}');
+                int arrayEndIndex = content.LastIndexOf(']');
+                
+                // Choose the later valid end
+                int jsonEnd = -1;
+                if (endIndex >= 0 && arrayEndIndex >= 0)
+                {
+                    jsonEnd = Mathf.Max(endIndex, arrayEndIndex);
+                }
+                else if (endIndex >= 0)
+                {
+                    jsonEnd = endIndex;
+                }
+                else if (arrayEndIndex >= 0)
+                {
+                    jsonEnd = arrayEndIndex;
+                }
+                
+                if (jsonEnd >= 0)
+                {
+                    content = content.Substring(0, jsonEnd + 1);
+                }
+            }
+            
+            // Check if we have valid JSON structure
+            if (content.StartsWith("{") && content.EndsWith("}"))
+            {
+                return content; // Valid JSON object
+            }
+            else if (content.StartsWith("[") && content.EndsWith("]"))
+            {
+                // Valid JSON array, but we might need to wrap it for dialogue response
+                Debug.Log("Detected JSON array, wrapping as dialogues object");
+                return $"{{\"dialogues\": {content}}}";
+            }
+            else
+            {
+                // If no valid JSON found, try to wrap plain text as dialogue content
+                if (!string.IsNullOrEmpty(content) && content.Contains("[") && content.Contains("]:"))
+                {
+                    // Format dialogue-like content into JSON
+                    Debug.Log("Attempting to format dialogue text as JSON");
+                    return $"{{\"raw_dialogue\": \"{SanitizeJsonString(content)}\"}}";
+                }
+                
+                Debug.LogWarning($"Could not extract valid JSON from response: {content.Substring(0, Mathf.Min(100, content.Length))}...");
+                return "{}";
+            }
+        }
+        
+        private static bool IsValidJsonStructure(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return false;
+            
+            content = content.Trim();
+            
+            // Basic bracket matching validation
+            int braceCount = 0;
+            int bracketCount = 0;
+            bool inString = false;
+            bool escaped = false;
+            
+            for (int i = 0; i < content.Length; i++)
+            {
+                char c = content[i];
+                
+                if (escaped)
+                {
+                    escaped = false;
+                    continue;
+                }
+                
+                if (c == '\\')
+                {
+                    escaped = true;
+                    continue;
+                }
+                
+                if (c == '"')
+                {
+                    inString = !inString;
+                    continue;
+                }
+                
+                if (!inString)
+                {
+                    if (c == '{') braceCount++;
+                    else if (c == '}') braceCount--;
+                    else if (c == '[') bracketCount++;
+                    else if (c == ']') bracketCount--;
+                    
+                    // If counts go negative, invalid structure
+                    if (braceCount < 0 || bracketCount < 0)
+                        return false;
+                }
+            }
+            
+            // All brackets should be closed
+            return braceCount == 0 && bracketCount == 0 && !inString;
         }
 
         [System.Serializable]

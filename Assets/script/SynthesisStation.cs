@@ -101,6 +101,10 @@ namespace Elementor
         {
             isCheckingSynthesis = false;
 
+            // Add detailed logging to debug the issue
+            Debug.Log($"OnSynthesisCheckComplete called with can_synthesize: {response.can_synthesize}");
+            Debug.Log($"Response details - Formula: {response.compound_formula}, Name: {response.compound_name}, Explanation: {response.explanation}");
+
             if (response.can_synthesize)
             {
                 Debug.Log($"Synthesis successful: {response.compound_formula} ({response.compound_name})");
@@ -131,7 +135,6 @@ namespace Elementor
             string resultingGroupName = response.compound_formula;
 
             List<CharacterView> members = new List<CharacterView>(charactersOnStation);
-            charactersOnStation.Clear();
 
             CharacterGroup group = CharacterSpawnController.Instance.CreateCharacterGroup(
                 resultingGroupName,
@@ -139,7 +142,14 @@ namespace Elementor
                 transform.parent
             );
 
-            if (group == null) return;
+            if (group == null) 
+            {
+                Debug.LogError("Failed to create character group for synthesis result");
+                return; // Don't clear charactersOnStation if group creation failed
+            }
+
+            // Only clear the station after successful group creation
+            charactersOnStation.Clear();
 
             foreach (var member in members)
             {

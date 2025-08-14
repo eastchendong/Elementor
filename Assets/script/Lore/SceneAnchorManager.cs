@@ -32,7 +32,7 @@ namespace Elementor
         public void CollectVolumeAnchors()
         {
             _volumeAnchorTransforms.Clear();
-            Debug.Log("Collecting volume anchors...");
+            Debug.Log("Collecting TABLE volume anchors...");
 
             var room = MRUK.Instance.GetCurrentRoom();
             if (room == null || room.Anchors.Count == 0)
@@ -46,10 +46,16 @@ namespace Elementor
                 if (anchor.VolumeBounds.HasValue)
                 {
                     string anchorName = anchor.gameObject.name;
-                    _volumeAnchorTransforms[anchorName] = anchor.transform;
-                    Debug.Log($"Collected volume anchor: {anchorName} at position {anchor.transform.position}");
+                    // Only collect anchors that contain "TABLE" in their name
+                    if (anchorName.ToUpper().Contains("TABLE"))
+                    {
+                        _volumeAnchorTransforms[anchorName] = anchor.transform;
+                        Debug.Log($"Collected TABLE anchor: {anchorName} at position {anchor.transform.position}");
+                    }
                 }
             }
+            
+            Debug.Log($"Total TABLE anchors collected: {_volumeAnchorTransforms.Count}");
         }
 
         /// <summary>
@@ -68,6 +74,42 @@ namespace Elementor
         }
 
         /// <summary>
+        /// Gets the transform of a random volume anchor, avoiding all previously used ones.
+        /// </summary>
+        /// <returns>A random anchor's transform that hasn't been used before, or null if no unused anchors are available.</returns>
+        public Transform GetRandomUnusedAnchorTransform()
+        {
+            if (_volumeAnchorTransforms.Count == 0)
+            {
+                Debug.LogWarning("No TABLE anchors available to choose from.");
+                return null;
+            }
+
+            // Get available anchors (excluding all previously used ones)
+            var availableAnchors = _volumeAnchorTransforms
+                .Where(kvp => !_usedAnchorNames.Contains(kvp.Key))
+                .ToList();
+
+            // If no unused anchors available, reset usage and use any
+            if (availableAnchors.Count == 0)
+            {
+                Debug.LogWarning("All TABLE anchors have been used. Resetting usage tracking and selecting randomly.");
+                ResetAnchorUsage();
+                availableAnchors = _volumeAnchorTransforms.ToList();
+            }
+
+            // Select random anchor from available ones
+            var selectedAnchor = availableAnchors[Random.Range(0, availableAnchors.Count)];
+            
+            Debug.Log($"Available unused TABLE anchors: [{string.Join(", ", availableAnchors.Select(kvp => kvp.Key))}]");
+            Debug.Log($"Selected TABLE anchor: {selectedAnchor.Key} (total used before: {_usedAnchorNames.Count})");
+            
+            _lastUsedAnchorName = selectedAnchor.Key;
+            
+            return selectedAnchor.Value;
+        }
+
+        /// <summary>
         /// Gets the transform of a random volume anchor, avoiding the previously used one.
         /// </summary>
         /// <returns>A random anchor's transform that wasn't used last time, or null if no volume anchors are available.</returns>
@@ -75,7 +117,7 @@ namespace Elementor
         {
             if (_volumeAnchorTransforms.Count == 0)
             {
-                Debug.LogWarning("No volume anchors available to choose from.");
+                Debug.LogWarning("No TABLE anchors available to choose from.");
                 return null;
             }
 
@@ -84,18 +126,20 @@ namespace Elementor
                 .Where(kvp => kvp.Key != _lastUsedAnchorName)
                 .ToList();
 
-            // If no available anchors (only 1 anchor total), reset and use any
+            // If no available anchors (only 1 table total), reset and use any
             if (availableAnchors.Count == 0)
             {
-                Debug.LogWarning("Only one anchor available, reusing the same anchor.");
+                Debug.LogWarning("Only one TABLE anchor available, reusing the same table.");
                 availableAnchors = _volumeAnchorTransforms.ToList();
             }
 
             // Select random anchor from available ones
             var selectedAnchor = availableAnchors[Random.Range(0, availableAnchors.Count)];
-            _lastUsedAnchorName = selectedAnchor.Key;
             
-            Debug.Log($"Selected anchor: {selectedAnchor.Key} (avoiding previous: {(_lastUsedAnchorName == selectedAnchor.Key ? "none" : _lastUsedAnchorName)})");
+            Debug.Log($"Available TABLE anchors: [{string.Join(", ", _volumeAnchorTransforms.Keys)}]");
+            Debug.Log($"Selected TABLE anchor: {selectedAnchor.Key} (avoiding previous: {_lastUsedAnchorName ?? "none"})");
+            
+            _lastUsedAnchorName = selectedAnchor.Key;
             
             return selectedAnchor.Value;
         }

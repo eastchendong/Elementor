@@ -225,11 +225,11 @@ namespace Elementor.Core.Speech
             prompt.Append($"背景故事：{loreContext}；");
             prompt.Append($"参与角色：{string.Join("，", uniqueElementInfo)}；");
             prompt.Append("要求：");
-            prompt.Append("1. 为每种不同的元素生成至少一句对话（相同元素不需要重复对话）；");
+            prompt.Append("1. 为每种不同的包含在参与角色中的元素生成至少一句对话（相同元素不需要重复对话）；");
             prompt.Append("2. 对话要符合角色的元素特性和剧情情境；");
             prompt.Append("3. 每句对话不超过20个字；");
             prompt.Append("4. 对话要构成完整的剧情片段；");
-            prompt.Append("5. 请按照以下格式返回：[元素名]: 对话内容；");
+            prompt.Append("5. 只对参与反应的角色进行对话，不要对只出现在背景故事中但是没出现在参与角色中的角色生成对话");
             prompt.Append("请生成对话。");
             
             return prompt.ToString();
@@ -255,47 +255,96 @@ namespace Elementor.Core.Speech
             {
                 Debug.Log($"Parsing dialogue response: {aiResponse}");
                 
-                // Split response into lines and parse each dialogue line
-                var lines = aiResponse.Split(new char[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
-                
-                foreach (var line in lines)
+                // First, try to parse as JSON structured dialogue
+                try
                 {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-                    
-                    // Look for pattern: [CharacterName]: dialogue text or CharacterName: dialogue text
-                    var colonIndex = line.IndexOf(':');
-                    if (colonIndex > 0)
+                    var dialogueResponse = JsonUtility.FromJson<Elementor.DialogueResponse>(aiResponse);
+                    if (dialogueResponse?.dialogues != null && dialogueResponse.dialogues.Length > 0)
                     {
-                        var characterPart = line.Substring(0, colonIndex).Trim();
-                        var dialogueText = line.Substring(colonIndex + 1).Trim();
+                        Debug.Log("Successfully parsed JSON structured dialogue");
                         
-                        // Extract character name (remove brackets if present)
-                        var characterName = characterPart.Replace("[", "").Replace("]", "").Trim();
-                        
-                        // Try to find matching character (case insensitive, partial match)
-                        var character = participants.FirstOrDefault(p => {
-                            string participantName = p.GetModel().GetCharacterName();
-                            return participantName.Equals(characterName, System.StringComparison.OrdinalIgnoreCase) ||
-                                   participantName.Contains(characterName) || 
-                                   characterName.Contains(participantName);
-                        });
-                        
-                        if (character != null && !string.IsNullOrEmpty(dialogueText))
+                        foreach (var dialogue in dialogueResponse.dialogues)
                         {
-                            var dialogueLine = new DialogueLine
-                            {
-                                characterName = character.GetModel().GetCharacterName(),
-                                text = dialogueText,
-                                duration = Mathf.Max(2f, 1f + dialogueText.Length * 0.05f),
-                                audioClip = null
-                            };
+                            // Try to find matching character (case insensitive, partial match)
+                            var character = participants.FirstOrDefault(p => {
+                                string participantName = p.GetModel().GetCharacterName();
+                                return participantName.Equals(dialogue.character, System.StringComparison.OrdinalIgnoreCase) ||
+                                       participantName.Contains(dialogue.character) || 
+                                       dialogue.character.Contains(participantName);
+                            });
                             
-                            dialogueLines.Add(dialogueLine);
-                            Debug.Log($"Added dialogue for {character.GetModel().GetCharacterName()}: {dialogueText}");
+                            if (character != null && !string.IsNullOrEmpty(dialogue.line))
+                            {
+                                var dialogueLine = new DialogueLine
+                                {
+                                    characterName = character.GetModel().GetCharacterName(),
+                                    text = dialogue.line,
+                                    duration = Mathf.Max(2f, 1f + dialogue.line.Length * 0.05f),
+                                    audioClip = null
+                                };
+                                
+                                dialogueLines.Add(dialogueLine);
+                                Debug.Log($"Added dialogue for {character.GetModel().GetCharacterName()}: {dialogue.line}");
+                            }
+                            else
+                            {
+                                Debug.LogWarning($"No matching character found for: {dialogue.character}");
+                            }
                         }
-                        else
+                    }
+                }
+                catch (System.Exception jsonEx)
+                {
+                    Debug.Log($"JSON parsing failed, falling back to text parsing: {jsonEx.Message}");
+                }
+                
+                // If JSON parsing didn't work or didn't produce results, fall back to text parsing
+                if (dialogueLines.Count == 0)
+                {
+                    Debug.Log("Falling back to text-based dialogue parsing");
+                    
+                    // Split response into lines and parse each dialogue line
+                    var lines = aiResponse.Split(new char[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
+                    
+                    foreach (var line in lines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        
+                        // Look for pattern: [CharacterName]: dialogue text or CharacterName: dialogue text
+                        var colonIndex = line.IndexOf(':');
+                        if (colonIndex > 0)
                         {
-                            Debug.LogWarning($"No matching character found for: {characterName}");
+                            var characterPart = line.Substring(0, colonIndex).Trim();
+                            var dialogueText = line.Substring(colonIndex + 1).Trim();
+                            
+                            // Extract character name (remove brackets if present)
+                            var characterName = characterPart.Replace("[", "").Replace("]", "").Trim();
+                            
+                            // Try to find matching character (case insensitive, partial match)
+                            var character = participants.FirstOrDefault(p => {
+                                string participantName = p.GetModel().GetCharacterName();
+                                return participantName.Equals(characterName, System.StringComparison.OrdinalIgnoreCase) ||
+                                       participantName.Contains(characterName) || 
+                                       characterName.Contains(participantName);
+                            });
+                            
+                            if (character != null && !string.IsNullOrEmpty(dialogueText))
+                            {
+                                var dialogueLine = new DialogueLine
+                                {
+                                    characterName = character.GetModel().GetCharacterName(),
+                                    text = dialogueText,
+                                    duration = Mathf.Max(2f, 1f + dialogueText.Length * 0.05f),
+                                    audioClip = null
+                                };
+                                
+                                dialogueLines.Add(dialogueLine);
+                                Debug.Log($"Added dialogue for {character.GetModel().GetCharacterName()}: {dialogueText}");
+                            }
+                            else
+                            {
+                                Debug.LogWarning($"No matching character found for: {characterName}");
+                            }
                         }
                     }
                 }

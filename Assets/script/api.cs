@@ -233,6 +233,15 @@ namespace Elementor
                 string cleanedJson = HttpRequestManager.ExtractJsonFromResponse(responseText);
                 Debug.Log("Cleaned dialogue JSON: " + cleanedJson);
                 
+                // First, try to validate that it's proper JSON
+                if (string.IsNullOrEmpty(cleanedJson) || cleanedJson == "{}")
+                {
+                    Debug.LogWarning("Received empty or invalid JSON, falling back to raw content");
+                    // Try to extract raw content directly
+                    OnDialogueGenerated?.Invoke(ExtractRawDialogueContent(responseText));
+                    return;
+                }
+                
                 // Check if it's the raw_dialogue fallback format
                 var rawDialogueCheck = JsonUtility.FromJson<RawDialogueResponse>(cleanedJson);
                 if (rawDialogueCheck?.raw_dialogue != null)
@@ -267,13 +276,39 @@ namespace Elementor
                     return;
                 }
                 
-                OnDialogueGenerated?.Invoke("");
+                // Final fallback - try to extract any meaningful content
+                Debug.LogWarning("Standard JSON parsing failed, attempting raw content extraction");
+                OnDialogueGenerated?.Invoke(ExtractRawDialogueContent(responseText));
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"Failed to extract dialogue content: {ex.Message}");
-                OnDialogueGenerated?.Invoke("");
+                Debug.LogWarning("Attempting to extract raw dialogue content as fallback");
+                
+                // Final attempt - extract raw content
+                string fallbackContent = ExtractRawDialogueContent(responseText);
+                OnDialogueGenerated?.Invoke(fallbackContent);
             }
+        }
+        
+        private string ExtractRawDialogueContent(string responseText)
+        {
+            try
+            {
+                // First try to extract from API response structure
+                var apiResponse = JsonUtility.FromJson<HttpRequestManager.ApiResponse>(responseText);
+                if (apiResponse?.choices != null && apiResponse.choices.Length > 0)
+                {
+                    return apiResponse.choices[0].message.content.Trim().Trim('"');
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"Failed to extract from API response structure: {ex.Message}");
+            }
+            
+            // Return empty string if all extraction methods fail
+            return "";
         }
 
         void OnDialogueError(string error)
@@ -281,26 +316,6 @@ namespace Elementor
             isDialogueRequesting = false;
             Debug.LogError("Dialogue generation failed: " + error);
             OnDialogueGenerated?.Invoke("");
-        }
-
-        private string ExtractDialogueContent(string responseText)
-        {
-            try
-            {
-                string cleanedJson = HttpRequestManager.ExtractJsonFromResponse(responseText);
-                var apiResponse = JsonUtility.FromJson<HttpRequestManager.ApiResponse>(cleanedJson);
-                if (apiResponse?.choices != null && apiResponse.choices.Length > 0)
-                {
-                    string content = apiResponse.choices[0].message.content;
-                    return content.Trim().Trim('"');
-                }
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"Failed to extract dialogue content: {ex.Message}");
-            }
-            
-            return "";
         }
 
         public void CheckSynthesisPossibility(List<string> elementNames)
@@ -327,13 +342,15 @@ namespace Elementor
 规则：
 1. 只考虑元素原子个数的组合，判断能否形成稳定的化学化合物
 2. 包括但不限于：单质分子（如H2, O2, N2, Cl2, Br2, I2, F2等）、离子化合物、共价化合物
-3. 所有给定的元素都必须被使用，不能有剩余
+3. 所有给定的元素都必须被使用，不能有剩余。
 4. 常见的合成例子：
    - 2个H → H2（氢气）
    - 2个Cl → Cl2（氯气）
    - 1个Na + 1个Cl → NaCl（氯化钠）
    - 1个Fe + 2个Cl → FeCl2（氯化亚铁）
    - 2个H + 1个O → H2O（水）
+   - 1个Cu + 1个O → CuO
+   - 1个Cu + 2个O → CuO2
 5. 如果能合成，给出标准的化学分子式和化合物名称
 6. 如果不能合成，说明具体原因
 
@@ -380,15 +397,19 @@ namespace Elementor
             try
             {
                 string cleanedJson = HttpRequestManager.ExtractJsonFromResponse(responseText);
+                Debug.Log($"Cleaned synthesis JSON: {cleanedJson}"); // Add debug log
+                
                 SynthesisResponse response = JsonUtility.FromJson<SynthesisResponse>(cleanedJson);
                 
                 if (response != null)
                 {
                     Debug.Log($"Synthesis result: {response.can_synthesize}, Formula: {response.compound_formula}");
+                    Debug.Log($"Full response object - Name: {response.compound_name}, Explanation: {response.explanation}");
                     OnSynthesisCheckComplete?.Invoke(response);
                 }
                 else
                 {
+                    Debug.LogError("Failed to parse synthesis response - response is null");
                     OnSynthesisCheckComplete?.Invoke(new SynthesisResponse 
                     { 
                         can_synthesize = false, 

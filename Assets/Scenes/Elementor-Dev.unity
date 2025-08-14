@@ -2245,6 +2245,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: chemistryBook
       objectReference: {fileID: 0}
+    - target: {fileID: 5254769706049426199, guid: 44c7cb0da3858ac48ab3e8d0d8624f8a, type: 3}
+      propertyPath: m_Pages.Array.data[0]
+      value: 
+      objectReference: {fileID: 21300000, guid: b36469795a3c330408fc8b6ea3baba27, type: 3}
+    - target: {fileID: 5254769706049426199, guid: 44c7cb0da3858ac48ab3e8d0d8624f8a, type: 3}
+      propertyPath: m_Pages.Array.data[1]
+      value: 
+      objectReference: {fileID: 21300000, guid: d598df8138e810647883a4c10d3249a7, type: 3}
+    - target: {fileID: 5254769706049426199, guid: 44c7cb0da3858ac48ab3e8d0d8624f8a, type: 3}
+      propertyPath: m_Pages.Array.data[3]
+      value: 
+      objectReference: {fileID: 21300000, guid: 66f917b2a7e1b5c40b583032311f3643, type: 3}
+    - target: {fileID: 5254769706049426199, guid: 44c7cb0da3858ac48ab3e8d0d8624f8a, type: 3}
+      propertyPath: m_Pages.Array.data[5]
+      value: 
+      objectReference: {fileID: 21300000, guid: 9192757f3726718439ff7fb2fdacb267, type: 3}
     - target: {fileID: 6027607647857459741, guid: 44c7cb0da3858ac48ab3e8d0d8624f8a, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.051
@@ -4229,6 +4245,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3769177770922079760, guid: 36cc40c6a4af6954ab6343c9a12853e5, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.102
+      objectReference: {fileID: 0}
     - target: {fileID: 3769177770922079761, guid: 36cc40c6a4af6954ab6343c9a12853e5, type: 3}
       propertyPath: _whenUnselected.m_PersistentCalls.m_Calls.Array.size
       value: 0
@@ -5021,7 +5041,7 @@ MonoBehaviour:
     Scaling: 3
     Alignment: 0
     IgnorePrefabSize: 0
-  - Labels: 2048
+  - Labels: 256
     Prefabs:
     - {fileID: 3472877804400992099, guid: a9ae9df7a568eaf429a8df1236d0a0e8, type: 3}
     PrefabSelection: 0
