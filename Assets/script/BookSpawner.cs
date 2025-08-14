@@ -91,9 +91,14 @@ public class BookSpawner : MonoBehaviour
         // 计算目标位置（从生成点位置向下偏移 dropDistance）
         Vector3 targetPosition = startPosition - new Vector3(0, dropDistance, 0);
 
+        // 计算朝向生成点的旋转
+        Vector3 directionToSpawnPoint = (spawnPoint.position - targetPosition).normalized;
+        Quaternion targetRotation = Quaternion.LookRotation(directionToSpawnPoint);
+
         // 设置初始状态
         targetGameObject.transform.position = startPosition;
         targetGameObject.transform.localScale = Vector3.one * initialScale;
+        targetGameObject.transform.rotation = targetRotation;
 
         float elapsed = 0f;
         while (elapsed < spawnDuration)
@@ -114,5 +119,6 @@ public class BookSpawner : MonoBehaviour
         // 确保最终位置和缩放准确
         targetGameObject.transform.position = targetPosition;
         targetGameObject.transform.localScale = originalScale * targetScale;
+        targetGameObject.transform.rotation = targetRotation;
     }
 }
