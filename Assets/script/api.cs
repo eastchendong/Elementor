@@ -707,7 +707,7 @@ namespace Elementor
                     }
                     else
                     {
-                        // Fallback: save directly
+                        // Fallback: save directly with UTF-8 BOM encoding
                         string persistentDir = Path.Combine(Application.persistentDataPath, "Generated_JSONs");
                         if (!Directory.Exists(persistentDir))
                         {
@@ -715,8 +715,12 @@ namespace Elementor
                         }
                         
                         string filePath = Path.Combine(persistentDir, fileName);
-                        System.IO.File.WriteAllText(filePath, jsonContent);
-                        Debug.Log($"💾 Saved generated lore data: {filePath}");
+                        // Write with UTF-8 BOM encoding to match the working format
+                        using (var writer = new System.IO.StreamWriter(filePath, false, new System.Text.UTF8Encoding(true)))
+                        {
+                            writer.Write(jsonContent);
+                        }
+                        Debug.Log($"💾 Saved generated lore data with UTF-8 BOM: {filePath}");
                     }
                 }
             }

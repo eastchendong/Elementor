@@ -288,11 +288,6 @@ namespace Elementor
         void OnPageChanged()
         {
             Debug.Log($"Page changed to: {currentPageIndex}");
-            // You can add auto-trigger here if needed
-            // if (analysisHelper != null)
-            // {
-            //     TriggerAnalysisForCurrentPage();
-            // }
         }
 
         public void PrintCurrentPage()
@@ -300,6 +295,7 @@ namespace Elementor
             Debug.Log("当前显示页码索引: " + currentPageIndex);
         }
 
+        [ContextMenu("Trigger Analysis for Current Page")]
         public void TriggerAnalysisForCurrentPage()
         {
             if (analysisHelper != null)

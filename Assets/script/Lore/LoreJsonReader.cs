@@ -90,8 +90,7 @@ namespace Elementor
             {
                 Debug.Log($"Processing JSON content (first 200 chars): {jsonContent.Substring(0, Mathf.Min(200, jsonContent.Length))}...");
                 
-                // Clean JSON content (remove BOM and other potential issues)
-                jsonContent = CleanJsonContent(jsonContent);
+                // Per user request, JSON cleaning is disabled. Assuming valid JSON input.
                 
                 // Validate JSON before parsing
                 if (string.IsNullOrEmpty(jsonContent.Trim()))
@@ -252,8 +251,7 @@ namespace Elementor
             {
                 Debug.Log("Loading lore from direct JSON content");
                 
-                // Clean JSON content (remove BOM and other potential issues)
-                jsonContent = CleanJsonContent(jsonContent);
+                // Per user request, JSON cleaning is disabled. Assuming valid JSON input.
                 
                 LoreData loreData = JsonUtility.FromJson<LoreData>(jsonContent);
 
@@ -274,34 +272,6 @@ namespace Elementor
         }
 
         /// <summary>
-        /// Helper method to clean JSON content from BOM and other encoding issues
-        /// </summary>
-        private string CleanJsonContent(string content)
-        {
-            if (string.IsNullOrEmpty(content))
-                return content;
-
-            // Remove UTF-8 BOM if present
-            if (content.StartsWith("\uFEFF"))
-            {
-                content = content.Substring(1);
-                Debug.Log("Removed UTF-8 BOM from JSON content");
-            }
-
-            // Remove any leading/trailing whitespace
-            content = content.Trim();
-
-            // Log first few bytes for debugging
-            if (content.Length > 0)
-            {
-                var bytes = System.Text.Encoding.UTF8.GetBytes(content.Substring(0, Mathf.Min(10, content.Length)));
-                Debug.Log($"First bytes after cleaning: {string.Join(", ", System.Array.ConvertAll(bytes, b => b.ToString()))}");
-            }
-
-            return content;
-        }
-
-        /// <summary>
         /// Save lore data to persistent data path for runtime access
         /// </summary>
         public void SaveLoreDataToPersistent(string fileName, string jsonContent)
@@ -315,8 +285,14 @@ namespace Elementor
                 }
 
                 string filePath = Path.Combine(persistentDir, fileName);
-                File.WriteAllText(filePath, jsonContent);
-                Debug.Log($"Saved lore data to persistent storage: {filePath}");
+                
+                // Write with UTF-8 BOM encoding to match the working format
+                using (var writer = new StreamWriter(filePath, false, new System.Text.UTF8Encoding(true)))
+                {
+                    writer.Write(jsonContent);
+                }
+                
+                Debug.Log($"Saved lore data to persistent storage with UTF-8 BOM: {filePath}");
             }
             catch (System.Exception ex)
             {
