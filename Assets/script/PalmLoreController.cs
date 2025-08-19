@@ -137,12 +137,6 @@ namespace Elementor
             if (story != null)
             {
                 string displayText = story.title;
-                
-                // Use plot instead of description since LoreStory has plot field, not description
-                if (story.plot != null && story.plot.Count > 0)
-                {
-                    displayText += "\n" + string.Join(" ", story.plot);
-                }
 
                 // Truncate if too long
                 if (displayText.Length > maxLoreTextLength)
@@ -166,21 +160,7 @@ namespace Elementor
             var reaction = loreController.GetReaction();
             if (reaction != null)
             {
-                string objectiveText = $"Objective: Perform {reaction.equation}";
-                
-                // Add reactant requirements
-                if (reaction.reactants != null && reaction.reactants.Count > 0)
-                {
-                    objectiveText += "\nRequired: ";
-                    for (int i = 0; i < reaction.reactants.Count; i++)
-                    {
-                        var reactant = reaction.reactants[i];
-                        objectiveText += $"{reactant.name} x{reactant.count}";
-                        if (i < reaction.reactants.Count - 1)
-                            objectiveText += ", ";
-                    }
-                }
-
+                string objectiveText = $"{reaction.equation}";
                 palmObjectiveText.text = objectiveText;
                 Debug.Log($"🎯 Updated palm objective text: {reaction.equation}");
             }

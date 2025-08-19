@@ -77,7 +77,7 @@ namespace Elementor.Lore
         {
             Debug.Log("🏗️ Starting scene generation from lore...");
             
-            Transform environmentSpawnPoint = sceneAnchorManager.GetRandomUnusedAnchorTransform();
+            Transform environmentSpawnPoint = sceneAnchorManager.GetNextUnusedAnchorTransform();
             if (environmentPrefab == null || environmentSpawnPoint == null)
             {
                 Debug.LogError($"❌ Environment Prefab is not set ({environmentPrefab == null}) or no spawn point available from SceneAnchorManager ({environmentSpawnPoint == null}).");

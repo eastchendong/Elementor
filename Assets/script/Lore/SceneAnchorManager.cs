@@ -32,7 +32,7 @@ namespace Elementor
         public void CollectVolumeAnchors()
         {
             _volumeAnchorTransforms.Clear();
-            Debug.Log("Collecting TABLE volume anchors...");
+            Debug.Log("Collecting LAMP volume anchors...");
 
             var room = MRUK.Instance.GetCurrentRoom();
             if (room == null || room.Anchors.Count == 0)
@@ -46,16 +46,16 @@ namespace Elementor
                 if (anchor.VolumeBounds.HasValue)
                 {
                     string anchorName = anchor.gameObject.name;
-                    // Only collect anchors that contain "TABLE" in their name
-                    if (anchorName.ToUpper().Contains("TABLE"))
+                    // Only collect anchors that contain "LAMP" in their name
+                    if (anchorName.ToUpper().Contains("LAMP"))
                     {
                         _volumeAnchorTransforms[anchorName] = anchor.transform;
-                        Debug.Log($"Collected TABLE anchor: {anchorName} at position {anchor.transform.position}");
+                        Debug.Log($"Collected LAMP anchor: {anchorName} at position {anchor.transform.position}");
                     }
                 }
             }
             
-            Debug.Log($"Total TABLE anchors collected: {_volumeAnchorTransforms.Count}");
+            Debug.Log($"Total LAMP anchors collected: {_volumeAnchorTransforms.Count}");
         }
 
         /// <summary>
@@ -74,6 +74,46 @@ namespace Elementor
         }
 
         /// <summary>
+        /// Gets the transform of the next unused volume anchor in a sequential order.
+        /// If all anchors have been used, it resets and starts from the beginning.
+        /// </summary>
+        /// <returns>The next unused anchor's transform, or null if no anchors are available.</returns>
+        public Transform GetNextUnusedAnchorTransform()
+        {
+            if (_volumeAnchorTransforms.Count == 0)
+            {
+                Debug.LogWarning("No LAMP anchors available to choose from.");
+                return null;
+            }
+
+            // Get all anchor keys and sort them to ensure a consistent order
+            var sortedAnchorKeys = _volumeAnchorTransforms.Keys.OrderBy(k => k).ToList();
+
+            // Find the first anchor in the sorted list that has not been used yet
+            string selectedKey = sortedAnchorKeys.FirstOrDefault(key => !_usedAnchorNames.Contains(key));
+
+            // If all anchors have been used, reset usage and select the first one
+            if (string.IsNullOrEmpty(selectedKey))
+            {
+                Debug.LogWarning("All LAMP anchors have been used. Resetting usage tracking and starting from the first anchor.");
+                ResetAnchorUsage();
+                selectedKey = sortedAnchorKeys.FirstOrDefault();
+            }
+
+            if (string.IsNullOrEmpty(selectedKey))
+            {
+                Debug.LogError("Could not select any anchor even after reset.");
+                return null;
+            }
+            
+            Debug.Log($"Selected next LAMP anchor: {selectedKey} (total used before: {_usedAnchorNames.Count})");
+            
+            _lastUsedAnchorName = selectedKey;
+            
+            return _volumeAnchorTransforms[selectedKey];
+        }
+
+        /// <summary>
         /// Gets the transform of a random volume anchor, avoiding all previously used ones.
         /// </summary>
         /// <returns>A random anchor's transform that hasn't been used before, or null if no unused anchors are available.</returns>
@@ -81,7 +121,7 @@ namespace Elementor
         {
             if (_volumeAnchorTransforms.Count == 0)
             {
-                Debug.LogWarning("No TABLE anchors available to choose from.");
+                Debug.LogWarning("No LAMP anchors available to choose from.");
                 return null;
             }
 
@@ -93,7 +133,7 @@ namespace Elementor
             // If no unused anchors available, reset usage and use any
             if (availableAnchors.Count == 0)
             {
-                Debug.LogWarning("All TABLE anchors have been used. Resetting usage tracking and selecting randomly.");
+                Debug.LogWarning("All LAMP anchors have been used. Resetting usage tracking and selecting randomly.");
                 ResetAnchorUsage();
                 availableAnchors = _volumeAnchorTransforms.ToList();
             }
@@ -101,8 +141,8 @@ namespace Elementor
             // Select random anchor from available ones
             var selectedAnchor = availableAnchors[Random.Range(0, availableAnchors.Count)];
             
-            Debug.Log($"Available unused TABLE anchors: [{string.Join(", ", availableAnchors.Select(kvp => kvp.Key))}]");
-            Debug.Log($"Selected TABLE anchor: {selectedAnchor.Key} (total used before: {_usedAnchorNames.Count})");
+            Debug.Log($"Available unused LAMP anchors: [{string.Join(", ", availableAnchors.Select(kvp => kvp.Key))}]");
+            Debug.Log($"Selected LAMP anchor: {selectedAnchor.Key} (total used before: {_usedAnchorNames.Count})");
             
             _lastUsedAnchorName = selectedAnchor.Key;
             
@@ -117,7 +157,7 @@ namespace Elementor
         {
             if (_volumeAnchorTransforms.Count == 0)
             {
-                Debug.LogWarning("No TABLE anchors available to choose from.");
+                Debug.LogWarning("No LAMP anchors available to choose from.");
                 return null;
             }
 
@@ -126,18 +166,18 @@ namespace Elementor
                 .Where(kvp => kvp.Key != _lastUsedAnchorName)
                 .ToList();
 
-            // If no available anchors (only 1 table total), reset and use any
+            // If no available anchors (only 1 LAMP total), reset and use any
             if (availableAnchors.Count == 0)
             {
-                Debug.LogWarning("Only one TABLE anchor available, reusing the same table.");
+                Debug.LogWarning("Only one LAMP anchor available, reusing the same LAMP.");
                 availableAnchors = _volumeAnchorTransforms.ToList();
             }
 
             // Select random anchor from available ones
             var selectedAnchor = availableAnchors[Random.Range(0, availableAnchors.Count)];
             
-            Debug.Log($"Available TABLE anchors: [{string.Join(", ", _volumeAnchorTransforms.Keys)}]");
-            Debug.Log($"Selected TABLE anchor: {selectedAnchor.Key} (avoiding previous: {_lastUsedAnchorName ?? "none"})");
+            Debug.Log($"Available LAMP anchors: [{string.Join(", ", _volumeAnchorTransforms.Keys)}]");
+            Debug.Log($"Selected LAMP anchor: {selectedAnchor.Key} (avoiding previous: {_lastUsedAnchorName ?? "none"})");
             
             _lastUsedAnchorName = selectedAnchor.Key;
             
@@ -191,12 +231,28 @@ namespace Elementor
         {
             if (_volumeAnchorTransforms == null || _volumeAnchorTransforms.Count == 0) return;
 
-            Gizmos.color = Color.yellow;
             foreach (var anchorTransform in _volumeAnchorTransforms.Values)
             {
                 if (anchorTransform != null)
                 {
+                    // Draw a sphere at the anchor's position
+                    Gizmos.color = Color.yellow;
                     Gizmos.DrawSphere(anchorTransform.position, 0.1f);
+
+                    // Draw lines to represent rotation
+                    const float lineLength = 0.25f;
+                    
+                    // Forward (Z - blue)
+                    Gizmos.color = Color.blue;
+                    Gizmos.DrawRay(anchorTransform.position, anchorTransform.forward * lineLength);
+                    
+                    // Up (Y - green)
+                    Gizmos.color = Color.green;
+                    Gizmos.DrawRay(anchorTransform.position, anchorTransform.up * lineLength);
+                    
+                    // Right (X - red)
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawRay(anchorTransform.position, anchorTransform.right * lineLength);
                 }
             }
         }

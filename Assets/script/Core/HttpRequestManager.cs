@@ -180,12 +180,12 @@ namespace Elementor.Core
             if (string.IsNullOrEmpty(content))
                 return "{}";
             
-            // Remove UTF-8 BOM if present
-            if (content.StartsWith("\uFEFF"))
-            {
-                content = content.Substring(1);
-                Debug.Log("Removed UTF-8 BOM from API response content");
-            }
+            // // Remove UTF-8 BOM if present
+            // if (content.StartsWith("\uFEFF"))
+            // {
+            //     content = content.Substring(1);
+            //     Debug.Log("Removed UTF-8 BOM from API response content");
+            // }
                 
             content = content.Trim();
             

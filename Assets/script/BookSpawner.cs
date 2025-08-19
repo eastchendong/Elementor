@@ -7,8 +7,8 @@ public class BookSpawner : MonoBehaviour
     public GameObject targetGameObject;    // 要启用和生成的目标GameObject
 
     [Header("Spawn Point")]
-    public Transform spawnPoint;           // 生成的参考点
-    public Vector3 spawnOffset;            // 偏移量（基于本地前、上、侧向量）
+    public Transform spawnPoint;           // 生成的参考点（应设为相机）
+    public float spawnDistanceInFront = 2.0f; // 在镜头前生成的距离
 
     [Header("Spawn Settings")]
     public float initialScale = 0.01f;     // 初始缩放比例
@@ -82,11 +82,8 @@ public class BookSpawner : MonoBehaviour
 
     IEnumerator SpawnAnimation()
     {
-        // 获取生成点的位置并应用偏移量
-        Vector3 startPosition = spawnPoint.position +
-                                spawnPoint.forward * spawnOffset.z +
-                                spawnPoint.up * spawnOffset.y +
-                                spawnPoint.right * spawnOffset.x;
+        // 计算生成位置在 spawnPoint 前方 spawnDistanceInFront 的距离
+        Vector3 startPosition = spawnPoint.position + spawnPoint.forward * spawnDistanceInFront;
 
         // 计算目标位置（从生成点位置向下偏移 dropDistance）
         Vector3 targetPosition = startPosition - new Vector3(0, dropDistance, 0);
