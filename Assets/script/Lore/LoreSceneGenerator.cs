@@ -73,6 +73,20 @@ namespace Elementor.Lore
             GenerateSceneFromLore();
         }
 
+        [ContextMenu("Test Generate Scene From Lore")]
+        private void TestGenerateSceneFromLore()
+        {
+            Debug.Log("🧪 Testing scene generation from lore via context menu...");
+            
+            if (loreController == null || loreController.CurrentLore == null)
+            {
+                Debug.LogWarning("🚫 No lore loaded. Cannot test scene generation.");
+                return;
+            }
+            
+            GenerateSceneFromLore();
+        }
+
         private void GenerateSceneFromLore()
         {
             Debug.Log("🏗️ Starting scene generation from lore...");
@@ -84,11 +98,10 @@ namespace Elementor.Lore
                 return;
             }
 
-            // Mark the selected anchor as used
+            // Don't mark as used again since GetNextUnusedAnchorTransform already does this
             string selectedAnchorName = sceneAnchorManager.GetAnchorName(environmentSpawnPoint);
             if (!string.IsNullOrEmpty(selectedAnchorName))
             {
-                sceneAnchorManager.MarkAnchorAsUsed(selectedAnchorName);
                 Debug.Log($"🎯 Spawning environment on table: {selectedAnchorName} at position: {environmentSpawnPoint.position}");
             }
             else

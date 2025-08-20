@@ -41,6 +41,7 @@ namespace Elementor
                 return;
             }
 
+            int lampCount = 0;
             foreach (var anchor in room.Anchors)
             {
                 if (anchor.VolumeBounds.HasValue)
@@ -49,8 +50,16 @@ namespace Elementor
                     // Only collect anchors that contain "LAMP" in their name
                     if (anchorName.ToUpper().Contains("LAMP"))
                     {
-                        _volumeAnchorTransforms[anchorName] = anchor.transform;
-                        Debug.Log($"Collected LAMP anchor: {anchorName} at position {anchor.transform.position}");
+                        // Create unique key by appending position-based suffix for duplicate names
+                        string uniqueKey = anchorName;
+                        if (_volumeAnchorTransforms.ContainsKey(uniqueKey))
+                        {
+                            lampCount++;
+                            uniqueKey = $"{anchorName}_{lampCount}";
+                        }
+                        
+                        _volumeAnchorTransforms[uniqueKey] = anchor.transform;
+                        Debug.Log($"Collected LAMP anchor: {uniqueKey} at position {anchor.transform.position}");
                     }
                 }
             }
@@ -106,9 +115,10 @@ namespace Elementor
                 return null;
             }
             
-            Debug.Log($"Selected next LAMP anchor: {selectedKey} (total used before: {_usedAnchorNames.Count})");
+            // Mark as used immediately
+            MarkAnchorAsUsed(selectedKey);
             
-            _lastUsedAnchorName = selectedKey;
+            Debug.Log($"Selected next unused LAMP anchor: {selectedKey} (total used: {_usedAnchorNames.Count}/{_volumeAnchorTransforms.Count})");
             
             return _volumeAnchorTransforms[selectedKey];
         }
@@ -141,10 +151,11 @@ namespace Elementor
             // Select random anchor from available ones
             var selectedAnchor = availableAnchors[Random.Range(0, availableAnchors.Count)];
             
-            Debug.Log($"Available unused LAMP anchors: [{string.Join(", ", availableAnchors.Select(kvp => kvp.Key))}]");
-            Debug.Log($"Selected LAMP anchor: {selectedAnchor.Key} (total used before: {_usedAnchorNames.Count})");
+            // Mark as used immediately
+            MarkAnchorAsUsed(selectedAnchor.Key);
             
-            _lastUsedAnchorName = selectedAnchor.Key;
+            Debug.Log($"Available unused LAMP anchors: [{string.Join(", ", availableAnchors.Select(kvp => kvp.Key))}]");
+            Debug.Log($"Selected unused LAMP anchor: {selectedAnchor.Key} (total used: {_usedAnchorNames.Count}/{_volumeAnchorTransforms.Count})");
             
             return selectedAnchor.Value;
         }
@@ -195,9 +206,8 @@ namespace Elementor
             if (!_usedAnchorNames.Contains(anchorName))
             {
                 _usedAnchorNames.Add(anchorName);
+                Debug.Log($"Marked anchor as used: {anchorName}. Total used anchors: {_usedAnchorNames.Count}/{_volumeAnchorTransforms.Count}");
             }
-            
-            Debug.Log($"Marked anchor as used: {anchorName}. Total used anchors: {_usedAnchorNames.Count}");
         }
 
         /// <summary>
