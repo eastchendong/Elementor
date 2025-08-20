@@ -823,7 +823,7 @@ MonoBehaviour:
     e32: 0
     e33: 1
   SceneSettings:
-    DataSource: 0
+    DataSource: 1
     RoomIndex: 5
     RoomPrefabs:
     - {fileID: 5618556046422172173, guid: 4b454e8ccd6764ccdbcd91586969863f, type: 3}
@@ -4194,8 +4194,16 @@ PrefabInstance:
       value: 0.0278
       objectReference: {fileID: 0}
     - target: {fileID: 1717163969150618336, guid: 36cc40c6a4af6954ab6343c9a12853e5, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.06
+      objectReference: {fileID: 0}
+    - target: {fileID: 1717163969150618336, guid: 36cc40c6a4af6954ab6343c9a12853e5, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 1717163969150618336, guid: 36cc40c6a4af6954ab6343c9a12853e5, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 1915603345510730370, guid: 36cc40c6a4af6954ab6343c9a12853e5, type: 3}
       propertyPath: m_AnchorMax.y
