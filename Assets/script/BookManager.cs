@@ -16,6 +16,12 @@ namespace Elementor
         
         [Header("Settings")]
         public string pageContentFile = "page_content.json";
+        [Tooltip("Timeout in seconds for analysis completion")]
+        public float analysisTimeoutSeconds = 10f;
+        
+        [Header("Manual Lore Testing")]
+        [Tooltip("Assign a JSON lore file for manual testing")]
+        public string manualLoreFilePath = "Generated_JSONs/example_lore.json";
 
         [Header("Book Control Buttons")]
         public Button nextPageButton;
@@ -72,8 +78,9 @@ namespace Elementor
 
         private void OnLoreLoaded()
         {
-            Debug.Log("BookManager: Lore loaded, closing book and disabling interactions");
-            CloseBookAndDisableInteractions();
+            Debug.Log("BookManager: Lore loaded, disabling interactions but keeping current page");
+            // Only disable interactions, don't close the book or change pages
+            SetBookInteractionEnabled(false);
         }
 
         public void OnReactionCompleted()
@@ -303,7 +310,7 @@ namespace Elementor
                 string content = GetCurrentPageContentAsString();
                 if (!string.IsNullOrEmpty(content))
                 {
-                    analysisHelper.StartWorkflowWithText(content);
+                    StartCoroutine(TriggerAnalysisWithTimeout(content));
                 }
                 else
                 {
@@ -314,6 +321,86 @@ namespace Elementor
             {
                 Debug.LogWarning("ChemicalAnalysisHelper not assigned!");
             }
+        }
+
+        private IEnumerator TriggerAnalysisWithTimeout(string content)
+        {
+            Debug.Log($"Starting analysis with {analysisTimeoutSeconds}s timeout for content: {content.Substring(0, Mathf.Min(50, content.Length))}...");
+            
+            // Start the analysis
+            analysisHelper.StartWorkflowWithText(content);
+            
+            float elapsed = 0f;
+            bool analysisCompleted = false;
+            
+            // Subscribe to completion event
+            System.Action<string> onCompleteHandler = (response) => {
+                analysisCompleted = true;
+                OnAnalysisCompleted();
+            };
+            
+            if (API.Instance != null)
+            {
+                API.Instance.OnAnalysisComplete += onCompleteHandler;
+            }
+            
+            // Wait for completion or timeout
+            while (!analysisCompleted && elapsed < analysisTimeoutSeconds)
+            {
+                yield return new WaitForSeconds(0.1f);
+                elapsed += 0.1f;
+                
+                // Check if analysis is no longer running
+                if (API.Instance != null && !API.Instance.IsAnalyzing)
+                {
+                    break;
+                }
+            }
+            
+            // Cleanup
+            if (API.Instance != null)
+            {
+                API.Instance.OnAnalysisComplete -= onCompleteHandler;
+            }
+            
+            if (elapsed >= analysisTimeoutSeconds)
+            {
+                Debug.LogWarning($"Analysis timed out after {analysisTimeoutSeconds} seconds");
+                OnAnalysisCompleted(); // Still disable interactions on timeout
+            }
+        }
+
+        private void OnAnalysisCompleted()
+        {
+            Debug.Log("BookManager: Analysis completed, disabling book interactions but keeping current page");
+            // Disable interactions but don't close the book or change pages
+            SetBookInteractionEnabled(false);
+        }
+
+        [ContextMenu("Trigger Manual Lore (Inspector Assignment)")]
+        public void TriggerManualLore()
+        {
+            if (string.IsNullOrEmpty(manualLoreFilePath))
+            {
+                Debug.LogWarning("Manual lore file path is not assigned in the inspector!");
+                return;
+            }
+
+            // Find LoreJsonReader in the scene
+            LoreJsonReader loreReader = FindObjectOfType<LoreJsonReader>();
+            if (loreReader == null)
+            {
+                Debug.LogError("LoreJsonReader not found in the scene! Cannot load manual lore.");
+                return;
+            }
+
+            Debug.Log($"Triggering manual lore load from inspector assignment: {manualLoreFilePath}");
+            
+            // Load the manually assigned lore file
+            loreReader.LoadSpecificLoreFile(manualLoreFilePath);
+            
+            // Disable book interactions after loading manual lore
+            SetBookInteractionEnabled(false);
         }
 
         string GetCurrentPageContentAsString()
@@ -347,14 +434,6 @@ namespace Elementor
 
             // Format as a single string with all the information
             return $"标题：{pageContent.title}\n描述：{pageContent.description}\n化学方程式：{pageContent.chemical_equation}";
-        }
-
-        /// <summary>
-        /// Get formatted text content for current page
-        /// </summary>
-        public string GetCurrentPageTextContent()
-        {
-            return GetCurrentPageContentAsString();
         }
     }
 }

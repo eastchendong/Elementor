@@ -823,7 +823,7 @@ MonoBehaviour:
     e32: 0
     e33: 1
   SceneSettings:
-    DataSource: 1
+    DataSource: 2
     RoomIndex: 5
     RoomPrefabs:
     - {fileID: 5618556046422172173, guid: 4b454e8ccd6764ccdbcd91586969863f, type: 3}
@@ -4564,6 +4564,8 @@ MonoBehaviour:
   currentPageIndex: 0
   analysisHelper: {fileID: 255017182}
   pageContentFile: page_content.json
+  analysisTimeoutSeconds: 10
+  manualLoreFilePath: Generated_JSONs/1.json
   nextPageButton: {fileID: 939436428}
   previousPageButton: {fileID: 557708464}
   selectBookButton: {fileID: 1747454606}
